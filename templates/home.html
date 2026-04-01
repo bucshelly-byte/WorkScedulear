@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>מבט שבועי</h2>
+
+<a class="btn" href="/visits/add">הוספת שיבוץ</a>
+
+<table>
+    <tr>
+        <th>תאריך</th>
+        <th>שעה</th>
+        <th>ילד</th>
+    </tr>
+
+    {% for day in days %}
+        {% set day_str = day.isoformat() %}
+        {% for slot in slots %}
+            <tr>
+                <td>
+                    {% if loop.index0 == 0 %}
+                        {{ day.strftime("%d/%m/%Y") }}
+                    {% endif %}
+                </td>
+                <td>{{ slot[0] }} - {{ slot[1] }}</td>
+                <td>
+                    {{ schedule[day_str].get((slot[0], slot[1]), "-") }}
+                </td>
+            </tr>
+        {% endfor %}
+    {% endfor %}
+</table>
+
+{% endblock %}
