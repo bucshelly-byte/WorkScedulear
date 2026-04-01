@@ -96,19 +96,19 @@ def home(request: Request):
 
     visits = cur.fetchall()
     conn.close()
-    
-# תיקון: שימוש במחרוזת כמפתח במקום tuple
-schedule = {d.isoformat(): {} for d in days}
-for v in visits:
-    slot_key = f"{v['start_time']}-{v['end_time']}"
-    schedule[v["date"]][slot_key] = v["child_name"]
 
-return templates.TemplateResponse("home.html", {
-    "request": request,
-    "days": days,
-    "time_slots": TIME_SLOTS,
-    "schedule": schedule
-})
+    # שימוש במחרוזת כמפתח במקום tuple
+    schedule = {d.isoformat(): {} for d in days}
+    for v in visits:
+        slot_key = f"{v['start_time']}-{v['end_time']}"
+        schedule[v["date"]][slot_key] = v["child_name"]
+
+    return templates.TemplateResponse("home.html", {
+        "request": request,
+        "days": days,
+        "time_slots": TIME_SLOTS,
+        "schedule": schedule
+    })
 
 # ---------------- Children ----------------
 
