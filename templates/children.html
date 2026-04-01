@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>ניהול ילדים</h2>
+
+<a class="btn" href="/children/add">הוספת ילד</a>
+
+<table>
+    <tr>
+        <th>שם</th>
+        <th>הורה</th>
+        <th>טלפון</th>
+        <th>פרופיל</th>
+    </tr>
+
+    {% for c in children %}
+    <tr>
+        <td>{{ c.name }}</td>
+        <td>{{ c.parent_name }}</td>
+        <td>{{ c.phone }}</td>
+        <td><a class="btn" href="/children/{{ c.id }}">לצפייה</a></td>
+    </tr>
+    {% endfor %}
+</table>
+
+{% endblock %}
