@@ -7,10 +7,9 @@ from typing import List, Optional
 from openpyxl import Workbook
 
 app = FastAPI()
-
 DB_PATH = "schedule.db"
 
-# ---------------- Database ----------------
+# ---------- DB ----------
 
 def get_db():
     conn = sqlite3.connect(DB_PATH)
@@ -21,7 +20,6 @@ def init_db():
     conn = get_db()
     cur = conn.cursor()
 
-    # טבלת ילדים
     cur.execute("""
     CREATE TABLE IF NOT EXISTS children (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -35,7 +33,6 @@ def init_db():
     )
     """)
 
-    # טבלת שיבוצים
     cur.execute("""
     CREATE TABLE IF NOT EXISTS visits (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -47,7 +44,6 @@ def init_db():
     )
     """)
 
-    # הוספת עמודות חסרות (DB ישן)
     try:
         cur.execute("ALTER TABLE children ADD COLUMN color TEXT")
     except:
@@ -65,8 +61,6 @@ if not os.path.exists(DB_PATH):
 else:
     init_db()
 
-# ---------------- קבועים ----------------
-
 DAYS = ["א'", "ב'", "ג'", "ד'", "ה'"]
 SLOTS = [
     ("08:00", "10:00"),
@@ -75,15 +69,11 @@ SLOTS = [
     ("14:00", "16:00"),
 ]
 
-AUTO_COLORS = [
-    "#007bff", "#28a745", "#17a2b8", "#ffc107",
-    "#dc3545", "#6f42c1", "#20c997", "#fd7e14"
-]
-
 def load_template():
     with open("home.html", "r", encoding="utf-8") as f:
         return f.read()
- # ---------------- דף הבית ----------------
+
+# ---------- Home ----------
 
 @app.get("/", response_class=HTMLResponse)
 def home(
@@ -95,7 +85,6 @@ def home(
     conn = get_db()
     cur = conn.cursor()
 
-    # כל השיבוצים
     cur.execute("""
         SELECT v.*, c.name AS child_name, c.color AS child_color
         FROM visits v
@@ -103,13 +92,11 @@ def home(
     """)
     visits = cur.fetchall()
 
-    # רשימת ילדים לסינון
     cur.execute("SELECT id, name FROM children ORDER BY name")
     children = cur.fetchall()
 
     conn.close()
 
-    # בניית מערכת שעות
     schedule = {d: {} for d in DAYS}
     for v in visits:
         if filter_child and v["child_id"] != filter_child:
@@ -124,7 +111,6 @@ def home(
     if msg:
         html.append(f'<div class="success-msg">{msg}</div>')
 
-    # סינון לפי ילד
     html.append('<div class="form-card">')
     html.append('<form method="get">')
     html.append('<label>סינון לפי ילד:</label>')
@@ -137,11 +123,10 @@ def home(
     html.append('</form>')
     html.append('</div>')
 
-    # כפתורי ייצוא
     html.append('<button class="btn btn-primary" onclick="exportImage()">📷 ייצוא כתמונה</button> ')
     html.append('<a href="/export/week" class="btn btn-secondary">ייצוא לאקסל</a>')
 
-    # טבלת מחשב
+    # Desktop table
     html.append('<div class="table-card">')
     html.append('<div class="section-title">מערכת שבועית</div>')
     html.append('<div class="table-wrapper desktop-week-table">')
@@ -181,7 +166,7 @@ def home(
 
     html.append("</table></div></div>")
 
-    # מובייל
+    # Mobile
     html.append('<div class="table-card">')
     html.append('<div class="section-title">מערכת שבועית (מובייל)</div>')
 
@@ -225,26 +210,254 @@ def home(
 
     page = load_template().replace("{{CONTENT}}", "".join(html))
     return HTMLResponse(page)
-        html.append('<label>ילד:</label>')
+
+# ---------- Children list ----------
+
+@app.get("/children", response_class=HTMLResponse)
+def children_list(request: Request, q: str = ""):
+    conn = get_db()
+    cur = conn.cursor()
+    if q:
+        cur.execute(
+            "SELECT * FROM children WHERE name LIKE ? OR parent_name LIKE ? ORDER BY name",
+            (f"%{q}%", f"%{q}%")
+        )
+    else:
+        cur.execute("SELECT * FROM children ORDER BY name")
+    children = cur.fetchall()
+    conn.close()
+
+    html = []
+    html.append('<div class="form-card">')
+    html.append('<div class="section-title">רשימת ילדים</div>')
+    html.append('<form method="get">')
+    html.append('<label>חיפוש:</label>')
+    html.append(f'<input type="text" name="q" value="{q}">')
+    html.append('<button class="btn btn-primary">חיפוש</button> ')
+    html.append('<a href="/children" class="btn btn-secondary">נקה</a> ')
+    html.append('<a href="/children/add" class="btn btn-primary">הוספת ילד</a>')
+    html.append('</form></div>')
+
+    html.append('<div class="table-card"><div class="table-wrapper">')
+    html.append('<table><tr><th>שם</th><th>הורה</th><th>טלפון</th><th>פרופיל</th></tr>')
+    for c in children:
+        html.append(
+            f"<tr>"
+            f"<td>{c['name']}</td>"
+            f"<td>{c['parent_name'] or ''}</td>"
+            f"<td>{c['phone'] or ''}</td>"
+            f"<td><a class='btn btn-secondary' href='/children/{c['id']}'>צפייה</a></td>"
+            f"</tr>"
+        )
+    html.append("</table></div></div>")
+
+    page = load_template().replace("{{CONTENT}}", "".join(html))
+    return HTMLResponse(page)
+
+# ---------- Add child ----------
+
+@app.get("/children/add", response_class=HTMLResponse)
+def add_child_form(request: Request):
+    html = []
+    html.append('<div class="form-card">')
+    html.append('<div class="section-title">הוספת ילד</div>')
+    html.append('<form method="post">')
+    html.append('<label>שם:</label><input name="name" required>')
+    html.append('<label>שם הורה:</label><input name="parent_name">')
+    html.append('<label>כתובת:</label><input name="address">')
+    html.append('<label>טלפון:</label><input name="phone">')
+    html.append('<label>תחביב:</label><input name="hobby">')
+    html.append('<label>צבע:</label><input type="color" name="color">')
+    html.append('<label>תמונה:</label><input name="photo_url">')
+    html.append('<button class="btn btn-primary">שמור</button> ')
+    html.append('<a href="/" class="btn btn-secondary">ביטול</a>')
+    html.append('</form></div>')
+
+    page = load_template().replace("{{CONTENT}}", "".join(html))
+    return HTMLResponse(page)
+
+@app.post("/children/add")
+def add_child(
+    name: str = Form(...),
+    parent_name: str = Form(""),
+    address: str = Form(""),
+    phone: str = Form(""),
+    hobby: str = Form(""),
+    color: str = Form(""),
+    photo_url: str = Form("")
+):
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO children (name, parent_name, address, phone, hobby, color, photo_url)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    """, (name, parent_name, address, phone, hobby, color or None, photo_url or None))
+    conn.commit()
+    conn.close()
+    return RedirectResponse("/", status_code=303)
+
+# ---------- Child profile ----------
+
+@app.get("/children/{child_id}", response_class=HTMLResponse)
+def child_profile(request: Request, child_id: int):
+    conn = get_db()
+    cur = conn.cursor()
+
+    cur.execute("SELECT * FROM children WHERE id=?", (child_id,))
+    child = cur.fetchone()
+    if not child:
+        conn.close()
+        raise HTTPException(404)
+
+    cur.execute("""
+        SELECT * FROM visits
+        WHERE child_id=?
+        ORDER BY day, start_time
+    """, (child_id,))
+    visits = cur.fetchall()
+    conn.close()
+
+    html = []
+    html.append('<div class="form-card">')
+    html.append(f'<div class="section-title">{child["name"]}</div>')
+    if child["photo_url"]:
+        html.append(f'<img class="child-photo" src="{child["photo_url"]}">')
+    html.append(f"<p><b>הורה:</b> {child['parent_name'] or ''}</p>")
+    html.append(f"<p><b>טלפון:</b> {child['phone'] or ''}</p>")
+    html.append(f"<p><b>כתובת:</b> {child['address'] or ''}</p>")
+    html.append(f"<p><b>תחביב:</b> {child['hobby'] or ''}</p>")
+    html.append(
+        f'<a class="btn btn-primary" href="/children/edit/{child_id}">עריכה</a> '
+        f'<a class="btn btn-danger" href="/children/delete/{child_id}" onclick="return confirm(\'למחוק?\')">מחיקה</a> '
+        f'<a class="btn btn-secondary" href="/visits/add?child_id={child_id}">שיבוץ</a> '
+        f'<a class="btn btn-primary" href="/export/child/{child_id}">ייצוא</a>'
+    )
+    html.append('</div>')
+
+    html.append('<div class="table-card"><table>')
+    html.append('<tr><th>יום</th><th>שעה</th><th>פעולות</th></tr>')
+    for v in visits:
+        html.append(
+            f"<tr>"
+            f"<td>{v['day']}</td>"
+            f"<td>{v['start_time']}-{v['end_time']}</td>"
+            f"<td>"
+            f"<a class='btn btn-secondary' href='/visits/edit/{v['id']}'>עריכה</a> "
+            f"<a class='btn btn-danger' href='/visits/delete/{v['id']}' onclick='return confirm(\"למחוק?\")'>מחיקה</a>"
+            f"</td>"
+            f"</tr>"
+        )
+    html.append("</table></div>")
+
+    page = load_template().replace("{{CONTENT}}", "".join(html))
+    return HTMLResponse(page)
+
+# ---------- Edit child ----------
+
+@app.get("/children/edit/{child_id}", response_class=HTMLResponse)
+def edit_child_form(request: Request, child_id: int):
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM children WHERE id=?", (child_id,))
+    c = cur.fetchone()
+    conn.close()
+    if not c:
+        raise HTTPException(404)
+
+    html = []
+    html.append('<div class="form-card">')
+    html.append('<div class="section-title">עריכת ילד</div>')
+    html.append('<form method="post">')
+    html.append(f'<label>שם:</label><input name="name" value="{c["name"]}">')
+    html.append(f'<label>שם הורה:</label><input name="parent_name" value="{c["parent_name"] or ""}">')
+    html.append(f'<label>כתובת:</label><input name="address" value="{c["address"] or ""}">')
+    html.append(f'<label>טלפון:</label><input name="phone" value="{c["phone"] or ""}">')
+    html.append(f'<label>תחביב:</label><input name="hobby" value="{c["hobby"] or ""}">')
+    html.append(f'<label>צבע:</label><input type="color" name="color" value="{c["color"] or "#ffffff"}">')
+    html.append(f'<label>תמונה:</label><input name="photo_url" value="{c["photo_url"] or ""}">')
+    html.append('<button class="btn btn-primary">שמור</button> ')
+    html.append('<a href="/" class="btn btn-secondary">ביטול</a>')
+    html.append('</form></div>')
+
+    page = load_template().replace("{{CONTENT}}", "".join(html))
+    return HTMLResponse(page)
+
+@app.post("/children/edit/{child_id}")
+def edit_child(
+    child_id: int,
+    name: str = Form(...),
+    parent_name: str = Form(""),
+    address: str = Form(""),
+    phone: str = Form(""),
+    hobby: str = Form(""),
+    color: str = Form(""),
+    photo_url: str = Form("")
+):
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("""
+        UPDATE children
+        SET name=?, parent_name=?, address=?, phone=?, hobby=?, color=?, photo_url=?
+        WHERE id=?
+    """, (name, parent_name, address, phone, hobby, color or None, photo_url or None, child_id))
+    conn.commit()
+    conn.close()
+    return RedirectResponse("/?msg=הילד עודכן בהצלחה", status_code=303)
+
+# ---------- Delete child ----------
+
+@app.get("/children/delete/{child_id}")
+def delete_child(child_id: int):
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM visits WHERE child_id=?", (child_id,))
+    cur.execute("DELETE FROM children WHERE id=?", (child_id,))
+    conn.commit()
+    conn.close()
+    return RedirectResponse("/?msg=הילד נמחק בהצלחה", status_code=303)
+
+# ---------- Add visit ----------
+
+@app.get("/visits/add", response_class=HTMLResponse)
+def add_visit_form(
+    request: Request,
+    day: str = "",
+    slot: str = "",
+    child_id: Optional[int] = None
+):
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM children ORDER BY name")
+    children = cur.fetchall()
+    conn.close()
+
+    html = []
+    html.append('<div class="form-card">')
+    html.append('<div class="section-title">שיבוץ חדש</div>')
+    html.append('<form method="post">')
+
+    html.append('<label>ילד:</label>')
     html.append('<select name="child_id" required>')
     for c in children:
-        sel = "selected" if c["id"] == v["child_id"] else ""
+        sel = "selected" if child_id and child_id == c["id"] else ""
         html.append(f'<option value="{c["id"]}" {sel}>{c["name"]}</option>')
     html.append('</select>')
 
-    html.append('<label>יום:</label>')
-    html.append('<select name="day" required>')
+    html.append('<label>ימים:</label><br>')
     for d in DAYS:
-        sel = "selected" if d == v["day"] else ""
-        html.append(f'<option value="{d}" {sel}>{d}</option>')
-    html.append('</select>')
+        checked = 'checked' if d == day else ''
+        html.append(
+            f'<label style="margin-left:8px;">'
+            f'<input type="checkbox" name="days" value="{d}" {checked}> {d}'
+            f'</label>'
+        )
+    html.append('<br><br>')
 
-    current_slot = f"{v['start_time']}-{v['end_time']}"
     html.append('<label>טווח שעות:</label>')
     html.append('<select name="slot" required>')
     for s, e in SLOTS:
         key = f"{s}-{e}"
-        sel = "selected" if key == current_slot else ""
+        sel = "selected" if key == slot else ''
         html.append(f'<option value="{key}" {sel}>{key}</option>')
     html.append('</select>')
 
@@ -255,6 +468,47 @@ def home(
 
     page = load_template().replace("{{CONTENT}}", "".join(html))
     return HTMLResponse(page)
+
+@app.post("/visits/add")
+def add_visit(
+    child_id: int = Form(...),
+    slot: str = Form(...),
+    days: List[str] = Form(...)
+):
+    start, end = slot.split("-")
+
+    conn = get_db()
+    cur = conn.cursor()
+
+    conflicts = []
+    for d in days:
+        cur.execute("""
+            SELECT v.id, c.name AS child_name
+            FROM visits v
+            JOIN children c ON c.id = v.child_id
+            WHERE v.day=? AND v.start_time=? AND v.end_time=?
+        """, (d, start, end))
+        row = cur.fetchone()
+        if row:
+            conflicts.append((d, row["child_name"]))
+
+    if conflicts:
+        conn.close()
+        parts = [f"יום {d} ({name})" for d, name in conflicts]
+        err_msg = "לא ניתן לשבץ – השעות האלו כבר תפוסות ב: " + ", ".join(parts)
+        return RedirectResponse(f"/?err={err_msg}", status_code=303)
+
+    for d in days:
+        cur.execute("""
+            INSERT INTO visits (child_id, day, start_time, end_time)
+            VALUES (?, ?, ?, ?)
+        """, (child_id, d, start, end))
+
+    conn.commit()
+    conn.close()
+    return RedirectResponse("/?msg=השיבוץ נשמר בהצלחה", status_code=303)
+
+# ---------- Edit visit ----------
 
 @app.get("/visits/edit/{visit_id}", response_class=HTMLResponse)
 def edit_visit_form(request: Request, visit_id: int):
@@ -276,7 +530,6 @@ def edit_visit_form(request: Request, visit_id: int):
     html.append('<div class="section-title">עריכת שיבוץ</div>')
     html.append('<form method="post">')
 
-    # בחירת ילד
     html.append('<label>ילד:</label>')
     html.append('<select name="child_id" required>')
     for c in children:
@@ -284,7 +537,6 @@ def edit_visit_form(request: Request, visit_id: int):
         html.append(f'<option value="{c["id"]}" {sel}>{c["name"]}</option>')
     html.append('</select>')
 
-    # בחירת יום
     html.append('<label>יום:</label>')
     html.append('<select name="day" required>')
     for d in DAYS:
@@ -292,7 +544,6 @@ def edit_visit_form(request: Request, visit_id: int):
         html.append(f'<option value="{d}" {sel}>{d}</option>')
     html.append('</select>')
 
-    # בחירת טווח שעות
     current_slot = f"{v['start_time']}-{v['end_time']}"
     html.append('<label>טווח שעות:</label>')
     html.append('<select name="slot" required>')
@@ -309,7 +560,42 @@ def edit_visit_form(request: Request, visit_id: int):
 
     page = load_template().replace("{{CONTENT}}", "".join(html))
     return HTMLResponse(page)
-# ---------------- מחיקת שיבוץ ----------------
+
+@app.post("/visits/edit/{visit_id}")
+def edit_visit(
+    visit_id: int,
+    child_id: int = Form(...),
+    day: str = Form(...),
+    slot: str = Form(...)
+):
+    start, end = slot.split("-")
+
+    conn = get_db()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT v.id, c.name AS child_name
+        FROM visits v
+        JOIN children c ON c.id = v.child_id
+        WHERE v.day=? AND v.start_time=? AND v.end_time=? AND v.id<>?
+    """, (day, start, end, visit_id))
+    row = cur.fetchone()
+    if row:
+        conn.close()
+        err_msg = f"לא ניתן לשמור – השעה כבר תפוסה ביום {day} ({row['child_name']})"
+        return RedirectResponse(f"/?err={err_msg}", status_code=303)
+
+    cur.execute("""
+        UPDATE visits
+        SET child_id=?, day=?, start_time=?, end_time=?
+        WHERE id=?
+    """, (child_id, day, start, end, visit_id))
+
+    conn.commit()
+    conn.close()
+    return RedirectResponse("/?msg=השיבוץ עודכן בהצלחה", status_code=303)
+
+# ---------- Delete visit ----------
 
 @app.get("/visits/delete/{visit_id}")
 def delete_visit(visit_id: int):
@@ -320,7 +606,7 @@ def delete_visit(visit_id: int):
     conn.close()
     return RedirectResponse("/?msg=השיבוץ נמחק בהצלחה", status_code=303)
 
-# ---------------- ייצוא שבועי ----------------
+# ---------- Export week ----------
 
 @app.get("/export/week")
 def export_week():
@@ -363,9 +649,13 @@ def export_week():
     headers = {
         "Content-Disposition": 'attachment; filename="week_schedule.xlsx"'
     }
-    return StreamingResponse(stream, media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", headers=headers)
+    return StreamingResponse(
+        stream,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers=headers
+    )
 
-# ---------------- ייצוא מערכת ילד ----------------
+# ---------- Export child ----------
 
 @app.get("/export/child/{child_id}")
 def export_child(child_id: int):
@@ -410,4 +700,8 @@ def export_child(child_id: int):
     headers = {
         "Content-Disposition": f'attachment; filename="{filename}"'
     }
-    return StreamingResponse(stream, media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", headers=headers)
+    return StreamingResponse(
+        stream,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers=headers
+    )
