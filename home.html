@@ -5,6 +5,9 @@
     <title>מערכת שעות</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+    <!-- ספריית צילום מסך -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
     <style>
         body {
             margin: 0;
@@ -69,16 +72,11 @@
             font-size: 15px;
         }
 
-        .side-menu a:last-child {
-            border-bottom: none;
-        }
-
-        /* אזור תוכן */
         .content {
             padding: 10px 10px 30px;
         }
 
-        /* טאבים לימי השבוע במובייל */
+        /* טאבים במובייל */
         .day-tabs {
             display: none;
             margin-bottom: 10px;
@@ -136,44 +134,23 @@
             color: #fff;
         }
 
-        /* צבעים לשעות (רקע) */
+        /* צבעים לשעות */
         .slot-08-10 { background: #fff7cc; }
         .slot-10-12 { background: #e0f0ff; }
         .slot-12-14 { background: #e5ffe5; }
         .slot-14-16 { background: #ffe5d9; }
 
-        /* צבעים לילדים (טקסט/תגית) – יגיעו מהשרת כ-style inline */
-
-        /* התאמה למובייל */
         @media (max-width: 768px) {
-            .table-wrapper {
-                overflow: hidden;
-            }
-            table {
-                min-width: 0;
-            }
-            .desktop-week-table {
-                display: none;
-            }
-            .mobile-day-table {
-                display: block;
-            }
-            .day-tabs {
-                display: block;
-                text-align: center;
-            }
+            .desktop-week-table { display: none; }
+            .mobile-day-table { display: block; }
+            .day-tabs { display: block; text-align: center; }
         }
 
         @media (min-width: 769px) {
-            .desktop-week-table {
-                display: block;
-            }
-            .mobile-day-table {
-                display: none;
-            }
+            .desktop-week-table { display: block; }
+            .mobile-day-table { display: none; }
         }
 
-        /* כפתורים כלליים */
         .btn {
             display: inline-block;
             padding: 6px 10px;
@@ -185,20 +162,9 @@
             text-decoration: none;
         }
 
-        .btn-primary {
-            background: #007bff;
-            color: #fff;
-        }
-
-        .btn-secondary {
-            background: #6c757d;
-            color: #fff;
-        }
-
-        .btn-danger {
-            background: #dc3545;
-            color: #fff;
-        }
+        .btn-primary { background: #007bff; color: #fff; }
+        .btn-secondary { background: #6c757d; color: #fff; }
+        .btn-danger { background: #dc3545; color: #fff; }
 
         .section-title {
             font-size: 18px;
@@ -213,33 +179,8 @@
             margin-bottom: 12px;
         }
 
-        input[type="text"],
-        input[type="tel"],
-        select {
-            width: 100%;
-            padding: 6px;
-            margin: 4px 0 8px;
-            box-sizing: border-box;
-            border-radius: 4px;
-            border: 1px solid #ccc;
-            font-size: 14px;
-        }
-
-        label {
-            font-size: 14px;
-        }
-
-        .error-msg {
-            color: #c00;
-            margin-bottom: 8px;
-            font-size: 14px;
-        }
-
-        .success-msg {
-            color: #0a0;
-            margin-bottom: 8px;
-            font-size: 14px;
-        }
+        .error-msg { color: #c00; margin-bottom: 8px; font-size: 14px; }
+        .success-msg { color: #0a0; margin-bottom: 8px; font-size: 14px; }
     </style>
 </head>
 <body>
@@ -256,7 +197,7 @@
     <a href="/children">רשימת ילדים</a>
     <a href="/children/add">הוספת ילד</a>
     <a href="/visits/add">שיבוץ חדש</a>
-    <a href="/export/week">ייצוא מערכת שבועית לאקסל</a>
+    <a href="/export/week">ייצוא לאקסל</a>
 </div>
 
 <div class="content">
@@ -264,87 +205,80 @@
 </div>
 
 <script>
-    function openMenu() {
-        document.getElementById('menuOverlay').style.display = 'block';
-        document.getElementById('sideMenu').classList.add('open');
-    }
+function openMenu() {
+    document.getElementById('menuOverlay').style.display = 'block';
+    document.getElementById('sideMenu').classList.add('open');
+}
 
-    function closeMenu() {
-        document.getElementById('menuOverlay').style.display = 'none';
-        document.getElementById('sideMenu').classList.remove('open');
-    }
+function closeMenu() {
+    document.getElementById('menuOverlay').style.display = 'none';
+    document.getElementById('sideMenu').classList.remove('open');
+}
 
-    // טאבים + החלקה במובייל
-    let currentDayIndex = 0;
-    const dayKeys = ["א'", "ב'", "ג'", "ד'", "ה'"];
+/* ייצוא כתמונה */
+function exportImage() {
+    const element =
+        document.querySelector(".desktop-week-table") ||
+        document.querySelector(".mobile-day-table");
 
-    function showMobileDay(dayKey) {
-        const tables = document.querySelectorAll('.mobile-day-table');
-        tables.forEach(t => {
-            if (t.getAttribute('data-day') === dayKey) {
-                t.style.display = 'block';
-            } else {
-                t.style.display = 'none';
-            }
-        });
-
-        const tabs = document.querySelectorAll('.day-tab');
-        tabs.forEach(tab => {
-            if (tab.getAttribute('data-day') === dayKey) {
-                tab.classList.add('active');
-            } else {
-                tab.classList.remove('active');
-            }
-        });
-
-        currentDayIndex = dayKeys.indexOf(dayKey);
-    }
-
-    function nextDay() {
-        currentDayIndex = (currentDayIndex + 1) % dayKeys.length;
-        showMobileDay(dayKeys[currentDayIndex]);
-    }
-
-    function prevDay() {
-        currentDayIndex = (currentDayIndex - 1 + dayKeys.length) % dayKeys.length;
-        showMobileDay(dayKeys[currentDayIndex]);
-    }
-
-    // זיהוי החלקה
-    let touchStartX = null;
-
-    function handleTouchStart(e) {
-        const firstTouch = e.touches[0];
-        touchStartX = firstTouch.clientX;
-    }
-
-    function handleTouchMove(e) {
-        if (!touchStartX) return;
-        let touchEndX = e.touches[0].clientX;
-        let diffX = touchStartX - touchEndX;
-
-        if (Math.abs(diffX) > 50) {
-            if (diffX > 0) {
-                // החלקה שמאלה → יום הבא
-                nextDay();
-            } else {
-                // החלקה ימינה → יום קודם
-                prevDay();
-            }
-            touchStartX = null;
-        }
-    }
-
-    document.addEventListener('DOMContentLoaded', function () {
-        // להציג כברירת מחדל את היום הראשון
-        showMobileDay("א'");
-
-        const swipeArea = document.querySelector('.content');
-        if (swipeArea) {
-            swipeArea.addEventListener('touchstart', handleTouchStart, false);
-            swipeArea.addEventListener('touchmove', handleTouchMove, false);
-        }
+    html2canvas(element, { scale: 2 }).then(canvas => {
+        const link = document.createElement("a");
+        link.download = "schedule.png";
+        link.href = canvas.toDataURL("image/png");
+        link.click();
     });
+}
+
+/* טאבים + החלקה */
+let currentDayIndex = 0;
+const dayKeys = ["א'", "ב'", "ג'", "ד'", "ה'"];
+
+function showMobileDay(dayKey) {
+    const tables = document.querySelectorAll('.mobile-day-table');
+    tables.forEach(t => {
+        t.style.display = t.getAttribute('data-day') === dayKey ? 'block' : 'none';
+    });
+
+    const tabs = document.querySelectorAll('.day-tab');
+    tabs.forEach(tab => {
+        tab.classList.toggle('active', tab.getAttribute('data-day') === dayKey);
+    });
+
+    currentDayIndex = dayKeys.indexOf(dayKey);
+}
+
+function nextDay() {
+    currentDayIndex = (currentDayIndex + 1) % dayKeys.length;
+    showMobileDay(dayKeys[currentDayIndex]);
+}
+
+function prevDay() {
+    currentDayIndex = (currentDayIndex - 1 + dayKeys.length) % dayKeys.length;
+    showMobileDay(dayKeys[currentDayIndex]);
+}
+
+let touchStartX = null;
+
+function handleTouchStart(e) {
+    touchStartX = e.touches[0].clientX;
+}
+
+function handleTouchMove(e) {
+    if (!touchStartX) return;
+    let diffX = touchStartX - e.touches[0].clientX;
+
+    if (Math.abs(diffX) > 50) {
+        diffX > 0 ? nextDay() : prevDay();
+        touchStartX = null;
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    showMobileDay("א'");
+    const swipeArea = document.querySelector('.content');
+    swipeArea.addEventListener('touchstart', handleTouchStart);
+    swipeArea.addEventListener('touchmove', handleTouchMove);
+});
 </script>
 
 </body>
