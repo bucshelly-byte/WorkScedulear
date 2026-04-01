@@ -16,7 +16,6 @@
             background: #f5f5f5;
         }
 
-        /* סרגל עליון */
         .topbar {
             background: #333;
             color: #fff;
@@ -36,7 +35,6 @@
             cursor: pointer;
         }
 
-        /* תפריט צד מימין */
         .side-menu-overlay {
             position: fixed;
             inset: 0;
@@ -76,7 +74,6 @@
             padding: 10px 10px 30px;
         }
 
-        /* טאבים במובייל */
         .day-tabs {
             display: none;
             margin-bottom: 10px;
@@ -99,7 +96,6 @@
             border-color: #007bff;
         }
 
-        /* טבלאות */
         .table-wrapper {
             overflow-x: auto;
         }
@@ -123,7 +119,7 @@
         }
 
         .slot-cell {
-            height: 60px;
+            height: 70px;
         }
 
         .child-name {
@@ -134,7 +130,6 @@
             color: #fff;
         }
 
-        /* צבעים לשעות */
         .slot-08-10 { background: #fff7cc; }
         .slot-10-12 { background: #e0f0ff; }
         .slot-12-14 { background: #e5ffe5; }
@@ -144,6 +139,7 @@
             .desktop-week-table { display: none; }
             .mobile-day-table { display: block; }
             .day-tabs { display: block; text-align: center; }
+            table { min-width: 0; }
         }
 
         @media (min-width: 769px) {
@@ -181,6 +177,34 @@
 
         .error-msg { color: #c00; margin-bottom: 8px; font-size: 14px; }
         .success-msg { color: #0a0; margin-bottom: 8px; font-size: 14px; }
+
+        input[type="text"],
+        input[type="tel"],
+        input[type="url"],
+        input[type="color"],
+        select {
+            width: 100%;
+            padding: 6px;
+            margin: 4px 0 8px;
+            box-sizing: border-box;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            font-size: 14px;
+        }
+
+        label { font-size: 14px; }
+
+        .child-photo {
+            max-width: 120px;
+            max-height: 120px;
+            border-radius: 8px;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .filter-row {
+            margin-bottom: 8px;
+        }
     </style>
 </head>
 <body>
@@ -215,11 +239,15 @@ function closeMenu() {
     document.getElementById('sideMenu').classList.remove('open');
 }
 
-/* ייצוא כתמונה */
 function exportImage() {
     const element =
         document.querySelector(".desktop-week-table") ||
         document.querySelector(".mobile-day-table");
+
+    if (!element) {
+        alert("לא נמצאה מערכת שעות לייצוא");
+        return;
+    }
 
     html2canvas(element, { scale: 2 }).then(canvas => {
         const link = document.createElement("a");
@@ -229,7 +257,6 @@ function exportImage() {
     });
 }
 
-/* טאבים + החלקה */
 let currentDayIndex = 0;
 const dayKeys = ["א'", "ב'", "ג'", "ד'", "ה'"];
 
