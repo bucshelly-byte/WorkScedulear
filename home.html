@@ -2,119 +2,350 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
+    <title>מערכת שעות</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>מערכת שעות שבועית</title>
 
     <style>
         body {
+            margin: 0;
             font-family: Arial, sans-serif;
             direction: rtl;
-            margin: 0;
-            padding: 0;
-            background: #f7f7f7;
+            background: #f5f5f5;
         }
 
-        /* תפריט עליון */
-        .navbar {
-            width: 100%;
+        /* סרגל עליון */
+        .topbar {
             background: #333;
-            color: white;
-            padding: 12px;
+            color: #fff;
+            padding: 10px 15px;
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            justify-content: space-between;
         }
-        .navbar-title {
-            font-size: 20px;
+
+        .topbar-title {
+            font-size: 18px;
+            font-weight: bold;
         }
+
         .hamburger {
-            font-size: 28px;
+            font-size: 26px;
             cursor: pointer;
         }
-        .menu {
+
+        /* תפריט צד מימין */
+        .side-menu-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.4);
             display: none;
-            background: #444;
-            padding: 10px;
-        }
-        .menu a {
-            display: block;
-            padding: 10px 0;
-            color: white;
-            text-decoration: none;
+            z-index: 9;
         }
 
-        /* טבלה רספונסיבית */
-        .table-container {
+        .side-menu {
+            position: fixed;
+            top: 0;
+            right: -260px;
+            width: 260px;
+            height: 100%;
+            background: #222;
+            color: #fff;
+            padding: 20px 15px;
+            box-sizing: border-box;
+            transition: right 0.3s ease;
+            z-index: 10;
+        }
+
+        .side-menu.open {
+            right: 0;
+        }
+
+        .side-menu a {
+            display: block;
+            color: #fff;
+            text-decoration: none;
+            padding: 10px 0;
+            border-bottom: 1px solid #444;
+            font-size: 15px;
+        }
+
+        .side-menu a:last-child {
+            border-bottom: none;
+        }
+
+        /* אזור תוכן */
+        .content {
+            padding: 10px 10px 30px;
+        }
+
+        /* טאבים לימי השבוע במובייל */
+        .day-tabs {
+            display: none;
+            margin-bottom: 10px;
+        }
+
+        .day-tab {
+            display: inline-block;
+            padding: 6px 10px;
+            margin: 0 2px;
+            border-radius: 16px;
+            border: 1px solid #ccc;
+            background: #fff;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .day-tab.active {
+            background: #007bff;
+            color: #fff;
+            border-color: #007bff;
+        }
+
+        /* טבלאות */
+        .table-wrapper {
             overflow-x: auto;
-            width: 100%;
-            margin-top: 20px;
         }
 
         table {
             border-collapse: collapse;
             width: 100%;
+            background: #fff;
             min-width: 650px;
-            background: white;
         }
 
         th, td {
-            border: 1px solid #ccc;
-            padding: 8px;
+            border: 1px solid #ddd;
+            padding: 6px;
             text-align: center;
+            font-size: 14px;
         }
 
         th {
-            background: #eee;
+            background: #f0f0f0;
         }
 
-        .slot {
+        .slot-cell {
             height: 60px;
         }
 
-        .child {
+        .child-name {
             font-weight: bold;
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #fff;
         }
+
+        /* צבעים לשעות (רקע) */
+        .slot-08-10 { background: #fff7cc; }
+        .slot-10-12 { background: #e0f0ff; }
+        .slot-12-14 { background: #e5ffe5; }
+        .slot-14-16 { background: #ffe5d9; }
+
+        /* צבעים לילדים (טקסט/תגית) – יגיעו מהשרת כ-style inline */
 
         /* התאמה למובייל */
-        @media (max-width: 600px) {
-            th, td {
-                padding: 6px;
-                font-size: 14px;
+        @media (max-width: 768px) {
+            .table-wrapper {
+                overflow: hidden;
             }
-            .navbar-title {
-                font-size: 18px;
+            table {
+                min-width: 0;
             }
-            .hamburger {
-                font-size: 26px;
+            .desktop-week-table {
+                display: none;
             }
+            .mobile-day-table {
+                display: block;
+            }
+            .day-tabs {
+                display: block;
+                text-align: center;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .desktop-week-table {
+                display: block;
+            }
+            .mobile-day-table {
+                display: none;
+            }
+        }
+
+        /* כפתורים כלליים */
+        .btn {
+            display: inline-block;
+            padding: 6px 10px;
+            margin: 4px 2px;
+            font-size: 13px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: #007bff;
+            color: #fff;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: #fff;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: #fff;
+        }
+
+        .section-title {
+            font-size: 18px;
+            margin: 10px 0;
+        }
+
+        .form-card, .table-card {
+            background: #fff;
+            padding: 10px;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            margin-bottom: 12px;
+        }
+
+        input[type="text"],
+        input[type="tel"],
+        select {
+            width: 100%;
+            padding: 6px;
+            margin: 4px 0 8px;
+            box-sizing: border-box;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            font-size: 14px;
+        }
+
+        label {
+            font-size: 14px;
+        }
+
+        .error-msg {
+            color: #c00;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .success-msg {
+            color: #0a0;
+            margin-bottom: 8px;
+            font-size: 14px;
         }
     </style>
-
-    <script>
-        function toggleMenu() {
-            const m = document.getElementById("menu");
-            m.style.display = m.style.display === "block" ? "none" : "block";
-        }
-    </script>
 </head>
-
 <body>
 
-    <!-- תפריט עליון -->
-    <div class="navbar">
-        <div class="navbar-title">מערכת שעות</div>
-        <div class="hamburger" onclick="toggleMenu()">☰</div>
-    </div>
+<div class="topbar">
+    <div class="topbar-title">מערכת שעות</div>
+    <div class="hamburger" onclick="openMenu()">☰</div>
+</div>
 
-    <div id="menu" class="menu">
-        <a href="/">דף הבית</a>
-        <a href="/children">רשימת ילדים</a>
-        <a href="/children/add">הוספת ילד</a>
-        <a href="/visits/add">שיבוץ חדש</a>
-    </div>
+<div class="side-menu-overlay" id="menuOverlay" onclick="closeMenu()"></div>
 
-    <!-- כאן server.py יכניס את הטבלה -->
+<div class="side-menu" id="sideMenu">
+    <a href="/">מערכת שעות</a>
+    <a href="/children">רשימת ילדים</a>
+    <a href="/children/add">הוספת ילד</a>
+    <a href="/visits/add">שיבוץ חדש</a>
+    <a href="/export/week">ייצוא מערכת שבועית לאקסל</a>
+</div>
+
+<div class="content">
     {{CONTENT}}
+</div>
+
+<script>
+    function openMenu() {
+        document.getElementById('menuOverlay').style.display = 'block';
+        document.getElementById('sideMenu').classList.add('open');
+    }
+
+    function closeMenu() {
+        document.getElementById('menuOverlay').style.display = 'none';
+        document.getElementById('sideMenu').classList.remove('open');
+    }
+
+    // טאבים + החלקה במובייל
+    let currentDayIndex = 0;
+    const dayKeys = ["א'", "ב'", "ג'", "ד'", "ה'"];
+
+    function showMobileDay(dayKey) {
+        const tables = document.querySelectorAll('.mobile-day-table');
+        tables.forEach(t => {
+            if (t.getAttribute('data-day') === dayKey) {
+                t.style.display = 'block';
+            } else {
+                t.style.display = 'none';
+            }
+        });
+
+        const tabs = document.querySelectorAll('.day-tab');
+        tabs.forEach(tab => {
+            if (tab.getAttribute('data-day') === dayKey) {
+                tab.classList.add('active');
+            } else {
+                tab.classList.remove('active');
+            }
+        });
+
+        currentDayIndex = dayKeys.indexOf(dayKey);
+    }
+
+    function nextDay() {
+        currentDayIndex = (currentDayIndex + 1) % dayKeys.length;
+        showMobileDay(dayKeys[currentDayIndex]);
+    }
+
+    function prevDay() {
+        currentDayIndex = (currentDayIndex - 1 + dayKeys.length) % dayKeys.length;
+        showMobileDay(dayKeys[currentDayIndex]);
+    }
+
+    // זיהוי החלקה
+    let touchStartX = null;
+
+    function handleTouchStart(e) {
+        const firstTouch = e.touches[0];
+        touchStartX = firstTouch.clientX;
+    }
+
+    function handleTouchMove(e) {
+        if (!touchStartX) return;
+        let touchEndX = e.touches[0].clientX;
+        let diffX = touchStartX - touchEndX;
+
+        if (Math.abs(diffX) > 50) {
+            if (diffX > 0) {
+                // החלקה שמאלה → יום הבא
+                nextDay();
+            } else {
+                // החלקה ימינה → יום קודם
+                prevDay();
+            }
+            touchStartX = null;
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        // להציג כברירת מחדל את היום הראשון
+        showMobileDay("א'");
+
+        const swipeArea = document.querySelector('.content');
+        if (swipeArea) {
+            swipeArea.addEventListener('touchstart', handleTouchStart, false);
+            swipeArea.addEventListener('touchmove', handleTouchMove, false);
+        }
+    });
+</script>
 
 </body>
 </html>
