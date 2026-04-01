@@ -1,4 +1,3 @@
-# force redeploy
 from fastapi import FastAPI, Form, Request, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
@@ -66,7 +65,7 @@ init_db()
 
 # ---------------- Constants ----------------
 
-TIME_SLOTS = [
+SLOTS = [
     ("08:00", "10:00"),
     ("10:00", "12:00"),
     ("12:00", "14:00"),
@@ -97,7 +96,7 @@ def home(request: Request):
     visits = cur.fetchall()
     conn.close()
 
-    # שימוש במחרוזת כמפתח במקום tuple
+    # בניית לוח שבועי
     schedule = {d.isoformat(): {} for d in days}
     for v in visits:
         slot_key = f"{v['start_time']}-{v['end_time']}"
@@ -106,7 +105,7 @@ def home(request: Request):
     return templates.TemplateResponse("home.html", {
         "request": request,
         "days": days,
-        "time_slots": TIME_SLOTS,
+        "slots": SLOTS,
         "schedule": schedule
     })
 
@@ -220,7 +219,7 @@ def add_visit_form(request: Request, child_id: int | None = None):
     return templates.TemplateResponse("visit_add.html", {
         "request": request,
         "children": children,
-        "slots": TIME_SLOTS,
+        "slots": SLOTS,
         "child_id": child_id,
         "today": date.today().isoformat()
     })
@@ -277,7 +276,7 @@ def edit_visit_form(request: Request, visit_id: int):
         "request": request,
         "visit": visit,
         "children": children,
-        "slots": TIME_SLOTS
+        "slots": SLOTS
     })
 
 @app.post("/visits/edit/{visit_id}")
