@@ -1,1 +1,113 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ title }}</title>
 
+    <style>
+        body {
+            font-family: Arial;
+            margin: 0;
+            background: #f3f0ff;
+        }
+
+        header {
+            background: #6a1b9a;
+            color: white;
+            padding: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 20px;
+        }
+
+        .burger {
+            font-size: 28px;
+            cursor: pointer;
+        }
+
+        .menu {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 230px;
+            height: 100%;
+            background: white;
+            box-shadow: -2px 0 6px rgba(0,0,0,0.2);
+            padding: 20px;
+            transform: translateX(100%);
+            transition: 0.3s;
+        }
+
+        .menu.open {
+            transform: translateX(0);
+        }
+
+        .menu a {
+            display: block;
+            margin-bottom: 14px;
+            color: #6a1b9a;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .content {
+            padding: 20px;
+        }
+
+        .btn {
+            background: #6a1b9a;
+            color: white;
+            padding: 8px 14px;
+            border-radius: 6px;
+            text-decoration: none;
+            display: inline-block;
+            margin: 6px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        th {
+            background: #d1c4e9;
+            padding: 10px;
+        }
+
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+    </style>
+
+    <script>
+        function toggleMenu() {
+            document.getElementById('menu').classList.toggle('open');
+        }
+    </script>
+</head>
+
+<body>
+
+<header>
+    <div>{{ title }}</div>
+    <div class="burger" onclick="toggleMenu()">☰</div>
+</header>
+
+<div id="menu" class="menu">
+    <a href="/">מבט שבועי</a>
+    <a href="/visits/add">הוספת שיבוץ</a>
+    <a href="/children">ניהול ילדים</a>
+</div>
+
+<div class="content">
+    {% block content %}{% endblock %}
+</div>
+
+</body>
+</html>
