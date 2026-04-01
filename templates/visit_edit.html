@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>עריכת שיבוץ</h2>
+
+<form method="post">
+
+    <label>ילד</label>
+    <select name="child_id">
+        {% for c in children %}
+            <option value="{{ c.id }}"
+                {% if c.id == visit.child_id %}selected{% endif %}>
+                {{ c.name }}
+            </option>
+        {% endfor %}
+    </select>
+
+    <label>תאריך</label>
+    <input type="date" name="date" value="{{ visit.date }}" required>
+
+    <label>טווח שעה</label>
+    <select name="slot">
+        {% for s,e in slots %}
+            <option value="{{ s }}-{{ e }}"
+                {% if s == visit.start_time and e == visit.end_time %}selected{% endif %}>
+                {{ s }} - {{ e }}
+            </option>
+        {% endfor %}
+    </select>
+
+    <button class="btn">שמור</button>
+</form>
+
+{% endblock %}
