@@ -10,7 +10,7 @@ app = FastAPI()
 # יצירת מנוע התבניות
 templates = Jinja2Templates(directory="templates")
 templates.env.cache = None
-templates.env.bytecode_cache = None   # כיבוי מוחלט של cache ישן
+templates.env.bytecode_cache = None
 
 DB_PATH = "schedule.db"
 
