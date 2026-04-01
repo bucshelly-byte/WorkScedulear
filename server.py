@@ -264,4 +264,142 @@ def add_child_form():
     <form method="post">
         <label>שם הילד</label><input name="name" required>
         <label>שם ההורה</label><input name="parent_name">
-        <label>
+        <label>כתובת</label><input name="address">
+        <label>טלפון</label><input name="phone">
+        <label>תחביב</label><input name="hobby">
+        <button class="btn">שמור</button>
+    </form>
+    """
+    return base_html("הוספת ילד", body)
+
+@app.post("/children/add")
+def add_child(name: str = Form(...), parent_name: str = Form(""),
+              address: str = Form(""), phone: str = Form(""),
+              hobby: str = Form("")):
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO children (name, parent_name, address, phone, hobby)
+        VALUES (?, ?, ?, ?, ?)
+    """, (name, parent_name, address, phone, hobby))
+    conn.commit()
+    conn.close()
+    return RedirectResponse("/children", status_code=303)
+
+@app.get("/children/{child_id}", response_class=HTMLResponse)
+def child_profile(child_id: int):
+    conn = get_db()
+    cur = conn.cursor()
+
+    cur.execute("SELECT * FROM children WHERE id = ?", (child_id,))
+    child = cur.fetchone()
+
+    if not child:
+        raise HTTPException(404)
+
+    cur.execute("""
+        SELECT * FROM visits
+        WHERE child_id = ?
+        ORDER BY date, start_time
+    """, (child_id,))
+    visits = cur.fetchall()
+
+    conn.close()
+
+    rows = ""
+    for v in visits:
+        nice = datetime.fromisoformat(v["date"]).strftime("%d/%m/%Y")
+        rows += f"<tr><td>{nice}</td><td>{v['start_time']}-{v['end_time']}</td></tr>"
+
+    body = f"""
+    <h2>פרופיל: {child['name']}</h2>
+    <p><b>הורה:</b> {child['parent_name']}</p>
+    <p><b>כתובת:</b> {child['address']}</p>
+    <p><b>טלפון:</b> {child['phone']}</p>
+    <p><b>תחביב:</b> {child['hobby']}</p>
+
+    <a class="btn" href="/visits/add?child_id={child_id}">הוספת שיבוץ</a>
+
+    <h3>שיבוצים</h3>
+    <table>
+        <tr><th>תאריך</th><th>שעה</th></tr>
+        {rows or "<tr><td colspan='2'>אין שיבוצים</td></tr>"}
+    </table>
+    """
+
+    return base_html("פרופיל ילד", body)
+
+# ---------- Add Visit ----------
+
+@app.get("/visits/add", response_class=HTMLResponse)
+def add_visit_form(child_id: int | None = None):
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM children ORDER BY name")
+    children = cur.fetchall()
+    conn.close()
+
+    options = ""
+    for c in children:
+        sel = "selected" if child_id == c["id"] else ""
+        options += f'<option value="{c["id"]}" {sel}>{c["name"]}</option>'
+
+    slot_options = "".join(
+        f'<option value="{s}-{e}">{s}-{e}</option>' for s, e in TIME_SLOTS
+    )
+
+    today = date.today().isoformat()
+
+    body = f"""
+    <h2>הוספת שיבוץ</h2>
+    <form method="post">
+        <label>ילד</label>
+        <select name="child_id">{options}</select>
+
+        <label>תאריך</label>
+        <input type="date" name="date" value="{today}" required>
+
+        <label>טווח שעה</label>
+        <select name="slot">{slot_options}</select>
+
+        <button class="btn">שמור</button>
+    </form>
+    """
+
+    return base_html("הוספת שיבוץ", body)
+
+@app.post("/visits/add")
+def add_visit(child_id: int = Form(...), date: str = Form(...), slot: str = Form(...)):
+    start, end = slot.split("-")
+
+    d = datetime.fromisoformat(date).date()
+    if d.weekday() > 4:
+        return HTMLResponse(base_html("שגיאה", "<p>ניתן לשבץ רק א-ה</p>"))
+
+    conn = get_db()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT v.id, c.name
+        FROM visits v
+        JOIN children c ON c.id = v.child_id
+        WHERE v.date = ? AND v.start_time = ? AND v.end_time = ?
+    """, (date, start, end))
+
+    conflict = cur.fetchone()
+
+    if conflict:
+        return HTMLResponse(base_html(
+            "התנגשות",
+            f"<p>כבר קיים שיבוץ בשעה זו עבור {conflict['name']}</p>"
+        ))
+
+    cur.execute("""
+        INSERT INTO visits (child_id, date, start_time, end_time)
+        VALUES (?, ?, ?, ?)
+    """, (child_id, date, start, end))
+
+    conn.commit()
+    conn.close()
+
+    return RedirectResponse("/", status_code=303)
