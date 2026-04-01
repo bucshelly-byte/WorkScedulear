@@ -256,42 +256,59 @@ def home(
     page = load_template().replace("{{CONTENT}}", "".join(html))
     return HTMLResponse(page)
 
-@app.post("/visits/edit/{visit_id}")
-def edit_visit(
-    visit_id: int,
-    child_id: int = Form(...),
-    day: str = Form(...),
-    slot: str = Form(...)
-):
-    start, end = slot.split("-")
-
+@app.get("/visits/edit/{visit_id}", response_class=HTMLResponse)
+def edit_visit_form(request: Request, visit_id: int):
     conn = get_db()
     cur = conn.cursor()
 
-    # בדיקת התנגשות
-    cur.execute("""
-        SELECT v.id, c.name AS child_name
-        FROM visits v
-        JOIN children c ON c.id = v.child_id
-        WHERE v.day=? AND v.start_time=? AND v.end_time=? AND v.id<>?
-    """, (day, start, end, visit_id))
-    row = cur.fetchone()
-    if row:
+    cur.execute("SELECT * FROM visits WHERE id=?", (visit_id,))
+    v = cur.fetchone()
+    if not v:
         conn.close()
-        err_msg = f"לא ניתן לשמור – השעה כבר תפוסה ביום {day} ({row['child_name']})"
-        return RedirectResponse(f"/?err={err_msg}", status_code=303)
+        raise HTTPException(404)
 
-    # עדכון
-    cur.execute("""
-        UPDATE visits
-        SET child_id=?, day=?, start_time=?, end_time=?
-        WHERE id=?
-    """, (child_id, day, start, end, visit_id))
-
-    conn.commit()
+    cur.execute("SELECT * FROM children ORDER BY name")
+    children = cur.fetchall()
     conn.close()
-    return RedirectResponse("/?msg=השיבוץ עודכן בהצלחה", status_code=303)
 
+    html = []
+    html.append('<div class="form-card">')
+    html.append('<div class="section-title">עריכת שיבוץ</div>')
+    html.append('<form method="post">')
+
+    # בחירת ילד
+    html.append('<label>ילד:</label>')
+    html.append('<select name="child_id" required>')
+    for c in children:
+        sel = "selected" if c["id"] == v["child_id"] else ""
+        html.append(f'<option value="{c["id"]}" {sel}>{c["name"]}</option>')
+    html.append('</select>')
+
+    # בחירת יום
+    html.append('<label>יום:</label>')
+    html.append('<select name="day" required>')
+    for d in DAYS:
+        sel = "selected" if d == v["day"] else ""
+        html.append(f'<option value="{d}" {sel}>{d}</option>')
+    html.append('</select>')
+
+    # בחירת טווח שעות
+    current_slot = f"{v['start_time']}-{v['end_time']}"
+    html.append('<label>טווח שעות:</label>')
+    html.append('<select name="slot" required>')
+    for s, e in SLOTS:
+        key = f"{s}-{e}"
+        sel = "selected" if key == current_slot else ""
+        html.append(f'<option value="{key}" {sel}>{key}</option>')
+    html.append('</select>')
+
+    html.append('<br><br>')
+    html.append('<button class="btn btn-primary" type="submit">שמור</button>')
+    html.append('<a href="/" class="btn btn-secondary">ביטול</a>')
+    html.append('</form></div>')
+
+    page = load_template().replace("{{CONTENT}}", "".join(html))
+    return HTMLResponse(page)
 # ---------------- מחיקת שיבוץ ----------------
 
 @app.get("/visits/delete/{visit_id}")
