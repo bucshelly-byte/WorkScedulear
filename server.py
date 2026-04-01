@@ -41,25 +41,12 @@ def init_db():
     )
     """)
 
-    cur.execute("SELECT COUNT(*) AS c FROM children")
-    if cur.fetchone()["c"] == 0:
-        cur.executemany("""
-            INSERT INTO children (name, parent_name, address, phone, hobby)
-            VALUES (?, ?, ?, ?, ?)
-        """, [
-            ("אור", "אמא: דנה", "רח' הפרחים 10, חיפה", "050-1111111", "כדורגל"),
-            ("נועה", "אמא: מיכל", "רח' הגפן 5, חדרה", "050-2222222", "ריקוד"),
-            ("איתי", "אבא: רון", "רח' הזית 3, נתניה", "050-3333333", "לגו"),
-        ])
-
     conn.commit()
     conn.close()
 
-# להתחיל DB נקי בפרודקשן – אם לא מתאים לך, תמחקי את שני השורות הבאות
-if os.path.exists(DB_PATH):
-    os.remove(DB_PATH)
-
-init_db()
+# מחיקה כדי להתחיל נקי (אם לא מתאים — תמחקי את השורה)
+if not os.path.exists(DB_PATH):
+    init_db()
 
 # ---------------- Constants ----------------
 
@@ -70,11 +57,19 @@ SLOTS = [
     ("14:00", "16:00"),
 ]
 
+DAY_NAMES = ["א'", "ב'", "ג'", "ד'", "ה'"]
+
 def get_week_dates():
     today = date.today()
     return [today + timedelta(days=i) for i in range(5)]
 
-# ---------------- Home (weekly view, no Jinja2) ----------------
+# ---------------- Load HTML Template ----------------
+
+def load_home_template():
+    with open("home.html", "r", encoding="utf-8") as f:
+        return f.read()
+
+# ---------------- Home Page ----------------
 
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request):
@@ -84,88 +79,68 @@ def home(request: Request):
     days = get_week_dates()
     day_strs = [d.isoformat() for d in days]
 
-    if day_strs:
-        cur.execute(f"""
-            SELECT v.*, c.name AS child_name
-            FROM visits v
-            JOIN children c ON c.id = v.child_id
-            WHERE v.date IN ({','.join('?'*len(day_strs))})
-        """, day_strs)
-        visits = cur.fetchall()
-    else:
-        visits = []
+    cur.execute(f"""
+        SELECT v.*, c.name AS child_name
+        FROM visits v
+        JOIN children c ON c.id = v.child_id
+        WHERE v.date IN ({','.join('?'*len(day_strs))})
+    """, day_strs)
 
+    visits = cur.fetchall()
     conn.close()
 
+    # בניית לוח שבועי
     schedule = {d.isoformat(): {} for d in days}
     for v in visits:
         slot_key = f"{v['start_time']}-{v['end_time']}"
         schedule[v["date"]][slot_key] = (v["child_name"], v["id"])
 
-    html = """
-    <html>
-    <head>
-        <meta charset="utf-8">
-        <title>מערכת שעות שבועית</title>
-        <style>
-            body { font-family: Arial, sans-serif; direction: rtl; }
-            table { border-collapse: collapse; width: 100%; }
-            th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
-            .slot { height: 60px; }
-            .child { font-weight: bold; }
-            a { text-decoration: none; }
-        </style>
-    </head>
-    <body>
-    <h1>מערכת שעות שבועית</h1>
-    <a href="/children">רשימת ילדים</a> | 
-    <a href="/children/add">הוספת ילד</a> | 
-    <a href="/visits/add">שיבוץ חדש</a>
-    <br><br>
+    # בניית טבלה
+    table = """
+    <div class="table-container">
     <table>
         <tr>
             <th>שעה</th>
     """
 
-    for day in days:
-        html += f"<th>{day.strftime('%d/%m')}</th>"
+    for i, day in enumerate(days):
+        table += f"<th>{DAY_NAMES[i]}<br>{day.strftime('%d/%m')}</th>"
 
-    html += "</tr>"
+    table += "</tr>"
 
     for slot in SLOTS:
         slot_key = f"{slot[0]}-{slot[1]}"
-        html += f"<tr><td>{slot[0]} - {slot[1]}</td>"
+        table += f"<tr><td>{slot[0]} - {slot[1]}</td>"
 
         for day in days:
             day_key = day.isoformat()
-            html += '<td class="slot">'
+            table += '<td class="slot">'
 
             if slot_key in schedule[day_key]:
                 child_name, visit_id = schedule[day_key][slot_key]
-                html += f"""
+                table += f"""
                     <span class="child">{child_name}</span><br>
                     <a href="/visits/edit/{visit_id}">עריכה</a>
                 """
             else:
-                html += f"""
+                table += f"""
                     <a href="/visits/add?date={day_key}&slot={slot_key}">
                         שיבוץ
                     </a>
                 """
 
-            html += "</td>"
+            table += "</td>"
 
-        html += "</tr>"
+        table += "</tr>"
 
-    html += """
-    </table>
-    </body>
-    </html>
-    """
+    table += "</table></div>"
+
+    # טעינת home.html והחלפת {{CONTENT}}
+    html = load_home_template().replace("{{CONTENT}}", table)
 
     return HTMLResponse(html)
 
-# ---------------- Children (no Jinja2) ----------------
+# ---------------- Children List ----------------
 
 @app.get("/children", response_class=HTMLResponse)
 def children_list(request: Request):
@@ -175,32 +150,10 @@ def children_list(request: Request):
     children = cur.fetchall()
     conn.close()
 
-    html = """
-    <html>
-    <head>
-        <meta charset="utf-8">
-        <title>רשימת ילדים</title>
-        <style>
-            body { font-family: Arial, sans-serif; direction: rtl; }
-            table { border-collapse: collapse; width: 100%; }
-            th, td { border: 1px solid #ccc; padding: 8px; text-align: right; }
-            a { text-decoration: none; }
-        </style>
-    </head>
-    <body>
-    <h1>רשימת ילדים</h1>
-    <a href="/">חזרה למערכת שעות</a> | 
-    <a href="/children/add">הוספת ילד</a>
-    <br><br>
-    <table>
-        <tr>
-            <th>שם</th>
-            <th>הורה</th>
-            <th>טלפון</th>
-            <th>תחביב</th>
-            <th>פרופיל</th>
-        </tr>
-    """
+    html = "<h1>רשימת ילדים</h1>"
+    html += '<a href="/">חזרה</a><br><br>'
+    html += "<table border='1' width='100%'>"
+    html += "<tr><th>שם</th><th>הורה</th><th>טלפון</th><th>פרופיל</th></tr>"
 
     for c in children:
         html += f"""
@@ -208,68 +161,34 @@ def children_list(request: Request):
             <td>{c['name']}</td>
             <td>{c['parent_name'] or ''}</td>
             <td>{c['phone'] or ''}</td>
-            <td>{c['hobby'] or ''}</td>
-            <td><a href="/children/{c['id']}">לצפייה</a></td>
+            <td><a href="/children/{c['id']}">צפייה</a></td>
         </tr>
         """
 
-    html += """
-    </table>
-    </body>
-    </html>
-    """
-
+    html += "</table>"
     return HTMLResponse(html)
+
+# ---------------- Add Child ----------------
 
 @app.get("/children/add", response_class=HTMLResponse)
 def add_child_form(request: Request):
-    html = """
-    <html>
-    <head>
-        <meta charset="utf-8">
-        <title>הוספת ילד</title>
-        <style>
-            body { font-family: Arial, sans-serif; direction: rtl; }
-            label { display: block; margin-top: 8px; }
-            input { width: 300px; }
-        </style>
-    </head>
-    <body>
+    return HTMLResponse("""
     <h1>הוספת ילד</h1>
-    <a href="/children">חזרה לרשימת ילדים</a>
-    <br><br>
-    <form method="post" action="/children/add">
-        <label>שם:
-            <input type="text" name="name" required>
-        </label>
-        <label>שם הורה:
-            <input type="text" name="parent_name">
-        </label>
-        <label>כתובת:
-            <input type="text" name="address">
-        </label>
-        <label>טלפון:
-            <input type="text" name="phone">
-        </label>
-        <label>תחביב:
-            <input type="text" name="hobby">
-        </label>
-        <br><br>
-        <button type="submit">שמירה</button>
+    <form method="post">
+        שם: <input name="name"><br>
+        הורה: <input name="parent_name"><br>
+        כתובת: <input name="address"><br>
+        טלפון: <input name="phone"><br>
+        תחביב: <input name="hobby"><br><br>
+        <button>שמור</button>
     </form>
-    </body>
-    </html>
-    """
-    return HTMLResponse(html)
+    """)
 
 @app.post("/children/add")
-def add_child(
-    name: str = Form(...),
-    parent_name: str = Form(""),
-    address: str = Form(""),
-    phone: str = Form(""),
-    hobby: str = Form("")
-):
+def add_child(name: str = Form(...), parent_name: str = Form(""),
+              address: str = Form(""), phone: str = Form(""),
+              hobby: str = Form("")):
+
     conn = get_db()
     cur = conn.cursor()
     cur.execute("""
@@ -281,175 +200,81 @@ def add_child(
 
     return RedirectResponse("/children", status_code=303)
 
+# ---------------- Child Profile ----------------
+
 @app.get("/children/{child_id}", response_class=HTMLResponse)
 def child_profile(request: Request, child_id: int):
     conn = get_db()
     cur = conn.cursor()
 
-    cur.execute("SELECT * FROM children WHERE id = ?", (child_id,))
+    cur.execute("SELECT * FROM children WHERE id=?", (child_id,))
     child = cur.fetchone()
 
     if not child:
-        conn.close()
         raise HTTPException(404)
 
     cur.execute("""
         SELECT * FROM visits
-        WHERE child_id = ?
+        WHERE child_id=?
         ORDER BY date, start_time
     """, (child_id,))
     visits = cur.fetchall()
 
     conn.close()
 
-    html = f"""
-    <html>
-    <head>
-        <meta charset="utf-8">
-        <title>פרופיל ילד - {child['name']}</title>
-        <style>
-            body {{ font-family: Arial, sans-serif; direction: rtl; }}
-            table {{ border-collapse: collapse; width: 100%; }}
-            th, td {{ border: 1px solid #ccc; padding: 8px; text-align: right; }}
-            a {{ text-decoration: none; }}
-        </style>
-    </head>
-    <body>
-    <h1>פרופיל ילד: {child['name']}</h1>
-    <a href="/children">חזרה לרשימת ילדים</a> | 
-    <a href="/">חזרה למערכת שעות</a>
-    <br><br>
-    <p><strong>הורה:</strong> {child['parent_name'] or ''}</p>
-    <p><strong>כתובת:</strong> {child['address'] or ''}</p>
-    <p><strong>טלפון:</strong> {child['phone'] or ''}</p>
-    <p><strong>תחביב:</strong> {child['hobby'] or ''}</p>
-    <h2>שיבוצים</h2>
-    <table>
-        <tr>
-            <th>תאריך</th>
-            <th>שעה</th>
-        </tr>
-    """
+    html = f"<h1>{child['name']}</h1>"
+    html += f"<p>הורה: {child['parent_name']}</p>"
+    html += f"<p>טלפון: {child['phone']}</p>"
+    html += f"<p>תחביב: {child['hobby']}</p>"
+
+    html += "<h2>שיבוצים</h2>"
+    html += "<table border='1' width='100%'>"
+    html += "<tr><th>תאריך</th><th>שעה</th></tr>"
 
     for v in visits:
-        html += f"""
-        <tr>
-            <td>{v['date']}</td>
-            <td>{v['start_time']} - {v['end_time']}</td>
-        </tr>
-        """
+        html += f"<tr><td>{v['date']}</td><td>{v['start_time']} - {v['end_time']}</td></tr>"
 
-    html += """
-    </table>
-    </body>
-    </html>
-    """
+    html += "</table>"
 
     return HTMLResponse(html)
 
-# ---------------- Visits (no Jinja2) ----------------
+# ---------------- Add Visit ----------------
 
 @app.get("/visits/add", response_class=HTMLResponse)
-def add_visit_form(
-    request: Request,
-    child_id: int | None = None,
-    date: str | None = None,
-    slot: str | None = None
-):
+def add_visit_form(request: Request, date: str = None, slot: str = None):
     conn = get_db()
     cur = conn.cursor()
     cur.execute("SELECT * FROM children ORDER BY name")
     children = cur.fetchall()
     conn.close()
 
-    selected_date = date or date_today_iso()
-    selected_slot = slot or ""
+    html = "<h1>שיבוץ חדש</h1>"
+    html += '<form method="post">'
 
-    html = """
-    <html>
-    <head>
-        <meta charset="utf-8">
-        <title>שיבוץ חדש</title>
-        <style>
-            body { font-family: Arial, sans-serif; direction: rtl; }
-            label { display: block; margin-top: 8px; }
-            select, input { width: 250px; }
-        </style>
-    </head>
-    <body>
-    <h1>שיבוץ חדש</h1>
-    <a href="/">חזרה למערכת שעות</a> | 
-    <a href="/children">רשימת ילדים</a>
-    <br><br>
-    <form method="post" action="/visits/add">
-        <label>ילד:
-            <select name="child_id" required>
-                <option value="">בחר/י ילד</option>
-    """
-
+    html += "<select name='child_id'>"
     for c in children:
-        sel = "selected" if child_id and c["id"] == child_id else ""
-        html += f'<option value="{c["id"]}" {sel}>{c["name"]}</option>'
+        html += f"<option value='{c['id']}'>{c['name']}</option>"
+    html += "</select><br><br>"
 
-    html += f"""
-            </select>
-        </label>
-        <label>תאריך:
-            <input type="date" name="date" value="{selected_date}" required>
-        </label>
-        <label>שעה:
-            <select name="slot" required>
-                <option value="">בחר/י שעה</option>
-    """
+    html += f"תאריך: <input type='date' name='date' value='{date or ''}'><br><br>"
 
+    html += "<select name='slot'>"
     for s in SLOTS:
         key = f"{s[0]}-{s[1]}"
-        sel = "selected" if key == selected_slot else ""
-        html += f'<option value="{key}" {sel}>{s[0]} - {s[1]}</option>'
+        selected = "selected" if key == slot else ""
+        html += f"<option value='{key}' {selected}>{key}</option>"
+    html += "</select><br><br>"
 
-    html += """
-            </select>
-        </label>
-        <br><br>
-        <button type="submit">שמירה</button>
-    </form>
-    </body>
-    </html>
-    """
+    html += "<button>שמור</button></form>"
 
     return HTMLResponse(html)
 
-def date_today_iso():
-    return date.today().isoformat()
-
 @app.post("/visits/add")
-def add_visit(
-    child_id: int = Form(...),
-    date: str = Form(...),
-    slot: str = Form(...)
-):
+def add_visit(child_id: int = Form(...), date: str = Form(...), slot: str = Form(...)):
     start, end = slot.split("-")
-
-    d = datetime.fromisoformat(date).date()
-    if d.weekday() > 4:
-        return HTMLResponse("<h3>ניתן לשבץ רק א-ה</h3>")
 
     conn = get_db()
     cur = conn.cursor()
-
-    cur.execute("""
-        SELECT v.id, c.name
-        FROM visits v
-        JOIN children c ON c.id = v.child_id
-        WHERE v.date=? AND v.start_time=? AND v.end_time=?
-    """, (date, start, end))
-
-    conflict = cur.fetchone()
-    if conflict:
-        conn.close()
-        return HTMLResponse(
-            f"<h3>כבר קיים שיבוץ בשעה זו עבור {conflict['name']}</h3>"
-        )
 
     cur.execute("""
         INSERT INTO visits (child_id, date, start_time, end_time)
@@ -461,6 +286,8 @@ def add_visit(
 
     return RedirectResponse("/", status_code=303)
 
+# ---------------- Edit Visit ----------------
+
 @app.get("/visits/edit/{visit_id}", response_class=HTMLResponse)
 def edit_visit_form(request: Request, visit_id: int):
     conn = get_db()
@@ -469,96 +296,42 @@ def edit_visit_form(request: Request, visit_id: int):
     cur.execute("SELECT * FROM visits WHERE id=?", (visit_id,))
     visit = cur.fetchone()
 
-    if not visit:
-        conn.close()
-        raise HTTPException(404)
-
     cur.execute("SELECT * FROM children ORDER BY name")
     children = cur.fetchall()
 
     conn.close()
 
-    html = f"""
-    <html>
-    <head>
-        <meta charset="utf-8">
-        <title>עריכת שיבוץ</title>
-        <style>
-            body {{ font-family: Arial, sans-serif; direction: rtl; }}
-            label {{ display: block; margin-top: 8px; }}
-            select, input {{ width: 250px; }}
-        </style>
-    </head>
-    <body>
-    <h1>עריכת שיבוץ</h1>
-    <a href="/">חזרה למערכת שעות</a>
-    <br><br>
-    <form method="post" action="/visits/edit/{visit_id}">
-        <label>ילד:
-            <select name="child_id" required>
-    """
+    html = "<h1>עריכת שיבוץ</h1>"
+    html += f"<form method='post'>"
 
+    html += "<select name='child_id'>"
     for c in children:
         sel = "selected" if c["id"] == visit["child_id"] else ""
-        html += f'<option value="{c["id"]}" {sel}>{c["name"]}</option>'
+        html += f"<option value='{c['id']}' {sel}>{c['name']}</option>"
+    html += "</select><br><br>"
 
-    html += f"""
-            </select>
-        </label>
-        <label>תאריך:
-            <input type="date" name="date" value="{visit['date']}" required>
-        </label>
-        <label>שעה:
-            <select name="slot" required>
-    """
+    html += f"תאריך: <input type='date' name='date' value='{visit['date']}'><br><br>"
 
-    current_slot = f"{visit['start_time']}-{visit['end_time']}"
+    html += "<select name='slot'>"
+    current = f"{visit['start_time']}-{visit['end_time']}"
     for s in SLOTS:
         key = f"{s[0]}-{s[1]}"
-        sel = "selected" if key == current_slot else ""
-        html += f'<option value="{key}" {sel}>{s[0]} - {s[1]}</option>'
+        sel = "selected" if key == current else ""
+        html += f"<option value='{key}' {sel}>{key}</option>"
+    html += "</select><br><br>"
 
-    html += """
-            </select>
-        </label>
-        <br><br>
-        <button type="submit">שמירה</button>
-    </form>
-    </body>
-    </html>
-    """
+    html += "<button>שמור</button></form>"
 
     return HTMLResponse(html)
 
 @app.post("/visits/edit/{visit_id}")
-def edit_visit(
-    visit_id: int,
-    child_id: int = Form(...),
-    date: str = Form(...),
-    slot: str = Form(...)
-):
-    start, end = slot.split("-")
+def edit_visit(visit_id: int, child_id: int = Form(...),
+               date: str = Form(...), slot: str = Form(...)):
 
-    d = datetime.fromisoformat(date).date()
-    if d.weekday() > 4:
-        return HTMLResponse("<h3>ניתן לשבץ רק א-ה</h3>")
+    start, end = slot.split("-")
 
     conn = get_db()
     cur = conn.cursor()
-
-    cur.execute("""
-        SELECT v.id, c.name
-        FROM visits v
-        JOIN children c ON c.id = v.child_id
-        WHERE v.date=? AND v.start_time=? AND v.end_time=? AND v.id!=?
-    """, (date, start, end, visit_id))
-
-    conflict = cur.fetchone()
-    if conflict:
-        conn.close()
-        return HTMLResponse(
-            f"<h3>כבר קיים שיבוץ בשעה זו עבור {conflict['name']}</h3>"
-        )
 
     cur.execute("""
         UPDATE visits
