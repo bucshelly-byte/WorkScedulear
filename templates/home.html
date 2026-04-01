@@ -2,70 +2,72 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>לוח זמנים</title>
+    <title>מערכת שעות שבועית</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             direction: rtl;
             text-align: center;
-            background: #f5f5f5;
         }
         table {
-            margin: 20px auto;
-            border-collapse: collapse;
             width: 90%;
-            background: white;
+            margin: auto;
+            border-collapse: collapse;
         }
         th, td {
-            border: 1px solid #ccc;
-            padding: 12px;
+            border: 1px solid #444;
+            padding: 10px;
         }
         th {
-            background: #4CAF50;
-            color: white;
+            background: #f0f0f0;
         }
-        td {
-            height: 50px;
+        .slot {
+            height: 60px;
         }
         .child {
             font-weight: bold;
-            color: #2a2a2a;
+            color: #0077cc;
+        }
+        a {
+            text-decoration: none;
+            color: #0077cc;
         }
     </style>
 </head>
 <body>
 
-<h1>לוח זמנים</h1>
+<h1>מערכת שעות שבועית</h1>
 
 <table>
-    <thead>
-        <tr>
-            <th>יום</th>
-            {% for slot in time_slots %}
-                <th>{{ slot[0] }} - {{ slot[1] }}</th>
-            {% endfor %}
-        </tr>
-    </thead>
-
-    <tbody>
+    <tr>
+        <th>שעה</th>
         {% for day in days %}
-        <tr>
-            <td>{{ day }}</td>
+            <th>{{ day.strftime("%d/%m") }}</th>
+        {% endfor %}
+    </tr>
 
-            {% for slot in time_slots %}
-                {% set key = slot[0] ~ '-' ~ slot[1] %}
-                <td>
-                    {% if schedule[day][key] %}
-                        <span class="child">{{ schedule[day][key] }}</span>
+    {% for slot in slots %}
+        {% set slot_key = slot[0] ~ "-" ~ slot[1] %}
+        <tr>
+            <td>{{ slot[0] }} - {{ slot[1] }}</td>
+
+            {% for day in days %}
+                {% set day_key = day.isoformat() %}
+                <td class="slot">
+                    {% if schedule[day_key].get(slot_key) %}
+                        <span class="child">{{ schedule[day_key][slot_key] }}</span><br>
+                        <a href="/visits/edit/{{ schedule[day_key][slot_key] }}">עריכה</a>
                     {% else %}
-                        -
+                        <a href="/visits/add?child_id=&date={{ day_key }}&slot={{ slot_key }}">שיבוץ</a>
                     {% endif %}
                 </td>
             {% endfor %}
         </tr>
-        {% endfor %}
-    </tbody>
+    {% endfor %}
 </table>
+
+<br><br>
+<a href="/children">רשימת ילדים</a>
 
 </body>
 </html>
