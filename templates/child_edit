@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>עריכת פרטי ילד</h2>
+
+<form method="post">
+
+    <label>שם הילד</label>
+    <input name="name" value="{{ child.name }}" required>
+
+    <label>שם ההורה</label>
+    <input name="parent_name" value="{{ child.parent_name }}">
+
+    <label>כתובת</label>
+    <input name="address" value="{{ child.address }}">
+
+    <label>טלפון</label>
+    <input name="phone" value="{{ child.phone }}">
+
+    <label>תחביב</label>
+    <input name="hobby" value="{{ child.hobby }}">
+
+    <button class="btn">שמור</button>
+</form>
+
+{% endblock %}
