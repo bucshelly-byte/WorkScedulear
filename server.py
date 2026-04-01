@@ -4,14 +4,13 @@ import sqlite3
 import os
 from io import BytesIO
 from typing import List, Optional
-
 from openpyxl import Workbook
 
 app = FastAPI()
 
 DB_PATH = "schedule.db"
 
-# ---------- DB ----------
+# ---------------- Database ----------------
 
 def get_db():
     conn = sqlite3.connect(DB_PATH)
@@ -22,6 +21,7 @@ def init_db():
     conn = get_db()
     cur = conn.cursor()
 
+    # טבלת ילדים
     cur.execute("""
     CREATE TABLE IF NOT EXISTS children (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -35,6 +35,7 @@ def init_db():
     )
     """)
 
+    # טבלת שיבוצים
     cur.execute("""
     CREATE TABLE IF NOT EXISTS visits (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -46,7 +47,7 @@ def init_db():
     )
     """)
 
-    # הוספת עמודות אם חסרות
+    # הוספת עמודות חסרות (למקרה של DB ישן)
     try:
         cur.execute("ALTER TABLE children ADD COLUMN color TEXT")
     except:
@@ -64,7 +65,7 @@ if not os.path.exists(DB_PATH):
 else:
     init_db()
 
-# ---------- קבועים ----------
+# ---------------- קבועים ----------------
 
 DAYS = ["א'", "ב'", "ג'", "ד'", "ה'"]
 SLOTS = [
@@ -89,7 +90,7 @@ def load_template():
     with open("home.html", "r", encoding="utf-8") as f:
         return f.read()
 
-# ---------- דף הבית ----------
+# ---------------- דף הבית ----------------
 
 @app.get("/", response_class=HTMLResponse)
 def home(
@@ -101,6 +102,7 @@ def home(
     conn = get_db()
     cur = conn.cursor()
 
+    # כל השיבוצים
     cur.execute("""
         SELECT v.*, c.name AS child_name, c.color AS child_color
         FROM visits v
@@ -108,11 +110,13 @@ def home(
     """)
     visits = cur.fetchall()
 
+    # רשימת ילדים לסינון
     cur.execute("SELECT id, name FROM children ORDER BY name")
     children = cur.fetchall()
 
     conn.close()
 
+    # בניית מערכת שעות
     schedule = {d: {} for d in DAYS}
     for v in visits:
         if filter_child and v["child_id"] != filter_child:
@@ -127,7 +131,7 @@ def home(
     if msg:
         html.append(f'<div class="success-msg">{msg}</div>')
 
-    # סינון
+    # סינון לפי ילד
     html.append('<div class="form-card">')
     html.append('<form method="get">')
     html.append('<label>סינון לפי ילד:</label>')
@@ -140,7 +144,7 @@ def home(
     html.append('</form>')
     html.append('</div>')
 
-    # כפתור ייצוא כתמונה
+    # כפתורי ייצוא
     html.append('<button class="btn btn-primary" onclick="exportImage()">📷 ייצוא כתמונה</button> ')
     html.append('<a href="/export/week" class="btn btn-secondary">ייצוא לאקסל</a>')
 
@@ -229,7 +233,7 @@ def home(
     page = load_template().replace("{{CONTENT}}", "".join(html))
     return HTMLResponse(page)
 
-# ---------- רשימת ילדים + חיפוש ----------
+# ---------------- רשימת ילדים + חיפוש ----------------
 
 @app.get("/children", response_class=HTMLResponse)
 def children_list(request: Request, q: str = ""):
@@ -273,7 +277,7 @@ def children_list(request: Request, q: str = ""):
     page = load_template().replace("{{CONTENT}}", "".join(html))
     return HTMLResponse(page)
 
-# ---------- הוספת ילד ----------
+# ---------------- הוספת ילד ----------------
 
 @app.get("/children/add", response_class=HTMLResponse)
 def add_child_form(request: Request):
@@ -332,7 +336,7 @@ def add_child(
     conn.close()
     return RedirectResponse("/", status_code=303)
 
-# ---------- פרופיל ילד ----------
+# ---------------- פרופיל ילד ----------------
 
 @app.get("/children/{child_id}", response_class=HTMLResponse)
 def child_profile(request: Request, child_id: int):
@@ -396,7 +400,7 @@ def child_profile(request: Request, child_id: int):
     page = load_template().replace("{{CONTENT}}", "".join(html))
     return HTMLResponse(page)
 
-# ---------- עריכת ילד ----------
+# ---------------- עריכת ילד ----------------
 
 @app.get("/children/edit/{child_id}", response_class=HTMLResponse)
 def edit_child_form(request: Request, child_id: int):
@@ -439,7 +443,4 @@ def edit_child_form(request: Request, child_id: int):
         <a href="/" class="btn btn-secondary">ביטול</a>
     </form>
     """)
-    html.append("</div>")
-
-    page = load_template().replace("{{CONTENT}}", "".join(html))
-    return HTMLResponse
+    html.append("</div
