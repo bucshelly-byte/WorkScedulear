@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>הוספת ילד</h2>
+
+<form method="post">
+    <label>שם הילד</label>
+    <input name="name" required>
+
+    <label>שם ההורה</label>
+    <input name="parent_name">
+
+    <label>כתובת</label>
+    <input name="address">
+
+    <label>טלפון</label>
+    <input name="phone">
+
+    <label>תחביב</label>
+    <input name="hobby">
+
+    <button class="btn">שמור</button>
+</form>
+
+{% endblock %}
