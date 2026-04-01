@@ -1,0 +1,8 @@
+services:
+  - type: web
+    name: bucshelly-project
+    env: python
+    pythonVersion: 3.10.13
+    buildCommand: pip install -r requirements.txt
+    startCommand: python server.py
+    plan: free
