@@ -23,7 +23,7 @@
                 </td>
                 <td>{{ slot[0] }} - {{ slot[1] }}</td>
                 <td>
-                    {{ schedule[day_str].get((slot[0], slot[1]), "-") }}
+                    {{ schedule[day_str].get(slot[0] ~ "-" ~ slot[1], "-") }}
                 </td>
             </tr>
         {% endfor %}
