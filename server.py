@@ -6,7 +6,12 @@ from datetime import datetime, date, timedelta
 import os
 
 app = FastAPI()
+
+# יצירת מנוע התבניות
 templates = Jinja2Templates(directory="templates")
+templates.env.cache = None
+templates.env.bytecode_cache = None   # כיבוי מוחלט של cache ישן
+
 DB_PATH = "schedule.db"
 
 # ---------------- Database ----------------
