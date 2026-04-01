@@ -257,6 +257,8 @@ def children_list():
 
     return base_html("ניהול ילדים", body)
 
+# ---------- Add Child ----------
+
 @app.get("/children/add", response_class=HTMLResponse)
 def add_child_form():
     body = """
@@ -286,6 +288,8 @@ def add_child(name: str = Form(...), parent_name: str = Form(""),
     conn.close()
     return RedirectResponse("/children", status_code=303)
 
+# ---------- Child Profile ----------
+
 @app.get("/children/{child_id}", response_class=HTMLResponse)
 def child_profile(child_id: int):
     conn = get_db()
@@ -309,7 +313,13 @@ def child_profile(child_id: int):
     rows = ""
     for v in visits:
         nice = datetime.fromisoformat(v["date"]).strftime("%d/%m/%Y")
-        rows += f"<tr><td>{nice}</td><td>{v['start_time']}-{v['end_time']}</td></tr>"
+        rows += f"""
+        <tr>
+            <td>{nice}</td>
+            <td>{v['start_time']}-{v['end_time']}</td>
+            <td><a class="btn" href="/visits/edit/{v['id']}">עריכה</a></td>
+        </tr>
+        """
 
     body = f"""
     <h2>פרופיל: {child['name']}</h2>
@@ -318,16 +328,77 @@ def child_profile(child_id: int):
     <p><b>טלפון:</b> {child['phone']}</p>
     <p><b>תחביב:</b> {child['hobby']}</p>
 
+    <a class="btn" href="/children/edit/{child_id}">עריכת פרטי ילד</a>
+    <br><br>
     <a class="btn" href="/visits/add?child_id={child_id}">הוספת שיבוץ</a>
 
     <h3>שיבוצים</h3>
     <table>
-        <tr><th>תאריך</th><th>שעה</th></tr>
-        {rows or "<tr><td colspan='2'>אין שיבוצים</td></tr>"}
+        <tr><th>תאריך</th><th>שעה</th><th>עריכה</th></tr>
+        {rows or "<tr><td colspan='3'>אין שיבוצים</td></tr>"}
     </table>
     """
 
     return base_html("פרופיל ילד", body)
+
+# ---------- Edit Child ----------
+
+@app.get("/children/edit/{child_id}", response_class=HTMLResponse)
+def edit_child_form(child_id: int):
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM children WHERE id = ?", (child_id,))
+    child = cur.fetchone()
+    conn.close()
+
+    if not child:
+        raise HTTPException(404)
+
+    body = f"""
+    <h2>עריכת פרטי ילד</h2>
+    <form method="post">
+        <label>שם הילד</label>
+        <input name="name" value="{child['name']}" required>
+
+        <label>שם ההורה</label>
+        <input name="parent_name" value="{child['parent_name']}">
+
+        <label>כתובת</label>
+        <input name="address" value="{child['address']}">
+
+        <label>טלפון</label>
+        <input name="phone" value="{child['phone']}">
+
+        <label>תחביב</label>
+        <input name="hobby" value="{child['hobby']}">
+
+        <button class="btn">שמור</button>
+    </form>
+    """
+
+    return base_html("עריכת ילד", body)
+
+@app.post("/children/edit/{child_id}")
+def edit_child(child_id: int,
+               name: str = Form(...),
+               parent_name: str = Form(""),
+               address: str = Form(""),
+               phone: str = Form(""),
+               hobby: str = Form("")):
+
+    conn = get_db()
+    cur = conn.cursor()
+
+    cur.execute("""
+        UPDATE children
+        SET name = ?, parent_name = ?, address = ?, phone = ?, hobby = ?
+        WHERE id = ?
+    """, (name, parent_name, address, phone, hobby, child_id))
+
+    conn.commit()
+    conn.close()
+
+    return RedirectResponse(f"/children/{child_id}", status_code=303)
 
 # ---------- Add Visit ----------
 
@@ -403,3 +474,70 @@ def add_visit(child_id: int = Form(...), date: str = Form(...), slot: str = Form
     conn.close()
 
     return RedirectResponse("/", status_code=303)
+
+# ---------- Edit Visit ----------
+
+@app.get("/visits/edit/{visit_id}", response_class=HTMLResponse)
+def edit_visit_form(visit_id: int):
+    conn = get_db()
+    cur = conn.cursor()
+
+    cur.execute("SELECT * FROM visits WHERE id = ?", (visit_id,))
+    visit = cur.fetchone()
+
+    cur.execute("SELECT * FROM children ORDER BY name")
+    children = cur.fetchall()
+
+    conn.close()
+
+    if not visit:
+        raise HTTPException(404)
+
+    child_options = ""
+    for c in children:
+        sel = "selected" if c["id"] == visit["child_id"] else ""
+        child_options += f'<option value="{c["id"]}" {sel}>{c["name"]}</option>'
+
+    slot_options = ""
+    for start, end in TIME_SLOTS:
+        sel = "selected" if (start == visit["start_time"] and end == visit["end_time"]) else ""
+        slot_options += f'<option value="{start}-{end}" {sel}>{start}-{end}</option>'
+
+    body = f"""
+    <h2>עריכת שיבוץ</h2>
+    <form method="post">
+        <label>ילד</label>
+        <select name="child_id">{child_options}</select>
+
+        <label>תאריך</label>
+        <input type="date" name="date" value="{visit['date']}" required>
+
+        <label>טווח שעה</label>
+        <select name="slot">{slot_options}</select>
+
+        <button class="btn">שמור</button>
+    </form>
+    """
+
+    return base_html("עריכת שיבוץ", body)
+
+@app.post("/visits/edit/{visit_id}")
+def edit_visit(visit_id: int,
+               child_id: int = Form(...),
+               date: str = Form(...),
+               slot: str = Form(...)):
+
+    start, end = slot.split("-")
+
+    d = datetime.fromisoformat(date).date()
+    if d.weekday() > 4:
+        return HTMLResponse(base_html("שגיאה", "<p>ניתן לשבץ רק א-ה</p>"))
+
+    conn = get_db()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT v.id, c.name
+        FROM visits v
+        JOIN children c ON c.id = v.child_id
+        WHERE v.date
