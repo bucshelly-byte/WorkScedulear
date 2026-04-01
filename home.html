@@ -1,1 +1,120 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מערכת שעות שבועית</title>
 
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            direction: rtl;
+            margin: 0;
+            padding: 0;
+            background: #f7f7f7;
+        }
+
+        /* תפריט עליון */
+        .navbar {
+            width: 100%;
+            background: #333;
+            color: white;
+            padding: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .navbar-title {
+            font-size: 20px;
+        }
+        .hamburger {
+            font-size: 28px;
+            cursor: pointer;
+        }
+        .menu {
+            display: none;
+            background: #444;
+            padding: 10px;
+        }
+        .menu a {
+            display: block;
+            padding: 10px 0;
+            color: white;
+            text-decoration: none;
+        }
+
+        /* טבלה רספונסיבית */
+        .table-container {
+            overflow-x: auto;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            min-width: 650px;
+            background: white;
+        }
+
+        th, td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: center;
+        }
+
+        th {
+            background: #eee;
+        }
+
+        .slot {
+            height: 60px;
+        }
+
+        .child {
+            font-weight: bold;
+        }
+
+        /* התאמה למובייל */
+        @media (max-width: 600px) {
+            th, td {
+                padding: 6px;
+                font-size: 14px;
+            }
+            .navbar-title {
+                font-size: 18px;
+            }
+            .hamburger {
+                font-size: 26px;
+            }
+        }
+    </style>
+
+    <script>
+        function toggleMenu() {
+            const m = document.getElementById("menu");
+            m.style.display = m.style.display === "block" ? "none" : "block";
+        }
+    </script>
+</head>
+
+<body>
+
+    <!-- תפריט עליון -->
+    <div class="navbar">
+        <div class="navbar-title">מערכת שעות</div>
+        <div class="hamburger" onclick="toggleMenu()">☰</div>
+    </div>
+
+    <div id="menu" class="menu">
+        <a href="/">דף הבית</a>
+        <a href="/children">רשימת ילדים</a>
+        <a href="/children/add">הוספת ילד</a>
+        <a href="/visits/add">שיבוץ חדש</a>
+    </div>
+
+    <!-- כאן server.py יכניס את הטבלה -->
+    {{CONTENT}}
+
+</body>
+</html>
