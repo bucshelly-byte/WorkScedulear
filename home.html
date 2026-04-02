@@ -2,58 +2,140 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>מערכת שעות</title>
+    <title>מערכת שעות – דף הבית</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <style>
-        body { font-family: Arial; padding: 20px; direction: rtl; }
-        h1 { margin-bottom: 20px; }
-        .menu {
-            margin-bottom: 25px;
+        body {
+            font-family: Arial;
+            margin: 0;
+            padding: 0;
+            direction: rtl;
+            background: #f7f7f7;
         }
-        .menu a {
-            display: inline-block;
-            padding: 10px 15px;
-            background: #4CAF50;
+
+        /* כפתור המבורגר */
+        .hamburger {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            width: 35px;
+            height: 30px;
+            cursor: pointer;
+            z-index: 1000;
+        }
+
+        .hamburger div {
+            width: 100%;
+            height: 5px;
+            background: #333;
+            margin: 6px 0;
+            border-radius: 5px;
+        }
+
+        /* תפריט צד */
+        .side-menu {
+            position: fixed;
+            top: 0;
+            right: -250px;
+            width: 250px;
+            height: 100%;
+            background: #333;
+            color: white;
+            padding-top: 60px;
+            transition: 0.3s;
+            z-index: 999;
+        }
+
+        .side-menu a {
+            display: block;
+            padding: 15px;
             color: white;
             text-decoration: none;
-            border-radius: 6px;
-            margin-left: 10px;
+            border-bottom: 1px solid #444;
         }
-        .menu a:hover {
-            background: #45a049;
+
+        .side-menu a:hover {
+            background: #444;
         }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
-        th { background: #f0f0f0; }
+
+        .side-menu.open {
+            right: 0;
+        }
+
+        header {
+            background: #4CAF50;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-size: 22px;
+        }
+
+        .container {
+            padding: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            margin-top: 20px;
+        }
+
+        th, td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: center;
+        }
+
+        th {
+            background: #eaeaea;
+        }
     </style>
 </head>
+
 <body>
 
-<h1>מערכת שעות</h1>
+<header>
+    מערכת שעות – דף הבית
+</header>
 
-<div class="menu">
+<!-- כפתור המבורגר -->
+<div class="hamburger" onclick="toggleMenu()">
+    <div></div>
+    <div></div>
+    <div></div>
+</div>
+
+<!-- תפריט צד -->
+<div id="sideMenu" class="side-menu">
     <a href="/children?key=ShellySecureKey_9843_2024_XYZ">ניהול ילדים</a>
     <a href="/schedule?key=ShellySecureKey_9843_2024_XYZ">ניהול משמרות</a>
     <a href="/export?key=ShellySecureKey_9843_2024_XYZ">ייצוא לאקסל</a>
 </div>
 
-<h2>כל המשמרות</h2>
+<div class="container">
+    <h2>מערכת שעות</h2>
 
-<table id="scheduleTable">
-    <thead>
-        <tr>
-            <th>ילד</th>
-            <th>יום</th>
-            <th>שעת התחלה</th>
-            <th>עד שעה</th>
-        </tr>
-    </thead>
-    <tbody></tbody>
-</table>
+    <table id="scheduleTable">
+        <thead>
+            <tr>
+                <th>ילד</th>
+                <th>יום</th>
+                <th>שעת התחלה</th>
+                <th>עד שעה</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
 
 <script>
 const KEY = "ShellySecureKey_9843_2024_XYZ";
+
+function toggleMenu() {
+    document.getElementById("sideMenu").classList.toggle("open");
+}
 
 async function loadSchedule() {
     const res = await fetch(`/api/schedule?key=${KEY}`);
