@@ -4,28 +4,54 @@
     <meta charset="UTF-8">
     <title>מערכת שעות</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        body { font-family: Arial; padding: 20px; direction: rtl; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+        th { background: #f0f0f0; }
+    </style>
 </head>
 <body>
 
 <h2>מערכת שעות</h2>
 
-<table border="1" cellpadding="6" cellspacing="0">
-    <tr>
-        <th>ילד</th>
-        <th>יום</th>
-        <th>שעת התחלה</th>
-        <th>עד שעה</th>
-    </tr>
-
-    {% for row in schedule %}
-    <tr>
-        <td>{{ row.name }}</td>
-        <td>{{ row.day }}</td>
-        <td>{{ row.start_time }}</td>
-        <td>{{ row.end_time }}</td>
-    </tr>
-    {% endfor %}
+<table id="scheduleTable">
+    <thead>
+        <tr>
+            <th>ילד</th>
+            <th>יום</th>
+            <th>שעת התחלה</th>
+            <th>עד שעה</th>
+        </tr>
+    </thead>
+    <tbody></tbody>
 </table>
+
+<script>
+const KEY = "ShellySecureKey_9843_2024_XYZ";
+
+async function loadSchedule() {
+    const res = await fetch(`/api/schedule?key=${KEY}`);
+    const data = await res.json();
+
+    const tbody = document.querySelector("#scheduleTable tbody");
+    tbody.innerHTML = "";
+
+    data.forEach(row => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td>${row.name}</td>
+            <td>${row.day}</td>
+            <td>${row.start_time}</td>
+            <td>${row.end_time}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+loadSchedule();
+</script>
 
 </body>
 </html>
