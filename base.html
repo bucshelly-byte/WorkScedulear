@@ -9,12 +9,12 @@
         body {
             margin: 0;
             font-family: "Alef", Arial;
-            background: #fdfaff;
+            background: #faf7ff;
             color: #444;
         }
 
         header {
-            background: #c8a8ff;
+            background: #bda7ff;
             padding: 14px;
             font-size: 22px;
             color: white;
@@ -22,13 +22,16 @@
             justify-content: space-between;
             align-items: center;
             box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            direction: rtl;
         }
 
         .burger {
             font-size: 28px;
             cursor: pointer;
+            margin-right: 10px;
         }
 
+        /* תפריט צד */
         .menu {
             position: fixed;
             top: 0;
@@ -65,11 +68,76 @@
         .content {
             padding: 20px;
         }
+
+        /* טבלאות */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 15px;
+        }
+
+        th {
+            background: #e8d9ff;
+            padding: 12px;
+            font-size: 16px;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+        }
+
+        /* כפתורים */
+        .btn {
+            background: #b48cff;
+            color: white;
+            padding: 10px 16px;
+            border-radius: 8px;
+            text-decoration: none;
+            display: inline-block;
+            margin: 6px 0;
+            font-size: 16px;
+        }
+
+        .btn:hover {
+            background: #a378ff;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            background: #fff;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #b48cff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background: #a378ff;
+        }
     </style>
 
     <script>
         function toggleMenu() {
             document.getElementById("menu").classList.toggle("open");
+        }
+
+        function closeMenu() {
+            document.getElementById("menu").classList.remove("open");
         }
     </script>
 </head>
@@ -82,9 +150,9 @@
 </header>
 
 <div id="menu" class="menu">
-    <a onclick="navigate('home')">מבט שבועי</a>
-    <a onclick="navigate('visit_add')">הוספת שיבוץ</a>
-    <a onclick="navigate('children')">ניהול ילדים</a>
+    <a onclick="closeMenu(); navigate('home')">מבט שבועי</a>
+    <a onclick="closeMenu(); navigate('visit_add')">הוספת שיבוץ</a>
+    <a onclick="closeMenu(); navigate('children')">ניהול ילדים</a>
 </div>
 
 <div id="app" class="content">
