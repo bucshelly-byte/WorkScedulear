@@ -7,6 +7,22 @@
 
     <style>
         body { font-family: Arial; padding: 20px; direction: rtl; }
+        h1 { margin-bottom: 20px; }
+        .menu {
+            margin-bottom: 25px;
+        }
+        .menu a {
+            display: inline-block;
+            padding: 10px 15px;
+            background: #4CAF50;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            margin-left: 10px;
+        }
+        .menu a:hover {
+            background: #45a049;
+        }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
         th { background: #f0f0f0; }
@@ -14,7 +30,15 @@
 </head>
 <body>
 
-<h2>מערכת שעות</h2>
+<h1>מערכת שעות</h1>
+
+<div class="menu">
+    <a href="/children?key=ShellySecureKey_9843_2024_XYZ">ניהול ילדים</a>
+    <a href="/schedule?key=ShellySecureKey_9843_2024_XYZ">ניהול משמרות</a>
+    <a href="/export?key=ShellySecureKey_9843_2024_XYZ">ייצוא לאקסל</a>
+</div>
+
+<h2>כל המשמרות</h2>
 
 <table id="scheduleTable">
     <thead>
