@@ -16,11 +16,13 @@
             background: #f5f5f5;
         }
 
+        /* 🔥 ההמבורגר תמיד בצד ימין */
         .topbar {
             background: #333;
             color: #fff;
             padding: 10px 15px;
             display: flex;
+            flex-direction: row-reverse;
             align-items: center;
             justify-content: space-between;
         }
@@ -74,28 +76,6 @@
             padding: 10px 10px 30px;
         }
 
-        .day-tabs {
-            display: none;
-            margin-bottom: 10px;
-        }
-
-        .day-tab {
-            display: inline-block;
-            padding: 6px 10px;
-            margin: 0 2px;
-            border-radius: 16px;
-            border: 1px solid #ccc;
-            background: #fff;
-            font-size: 14px;
-            cursor: pointer;
-        }
-
-        .day-tab.active {
-            background: #007bff;
-            color: #fff;
-            border-color: #007bff;
-        }
-
         .table-wrapper {
             overflow-x: auto;
         }
@@ -118,35 +98,6 @@
             background: #f0f0f0;
         }
 
-        .slot-cell {
-            height: 70px;
-        }
-
-        .child-name {
-            font-weight: bold;
-            display: inline-block;
-            padding: 2px 6px;
-            border-radius: 4px;
-            color: #fff;
-        }
-
-        .slot-08-10 { background: #fff7cc; }
-        .slot-10-12 { background: #e0f0ff; }
-        .slot-12-14 { background: #e5ffe5; }
-        .slot-14-16 { background: #ffe5d9; }
-
-        @media (max-width: 768px) {
-            .desktop-week-table { display: none; }
-            .mobile-day-table { display: block; }
-            .day-tabs { display: block; text-align: center; }
-            table { min-width: 0; }
-        }
-
-        @media (min-width: 769px) {
-            .desktop-week-table { display: block; }
-            .mobile-day-table { display: none; }
-        }
-
         .btn {
             display: inline-block;
             padding: 6px 10px;
@@ -159,7 +110,6 @@
         }
 
         .btn-primary { background: #007bff; color: #fff; }
-        .btn-secondary { background: #6c757d; color: #fff; }
         .btn-danger { background: #dc3545; color: #fff; }
 
         .section-title {
@@ -178,54 +128,58 @@
         .error-msg { color: #c00; margin-bottom: 8px; font-size: 14px; }
         .success-msg { color: #0a0; margin-bottom: 8px; font-size: 14px; }
 
-        input[type="text"],
-        input[type="tel"],
-        input[type="url"],
-        input[type="color"],
-        select {
-            width: 100%;
-            padding: 6px;
-            margin: 4px 0 8px;
-            box-sizing: border-box;
-            border-radius: 4px;
-            border: 1px solid #ccc;
-            font-size: 14px;
-        }
-
-        label { font-size: 14px; }
-
-        .child-photo {
-            max-width: 120px;
-            max-height: 120px;
-            border-radius: 8px;
-            display: block;
-            margin-bottom: 8px;
-        }
-
-        .filter-row {
-            margin-bottom: 8px;
-        }
     </style>
 </head>
 <body>
 
 <div class="topbar">
-    <div class="topbar-title">מערכת שעות</div>
     <div class="hamburger" onclick="openMenu()">☰</div>
+    <div class="topbar-title">מערכת שעות</div>
 </div>
 
 <div class="side-menu-overlay" id="menuOverlay" onclick="closeMenu()"></div>
 
 <div class="side-menu" id="sideMenu">
-    <a href="/">מערכת שעות</a>
-    <a href="/children">רשימת ילדים</a>
-    <a href="/children/add">הוספת ילד</a>
-    <a href="/visits/add">שיבוץ חדש</a>
-    <a href="/export/week">ייצוא לאקסל</a>
+    <a href="/?key={{ secret_key }}">מערכת שעות</a>
+    <a href="/children?key={{ secret_key }}">רשימת ילדים</a>
+    <a href="/children/add?key={{ secret_key }}">הוספת ילד</a>
+    <a href="/visits/add?key={{ secret_key }}">שיבוץ חדש</a>
+    <a href="/export?key={{ secret_key }}">ייצוא לאקסל</a>
 </div>
 
 <div class="content">
-    {{CONTENT}}
+
+    {% if msg %}
+        <div class="success-msg">{{ msg }}</div>
+    {% endif %}
+    {% if err %}
+        <div class="error-msg">{{ err }}</div>
+    {% endif %}
+
+    <div class="table-card">
+        <div class="section-title">מערכת שעות</div>
+
+        <div class="table-wrapper">
+            <table>
+                <tr>
+                    <th>ילד</th>
+                    <th>יום</th>
+                    <th>משעה</th>
+                    <th>עד שעה</th>
+                </tr>
+
+                {% for row in schedule %}
+                <tr>
+                    <td>{{ row.name }}</td>
+                    <td>{{ row.day }}</td>
+                    <td>{{ row.start_time }}</td>
+                    <td>{{ row.end_time }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+
 </div>
 
 <script>
@@ -238,74 +192,6 @@ function closeMenu() {
     document.getElementById('menuOverlay').style.display = 'none';
     document.getElementById('sideMenu').classList.remove('open');
 }
-
-function exportImage() {
-    const element =
-        document.querySelector(".desktop-week-table") ||
-        document.querySelector(".mobile-day-table");
-
-    if (!element) {
-        alert("לא נמצאה מערכת שעות לייצוא");
-        return;
-    }
-
-    html2canvas(element, { scale: 2 }).then(canvas => {
-        const link = document.createElement("a");
-        link.download = "schedule.png";
-        link.href = canvas.toDataURL("image/png");
-        link.click();
-    });
-}
-
-let currentDayIndex = 0;
-const dayKeys = ["א'", "ב'", "ג'", "ד'", "ה'"];
-
-function showMobileDay(dayKey) {
-    const tables = document.querySelectorAll('.mobile-day-table');
-    tables.forEach(t => {
-        t.style.display = t.getAttribute('data-day') === dayKey ? 'block' : 'none';
-    });
-
-    const tabs = document.querySelectorAll('.day-tab');
-    tabs.forEach(tab => {
-        tab.classList.toggle('active', tab.getAttribute('data-day') === dayKey);
-    });
-
-    currentDayIndex = dayKeys.indexOf(dayKey);
-}
-
-function nextDay() {
-    currentDayIndex = (currentDayIndex + 1) % dayKeys.length;
-    showMobileDay(dayKeys[currentDayIndex]);
-}
-
-function prevDay() {
-    currentDayIndex = (currentDayIndex - 1 + dayKeys.length) % dayKeys.length;
-    showMobileDay(dayKeys[currentDayIndex]);
-}
-
-let touchStartX = null;
-
-function handleTouchStart(e) {
-    touchStartX = e.touches[0].clientX;
-}
-
-function handleTouchMove(e) {
-    if (!touchStartX) return;
-    let diffX = touchStartX - e.touches[0].clientX;
-
-    if (Math.abs(diffX) > 50) {
-        diffX > 0 ? nextDay() : prevDay();
-        touchStartX = null;
-    }
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-    showMobileDay("א'");
-    const swipeArea = document.querySelector('.content');
-    swipeArea.addEventListener('touchstart', handleTouchStart);
-    swipeArea.addEventListener('touchmove', handleTouchMove);
-});
 </script>
 
 </body>
