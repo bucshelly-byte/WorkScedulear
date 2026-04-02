@@ -11,8 +11,7 @@ import openpyxl
 # -----------------------------
 # 🔐 SECRET KEY להגנה על גישה מרחוק
 # -----------------------------
-SECRET_KEY = "S3cUr3_KeY_9843!@#_OnlyForShelly"
-
+SECRET_KEY = "ShellySecureKey_9843_2024_XYZ"
 def verify_key(request: Request):
     key = request.query_params.get("key")
     if key != SECRET_KEY:
