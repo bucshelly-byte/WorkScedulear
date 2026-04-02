@@ -1,34 +1,176 @@
-{% extends "base.html" %}
-{% block content %}
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>עריכת שיבוץ</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<h2>עריכת שיבוץ</h2>
+    <style>
+        body { font-family: Arial; margin: 0; padding: 0; background: #f7f7f7; }
 
-<form method="post">
+        .hamburger {
+            position: fixed; top: 15px; right: 15px;
+            width: 35px; height: 30px; cursor: pointer; z-index: 1000;
+        }
+        .hamburger div {
+            width: 100%; height: 5px; background: #333;
+            margin: 6px 0; border-radius: 5px;
+        }
 
-    <label>ילד</label>
-    <select name="child_id">
-        {% for c in children %}
-            <option value="{{ c.id }}"
-                {% if c.id == visit.child_id %}selected{% endif %}>
-                {{ c.name }}
-            </option>
-        {% endfor %}
+        .side-menu {
+            position: fixed; top: 0; right: -250px;
+            width: 250px; height: 100%; background: #333;
+            padding-top: 60px; transition: 0.3s; z-index: 999;
+        }
+        .side-menu a {
+            display: block; padding: 15px; color: white;
+            text-decoration: none; border-bottom: 1px solid #444;
+        }
+        .side-menu.open { right: 0; }
+
+        header {
+            background: #4CAF50; color: white;
+            padding: 15px; text-align: center; font-size: 22px;
+        }
+
+        .container { padding: 20px; }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+
+        button:hover { background: #45a049; }
+    </style>
+</head>
+
+<body>
+
+<header>עריכת שיבוץ</header>
+
+<div class="hamburger" onclick="toggleMenu()">
+    <div></div><div></div><div></div>
+</div>
+
+<div id="sideMenu" class="side-menu">
+    <a href="/home.html?key=ShellySecureKey_9843_2024_XYZ">דף הבית</a>
+    <a href="/children.html?key=ShellySecureKey_9843_2024_XYZ">ניהול ילדים</a>
+    <a href="/visit_add.html?key=ShellySecureKey_9843_2024_XYZ">שיבוץ ילד</a>
+</div>
+
+<div class="container">
+    <label>בחר ילד</label>
+    <select id="childSelect"></select>
+
+    <label>יום</label>
+    <select id="day">
+        <option value="ראשון">ראשון</option>
+        <option value="שני">שני</option>
+        <option value="שלישי">שלישי</option>
+        <option value="רביעי">רביעי</option>
+        <option value="חמישי">חמישי</option>
+        <option value="שישי">שישי</option>
     </select>
 
-    <label>תאריך</label>
-    <input type="date" name="date" value="{{ visit.date }}" required>
+    <label>שעת התחלה</label>
+    <input id="start_time" type="time">
 
-    <label>טווח שעה</label>
-    <select name="slot">
-        {% for s,e in slots %}
-            <option value="{{ s }}-{{ e }}"
-                {% if s == visit.start_time and e == visit.end_time %}selected{% endif %}>
-                {{ s }} - {{ e }}
-            </option>
-        {% endfor %}
-    </select>
+    <label>שעת סיום</label>
+    <input id="end_time" type="time">
 
-    <button class="btn">שמור</button>
-</form>
+    <button onclick="saveEdit()">שמור שינוי</button>
+</div>
 
-{% endblock %}
+<script>
+const KEY = "ShellySecureKey_9843_2024_XYZ";
+
+function toggleMenu() {
+    document.getElementById("sideMenu").classList.toggle("open");
+}
+
+function getParam(name) {
+    const url = new URL(window.location.href);
+    return url.searchParams.get(name);
+}
+
+async function loadChildren() {
+    const res = await fetch(`/api/children?key=${KEY}`);
+    const data = await res.json();
+    const select = document.getElementById("childSelect");
+    select.innerHTML = "";
+    data.forEach(child => {
+        const opt = document.createElement("option");
+        opt.value = child.id;
+        opt.textContent = child.name;
+        select.appendChild(opt);
+    });
+}
+
+async function loadVisit() {
+    const id = getParam("id");
+    if (!id) {
+        alert("חסר מזהה שיבוץ");
+        return;
+    }
+    const res = await fetch(`/api/schedule?key=${KEY}`);
+    const data = await res.json();
+    const row = data.find(r => r.id === Number(id));
+    if (!row) {
+        alert("שיבוץ לא נמצא");
+        return;
+    }
+    document.getElementById("childSelect").value = row.child_id;
+    document.getElementById("day").value = row.day;
+    document.getElementById("start_time").value = row.start_time;
+    document.getElementById("end_time").value = row.end_time;
+}
+
+async function saveEdit() {
+    const id = getParam("id");
+    const child_id = document.getElementById("childSelect").value;
+    const day = document.getElementById("day").value;
+    const start_time = document.getElementById("start_time").value;
+    const end_time = document.getElementById("end_time").value;
+
+    const formData = new FormData();
+    formData.append("child_id", child_id);
+    formData.append("day", day);
+    formData.append("start_time", start_time);
+    formData.append("end_time", end_time);
+
+    const res = await fetch(`/api/schedule/edit/${id}?key=${KEY}`, {
+        method: "POST",
+        body: formData
+    });
+
+    if (res.ok) {
+        alert("השיבוץ עודכן");
+        window.location.href = `/home.html?key=${KEY}`;
+    } else {
+        const txt = await res.text();
+        alert("שגיאה בעדכון: " + txt);
+    }
+}
+
+(async () => {
+    await loadChildren();
+    await loadVisit();
+})();
+</script>
+
+</body>
+</html>
