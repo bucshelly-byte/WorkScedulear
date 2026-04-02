@@ -1,33 +1,67 @@
-{% extends "base.html" %}
-{% block content %}
+<h2 id="childName">פרופיל ילד</h2>
 
-<h2>פרופיל: {{ child.name }}</h2>
+<button class="btn" onclick="exportChild()">📤 ייצוא מערכת</button>
 
-<p><b>הורה:</b> {{ child.parent_name }}</p>
-<p><b>כתובת:</b> {{ child.address }}</p>
-<p><b>טלפון:</b> {{ child.phone }}</p>
-<p><b>תחביב:</b> {{ child.hobby }}</p>
-
-<a class="btn" href="/children/edit/{{ child.id }}">עריכת פרטי ילד</a>
-<br><br>
-<a class="btn" href="/visits/add?child_id={{ child.id }}">הוספת שיבוץ</a>
-
-<h3>שיבוצים</h3>
-
-<table>
-    <tr>
-        <th>תאריך</th>
-        <th>שעה</th>
-        <th>עריכה</th>
-    </tr>
-
-    {% for v in visits %}
-    <tr>
-        <td>{{ v.date }}</td>
-        <td>{{ v.start_time }} - {{ v.end_time }}</td>
-        <td><a class="btn" href="/visits/edit/{{ v.id }}">עריכה</a></td>
-    </tr>
-    {% endfor %}
+<table id="childSchedule">
+    <thead>
+        <tr>
+            <th>יום</th>
+            <th>התחלה</th>
+            <th>סיום</th>
+            <th>פעולות</th>
+        </tr>
+    </thead>
+    <tbody></tbody>
 </table>
 
-{% endblock %}
+<script>
+let CURRENT_CHILD = null;
+
+async function init_child_profile(id) {
+    CURRENT_CHILD = id;
+
+    const resChild = await fetch(`/api/children/${id}?key=${KEY}`);
+    const child = await resChild.json();
+    document.getElementById("childName").innerText = child.name;
+
+    const res = await fetch(`/api/schedule/by_child/${id}?key=${KEY}`);
+    const data = await res.json();
+
+    const tbody = document.querySelector("#childSchedule tbody");
+    tbody.innerHTML = "";
+
+    data.forEach(row => {
+        const tr = document.createElement("tr");
+
+        tr.innerHTML = `
+            <td>${row.day}</td>
+            <td>${row.start_time}</td>
+            <td>${row.end_time}</td>
+            <td>
+                <span style="cursor:pointer;font-size:20px;margin-left:8px" onclick="navigate('visit_edit', ${row.id})">✏️</span>
+                <span style="cursor:pointer;font-size:20px" onclick="deleteVisit(${row.id})">🗑️</span>
+            </td>
+        `;
+
+        tbody.appendChild(tr);
+    });
+}
+
+function exportChild() {
+    window.location.href = `/export/image/child/${CURRENT_CHILD}?key=${KEY}`;
+}
+
+async function deleteVisit(id) {
+    if (!confirm("למחוק את השיבוץ?")) return;
+
+    const res = await fetch(`/api/schedule/delete/${id}?key=${KEY}`, {
+        method: "POST"
+    });
+
+    if (res.ok) {
+        navigate("child_profile", CURRENT_CHILD);
+    } else {
+        alert("שגיאה במחיקה");
+    }
+}
+</script>
