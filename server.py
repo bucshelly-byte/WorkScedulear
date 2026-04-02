@@ -5,7 +5,6 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Optional
-from fastapi import Query
 import openpyxl
 
 # -----------------------------
@@ -32,9 +31,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# home.html נטען כקובץ סטטי
+# static (למשל CSS/JS)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
+# templates (כל הדפים חוץ מ-home)
 templates = Jinja2Templates(directory="templates")
 
 
@@ -84,7 +84,7 @@ def home(request: Request, _: None = Depends(verify_key)):
 
 
 # -----------------------------
-# CHILDREN
+# CHILDREN PAGES
 # -----------------------------
 @app.get("/children", response_class=HTMLResponse)
 def children_page(request: Request, _: None = Depends(verify_key)):
@@ -113,7 +113,7 @@ def delete_child(child_id: int = Form(...), _: None = Depends(verify_key)):
 
 
 # -----------------------------
-# SCHEDULE
+# SCHEDULE PAGES
 # -----------------------------
 @app.get("/schedule", response_class=HTMLResponse)
 def schedule_page(request: Request, _: None = Depends(verify_key)):
@@ -150,7 +150,7 @@ def delete_schedule(schedule_id: int = Form(...), _: None = Depends(verify_key))
 
 
 # -----------------------------
-# EXPORT
+# EXPORT EXCEL
 # -----------------------------
 @app.get("/export")
 def export_excel(_: None = Depends(verify_key)):
