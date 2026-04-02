@@ -6,6 +6,7 @@ from fastapi.staticfiles import StaticFiles
 from typing import Optional
 from PIL import Image, ImageDraw, ImageFont
 import datetime
+import os
 
 SECRET_KEY = "ShellySecureKey_9843_2024_XYZ"
 
@@ -15,6 +16,7 @@ def verify_key(request: Request):
 
 app = FastAPI()
 
+# CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -23,7 +25,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Static files
 app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/pages", StaticFiles(directory="pages"), name="pages")
 
 DB_NAME = "schedule.db"
 
@@ -66,27 +70,15 @@ def init_db():
 init_db()
 
 # -----------------------------
-# STATIC PAGES
+# SPA ENTRY POINT
 # -----------------------------
 @app.get("/")
-def home(_: None = Depends(verify_key)):
-    return FileResponse("home.html")
+def spa(_: None = Depends(verify_key)):
+    return FileResponse("base.html")
 
 @app.get("/home.html")
-def home_html(_: None = Depends(verify_key)):
-    return FileResponse("home.html")
-
-@app.get("/children.html")
-def children_html(_: None = Depends(verify_key)):
-    return FileResponse("children.html")
-
-@app.get("/visit_add.html")
-def visit_add_html(_: None = Depends(verify_key)):
-    return FileResponse("visit_add.html")
-
-@app.get("/visit_edit.html")
-def visit_edit_html(_: None = Depends(verify_key)):
-    return FileResponse("visit_edit.html")
+def spa_home(_: None = Depends(verify_key)):
+    return FileResponse("base.html")
 
 # -----------------------------
 # CHILDREN API
@@ -175,8 +167,7 @@ def has_conflict(conn, child_id: int, day: str, start_time: str, end_time: str, 
         query += " AND id != ?"
         params.append(exclude_id)
     c.execute(query, params)
-    row = c.fetchone()
-    return row is not None
+    return c.fetchone() is not None
 
 @app.get("/api/schedule")
 def api_get_schedule(_: None = Depends(verify_key)):
@@ -218,6 +209,7 @@ def api_add_schedule(
     _: None = Depends(verify_key)
 ):
     conn = get_db()
+
     if has_conflict(conn, child_id, day, start_time, end_time):
         conn.close()
         raise HTTPException(400, "שיבוץ מתנגש עם שיבוץ קיים")
@@ -241,6 +233,7 @@ def api_edit_schedule(
     _: None = Depends(verify_key)
 ):
     conn = get_db()
+
     if has_conflict(conn, child_id, day, start_time, end_time, exclude_id=schedule_id):
         conn.close()
         raise HTTPException(400, "שיבוץ מתנגש עם שיבוץ קיים")
@@ -267,8 +260,6 @@ def api_delete_schedule(schedule_id: int, _: None = Depends(verify_key)):
 # -----------------------------
 # EXPORT AS IMAGE (PNG)
 # -----------------------------
-from PIL import Image, ImageDraw, ImageFont
-
 def render_schedule_to_image(rows, title: str, filename: str):
     col_titles = ["ילד", "הורה", "טלפון", "כתובת", "יום", "התחלה", "סיום"]
     col_widths = [180, 180, 140, 220, 100, 100, 100]
