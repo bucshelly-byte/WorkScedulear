@@ -28,15 +28,16 @@ def get_db():
     return conn
 
 # -----------------------------
-# HOME PAGE (STATIC)
+# STATIC PAGES (כמו בתפריט שלך)
 # -----------------------------
 @app.get("/")
 def home(_: None = Depends(verify_key)):
     return FileResponse("home.html")
 
-# -----------------------------
-# STATIC PAGES
-# -----------------------------
+@app.get("/home.html")
+def home2(_: None = Depends(verify_key)):
+    return FileResponse("home.html")
+
 @app.get("/children.html")
 def children_page(_: None = Depends(verify_key)):
     return FileResponse("children.html")
@@ -44,39 +45,6 @@ def children_page(_: None = Depends(verify_key)):
 @app.get("/visit_add.html")
 def visit_add_page(_: None = Depends(verify_key)):
     return FileResponse("visit_add.html")
-
-# -----------------------------
-# API: ADD CHILD
-# -----------------------------
-@app.post("/api/children/add")
-def add_child(
-    name: str = Form(...),
-    parent: str = Form(...),
-    phone: str = Form(...),
-    address: str = Form(...),
-    _: None = Depends(verify_key)
-):
-    conn = get_db()
-    cursor = conn.cursor()
-    cursor.execute("""
-        INSERT INTO children (name, parent, phone, address)
-        VALUES (?, ?, ?, ?)
-    """, (name, parent, phone, address))
-    conn.commit()
-    conn.close()
-    return {"status": "success"}
-
-# -----------------------------
-# API: GET CHILDREN
-# -----------------------------
-@app.get("/api/children")
-def get_children(_: None = Depends(verify_key)):
-    conn = get_db()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM children")
-    rows = cursor.fetchall()
-    conn.close()
-    return [dict(row) for row in rows]
 
 # -----------------------------
 # API: ADD SCHEDULE ENTRY
