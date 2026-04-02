@@ -1,9 +1,11 @@
 import sqlite3
 from fastapi import FastAPI, Request, Form, HTTPException, Depends
-from fastapi.responses import FileResponse
+from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Optional
+from fastapi import Query
 import openpyxl
 
 # -----------------------------
@@ -30,8 +32,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# כל ה־HTML, CSS, JS יגיעו מכאן
-app.mount("/", StaticFiles(directory="static", html=True), name="static")
+# home.html נטען כקובץ סטטי
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+templates = Jinja2Templates(directory="templates")
 
 
 # -----------------------------
@@ -72,19 +76,22 @@ init_db()
 
 
 # -----------------------------
-# API — CHILDREN
+# HOME (סטטי, לא Jinja)
 # -----------------------------
-@app.get("/api/children")
-def get_children(_: None = Depends(verify_key)):
-    conn = get_db()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM children")
-    rows = cursor.fetchall()
-    conn.close()
-    return [dict(r) for r in rows]
+@app.get("/", response_class=HTMLResponse)
+def home(request: Request, _: None = Depends(verify_key)):
+    return FileResponse("home.html")
 
 
-@app.post("/api/children/add")
+# -----------------------------
+# CHILDREN
+# -----------------------------
+@app.get("/children", response_class=HTMLResponse)
+def children_page(request: Request, _: None = Depends(verify_key)):
+    return templates.TemplateResponse("children.html", {"request": request, "secret_key": SECRET_KEY})
+
+
+@app.post("/children/add")
 def add_child(name: str = Form(...), _: None = Depends(verify_key)):
     conn = get_db()
     cursor = conn.cursor()
@@ -94,7 +101,7 @@ def add_child(name: str = Form(...), _: None = Depends(verify_key)):
     return {"status": "success"}
 
 
-@app.post("/api/children/delete")
+@app.post("/children/delete")
 def delete_child(child_id: int = Form(...), _: None = Depends(verify_key)):
     conn = get_db()
     cursor = conn.cursor()
@@ -106,33 +113,14 @@ def delete_child(child_id: int = Form(...), _: None = Depends(verify_key)):
 
 
 # -----------------------------
-# API — SCHEDULE
+# SCHEDULE
 # -----------------------------
-@app.get("/api/schedule")
-def get_schedule(child_id: Optional[int] = None, _: None = Depends(verify_key)):
-    conn = get_db()
-    cursor = conn.cursor()
-
-    if child_id:
-        cursor.execute("""
-            SELECT schedule.id, children.name, schedule.day, schedule.start_time, schedule.end_time
-            FROM schedule
-            JOIN children ON schedule.child_id = children.id
-            WHERE child_id = ?
-        """, (child_id,))
-    else:
-        cursor.execute("""
-            SELECT schedule.id, children.name, schedule.day, schedule.start_time, schedule.end_time
-            FROM schedule
-            JOIN children ON schedule.child_id = children.id
-        """)
-
-    rows = cursor.fetchall()
-    conn.close()
-    return [dict(r) for r in rows]
+@app.get("/schedule", response_class=HTMLResponse)
+def schedule_page(request: Request, _: None = Depends(verify_key)):
+    return templates.TemplateResponse("visit_add.html", {"request": request, "secret_key": SECRET_KEY})
 
 
-@app.post("/api/schedule/add")
+@app.post("/schedule/add")
 def add_schedule(
     child_id: int = Form(...),
     day: str = Form(...),
@@ -151,7 +139,7 @@ def add_schedule(
     return {"status": "success"}
 
 
-@app.post("/api/schedule/delete")
+@app.post("/schedule/delete")
 def delete_schedule(schedule_id: int = Form(...), _: None = Depends(verify_key)):
     conn = get_db()
     cursor = conn.cursor()
@@ -162,9 +150,9 @@ def delete_schedule(schedule_id: int = Form(...), _: None = Depends(verify_key))
 
 
 # -----------------------------
-# EXPORT EXCEL
+# EXPORT
 # -----------------------------
-@app.get("/api/export")
+@app.get("/export")
 def export_excel(_: None = Depends(verify_key)):
     conn = get_db()
     cursor = conn.cursor()
