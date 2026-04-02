@@ -1,26 +1,51 @@
-{% extends "base.html" %}
-{% block content %}
+<h2>עריכת ילד</h2>
 
-<h2>עריכת פרטי ילד</h2>
+<input type="hidden" id="childId">
 
-<form method="post">
+<label>שם הילד</label>
+<input id="name">
 
-    <label>שם הילד</label>
-    <input name="name" value="{{ child.name }}" required>
+<label>שם ההורה</label>
+<input id="parent_name">
 
-    <label>שם ההורה</label>
-    <input name="parent_name" value="{{ child.parent_name }}">
+<label>טלפון</label>
+<input id="phone">
 
-    <label>כתובת</label>
-    <input name="address" value="{{ child.address }}">
+<label>כתובת</label>
+<input id="address">
 
-    <label>טלפון</label>
-    <input name="phone" value="{{ child.phone }}">
+<button onclick="saveEdit()">שמור</button>
 
-    <label>תחביב</label>
-    <input name="hobby" value="{{ child.hobby }}">
+<script>
+async function init_child_edit(id) {
+    const res = await fetch(`/api/children/${id}?key=${KEY}`);
+    const data = await res.json();
 
-    <button class="btn">שמור</button>
-</form>
+    document.getElementById("childId").value = data.id;
+    document.getElementById("name").value = data.name;
+    document.getElementById("parent_name").value = data.parent_name || "";
+    document.getElementById("phone").value = data.phone || "";
+    document.getElementById("address").value = data.address || "";
+}
 
-{% endblock %}
+async function saveEdit() {
+    const id = document.getElementById("childId").value;
+
+    const form = new FormData();
+    form.append("name", document.getElementById("name").value);
+    form.append("parent_name", document.getElementById("parent_name").value);
+    form.append("phone", document.getElementById("phone").value);
+    form.append("address", document.getElementById("address").value);
+
+    const res = await fetch(`/api/children/edit/${id}?key=${KEY}`, {
+        method: "POST",
+        body: form
+    });
+
+    if (res.ok) {
+        navigate("children");
+    } else {
+        alert("שגיאה בעדכון");
+    }
+}
+</script>
