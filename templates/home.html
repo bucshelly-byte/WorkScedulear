@@ -4,195 +4,28 @@
     <meta charset="UTF-8">
     <title>מערכת שעות</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <!-- ספריית צילום מסך -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-
-    <style>
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            direction: rtl;
-            background: #f5f5f5;
-        }
-
-        /* 🔥 ההמבורגר תמיד בצד ימין */
-        .topbar {
-            background: #333;
-            color: #fff;
-            padding: 10px 15px;
-            display: flex;
-            flex-direction: row-reverse;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .topbar-title {
-            font-size: 18px;
-            font-weight: bold;
-        }
-
-        .hamburger {
-            font-size: 26px;
-            cursor: pointer;
-        }
-
-        .side-menu-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.4);
-            display: none;
-            z-index: 9;
-        }
-
-        .side-menu {
-            position: fixed;
-            top: 0;
-            right: -260px;
-            width: 260px;
-            height: 100%;
-            background: #222;
-            color: #fff;
-            padding: 20px 15px;
-            box-sizing: border-box;
-            transition: right 0.3s ease;
-            z-index: 10;
-        }
-
-        .side-menu.open {
-            right: 0;
-        }
-
-        .side-menu a {
-            display: block;
-            color: #fff;
-            text-decoration: none;
-            padding: 10px 0;
-            border-bottom: 1px solid #444;
-            font-size: 15px;
-        }
-
-        .content {
-            padding: 10px 10px 30px;
-        }
-
-        .table-wrapper {
-            overflow-x: auto;
-        }
-
-        table {
-            border-collapse: collapse;
-            width: 100%;
-            background: #fff;
-            min-width: 650px;
-        }
-
-        th, td {
-            border: 1px solid #ddd;
-            padding: 6px;
-            text-align: center;
-            font-size: 14px;
-        }
-
-        th {
-            background: #f0f0f0;
-        }
-
-        .btn {
-            display: inline-block;
-            padding: 6px 10px;
-            margin: 4px 2px;
-            font-size: 13px;
-            border-radius: 4px;
-            border: none;
-            cursor: pointer;
-            text-decoration: none;
-        }
-
-        .btn-primary { background: #007bff; color: #fff; }
-        .btn-danger { background: #dc3545; color: #fff; }
-
-        .section-title {
-            font-size: 18px;
-            margin: 10px 0;
-        }
-
-        .form-card, .table-card {
-            background: #fff;
-            padding: 10px;
-            border-radius: 6px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-            margin-bottom: 12px;
-        }
-
-        .error-msg { color: #c00; margin-bottom: 8px; font-size: 14px; }
-        .success-msg { color: #0a0; margin-bottom: 8px; font-size: 14px; }
-
-    </style>
 </head>
 <body>
 
-<div class="topbar">
-    <div class="hamburger" onclick="openMenu()">☰</div>
-    <div class="topbar-title">מערכת שעות</div>
-</div>
+<h2>מערכת שעות</h2>
 
-<div class="side-menu-overlay" id="menuOverlay" onclick="closeMenu()"></div>
+<table border="1" cellpadding="6" cellspacing="0">
+    <tr>
+        <th>ילד</th>
+        <th>יום</th>
+        <th>שעת התחלה</th>
+        <th>עד שעה</th>
+    </tr>
 
-<div class="side-menu" id="sideMenu">
-    <a href="/?key={{ secret_key }}">מערכת שעות</a>
-    <a href="/children?key={{ secret_key }}">רשימת ילדים</a>
-    <a href="/children/add?key={{ secret_key }}">הוספת ילד</a>
-    <a href="/visits/add?key={{ secret_key }}">שיבוץ חדש</a>
-    <a href="/export?key={{ secret_key }}">ייצוא לאקסל</a>
-</div>
-
-<div class="content">
-
-    {% if msg %}
-        <div class="success-msg">{{ msg }}</div>
-    {% endif %}
-    {% if err %}
-        <div class="error-msg">{{ err }}</div>
-    {% endif %}
-
-    <div class="table-card">
-        <div class="section-title">מערכת שעות</div>
-
-        <div class="table-wrapper">
-            <table>
-                <tr>
-                    <th>ילד</th>
-                    <th>יום</th>
-                    <th>משעה</th>
-                    <th>עד שעה</th>
-                </tr>
-
-                {% for row in schedule %}
-                <tr>
-                    <td>{{ row.name }}</td>
-                    <td>{{ row.day }}</td>
-                    <td>{{ row.start_time }}</td>
-                    <td>{{ row.end_time }}</td>
-                </tr>
-                {% endfor %}
-            </table>
-        </div>
-    </div>
-
-</div>
-
-<script>
-function openMenu() {
-    document.getElementById('menuOverlay').style.display = 'block';
-    document.getElementById('sideMenu').classList.add('open');
-}
-
-function closeMenu() {
-    document.getElementById('menuOverlay').style.display = 'none';
-    document.getElementById('sideMenu').classList.remove('open');
-}
-</script>
+    {% for row in schedule %}
+    <tr>
+        <td>{{ row.name }}</td>
+        <td>{{ row.day }}</td>
+        <td>{{ row.start_time }}</td>
+        <td>{{ row.end_time }}</td>
+    </tr>
+    {% endfor %}
+</table>
 
 </body>
 </html>
