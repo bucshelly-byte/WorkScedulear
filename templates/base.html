@@ -29,7 +29,6 @@
             cursor: pointer;
         }
 
-        /* תפריט צד */
         .menu {
             position: fixed;
             top: 0;
@@ -66,65 +65,6 @@
         .content {
             padding: 20px;
         }
-
-        .btn {
-            background: #b48cff;
-            color: white;
-            padding: 10px 16px;
-            border-radius: 8px;
-            text-decoration: none;
-            display: inline-block;
-            margin: 6px 0;
-            font-size: 16px;
-        }
-
-        .btn:hover {
-            background: #a378ff;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background: white;
-            border-radius: 10px;
-            overflow: hidden;
-            margin-top: 15px;
-        }
-
-        th {
-            background: #e8d9ff;
-            padding: 12px;
-            font-size: 16px;
-        }
-
-        td {
-            padding: 12px;
-            border-bottom: 1px solid #eee;
-        }
-
-        input, select {
-            width: 100%;
-            padding: 12px;
-            margin: 8px 0;
-            border-radius: 8px;
-            border: 1px solid #ccc;
-            background: #fff;
-        }
-
-        button {
-            width: 100%;
-            padding: 12px;
-            background: #b48cff;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 18px;
-            margin-top: 10px;
-        }
-
-        button:hover {
-            background: #a378ff;
-        }
     </style>
 
     <script>
@@ -142,9 +82,16 @@
 </header>
 
 <div id="menu" class="menu">
-    <a href="/home.html?key=ShellySecureKey_9843_2024_XYZ">מבט שבועי</a>
-    <a href="/visit_add.html?key=ShellySecureKey_9843_2024_XYZ">הוספת שיבוץ</a>
-    <a href="/children.html?key=ShellySecureKey_9843_2024_XYZ">ניהול ילדים</a>
+    <a onclick="navigate('home')">מבט שבועי</a>
+    <a onclick="navigate('visit_add')">הוספת שיבוץ</a>
+    <a onclick="navigate('children')">ניהול ילדים</a>
 </div>
 
-<div class="content">
+<div id="app" class="content">
+    טוען...
+</div>
+
+<script src="/static/app.js"></script>
+
+</body>
+</html>
