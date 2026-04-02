@@ -5,7 +5,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from typing import Optional
 from PIL import Image, ImageDraw, ImageFont
-import os
 import datetime
 
 SECRET_KEY = "ShellySecureKey_9843_2024_XYZ"
@@ -40,7 +39,6 @@ def init_db():
     conn = get_db()
     c = conn.cursor()
 
-    # טבלת ילדים
     c.execute("""
         CREATE TABLE IF NOT EXISTS children (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -51,7 +49,6 @@ def init_db():
         )
     """)
 
-    # טבלת שיבוצים
     c.execute("""
         CREATE TABLE IF NOT EXISTS schedule (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -86,6 +83,10 @@ def children_html(_: None = Depends(verify_key)):
 @app.get("/visit_add.html")
 def visit_add_html(_: None = Depends(verify_key)):
     return FileResponse("visit_add.html")
+
+@app.get("/visit_edit.html")
+def visit_edit_html(_: None = Depends(verify_key)):
+    return FileResponse("visit_edit.html")
 
 # -----------------------------
 # CHILDREN API
@@ -159,7 +160,7 @@ def api_delete_child(child_id: int, _: None = Depends(verify_key)):
     return {"status": "success"}
 
 # -----------------------------
-# SCHEDULE API (WITH CONFLICT CHECK)
+# SCHEDULE API + CONFLICT CHECK
 # -----------------------------
 def has_conflict(conn, child_id: int, day: str, start_time: str, end_time: str, exclude_id: Optional[int] = None):
     c = conn.cursor()
@@ -266,8 +267,9 @@ def api_delete_schedule(schedule_id: int, _: None = Depends(verify_key)):
 # -----------------------------
 # EXPORT AS IMAGE (PNG)
 # -----------------------------
+from PIL import Image, ImageDraw, ImageFont
+
 def render_schedule_to_image(rows, title: str, filename: str):
-    # הגדרות בסיסיות
     col_titles = ["ילד", "הורה", "טלפון", "כתובת", "יום", "התחלה", "סיום"]
     col_widths = [180, 180, 140, 220, 100, 100, 100]
     row_height = 40
@@ -287,17 +289,14 @@ def render_schedule_to_image(rows, title: str, filename: str):
         font = ImageFont.load_default()
         font_bold = font
 
-    # כותרת
     draw.text((margin, margin), title, fill="black", font=font_bold)
 
-    # כותרות עמודות
     x = margin
     y = margin + header_height - row_height
     for i, col in enumerate(col_titles):
         draw.text((x + 5, y + 5), col, fill="black", font=font_bold)
         x += col_widths[i]
 
-    # שורות
     y += row_height
     for row in rows:
         x = margin
