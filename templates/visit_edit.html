@@ -1,138 +1,48 @@
-<!DOCTYPE html>
-<html lang="he" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <title>עריכת שיבוץ</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<h2>עריכת שיבוץ</h2>
 
-    <style>
-        body { font-family: Arial; margin: 0; padding: 0; background: #f7f7f7; }
+<input type="hidden" id="visitId">
 
-        .hamburger {
-            position: fixed; top: 15px; right: 15px;
-            width: 35px; height: 30px; cursor: pointer; z-index: 1000;
-        }
-        .hamburger div {
-            width: 100%; height: 5px; background: #333;
-            margin: 6px 0; border-radius: 5px;
-        }
+<label>בחר ילד</label>
+<select id="childSelect"></select>
 
-        .side-menu {
-            position: fixed; top: 0; right: -250px;
-            width: 250px; height: 100%; background: #333;
-            padding-top: 60px; transition: 0.3s; z-index: 999;
-        }
-        .side-menu a {
-            display: block; padding: 15px; color: white;
-            text-decoration: none; border-bottom: 1px solid #444;
-        }
-        .side-menu.open { right: 0; }
+<label>יום</label>
+<select id="day">
+    <option>ראשון</option>
+    <option>שני</option>
+    <option>שלישי</option>
+    <option>רביעי</option>
+    <option>חמישי</option>
+    <option>שישי</option>
+</select>
 
-        header {
-            background: #4CAF50; color: white;
-            padding: 15px; text-align: center; font-size: 22px;
-        }
+<label>שעת התחלה</label>
+<input type="time" id="start_time">
 
-        .container { padding: 20px; }
+<label>שעת סיום</label>
+<input type="time" id="end_time">
 
-        input, select {
-            width: 100%;
-            padding: 10px;
-            margin: 8px 0;
-            border-radius: 6px;
-            border: 1px solid #ccc;
-        }
-
-        button {
-            width: 100%;
-            padding: 10px;
-            margin-top: 10px;
-            background: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 16px;
-        }
-
-        button:hover { background: #45a049; }
-    </style>
-</head>
-
-<body>
-
-<header>עריכת שיבוץ</header>
-
-<div class="hamburger" onclick="toggleMenu()">
-    <div></div><div></div><div></div>
-</div>
-
-<div id="sideMenu" class="side-menu">
-    <a href="/home.html?key=ShellySecureKey_9843_2024_XYZ">דף הבית</a>
-    <a href="/children.html?key=ShellySecureKey_9843_2024_XYZ">ניהול ילדים</a>
-    <a href="/visit_add.html?key=ShellySecureKey_9843_2024_XYZ">שיבוץ ילד</a>
-</div>
-
-<div class="container">
-    <label>בחר ילד</label>
-    <select id="childSelect"></select>
-
-    <label>יום</label>
-    <select id="day">
-        <option value="ראשון">ראשון</option>
-        <option value="שני">שני</option>
-        <option value="שלישי">שלישי</option>
-        <option value="רביעי">רביעי</option>
-        <option value="חמישי">חמישי</option>
-        <option value="שישי">שישי</option>
-    </select>
-
-    <label>שעת התחלה</label>
-    <input id="start_time" type="time">
-
-    <label>שעת סיום</label>
-    <input id="end_time" type="time">
-
-    <button onclick="saveEdit()">שמור שינוי</button>
-</div>
+<button onclick="saveEdit()">שמור</button>
 
 <script>
-const KEY = "ShellySecureKey_9843_2024_XYZ";
+async function init_visit_edit(id) {
+    document.getElementById("visitId").value = id;
 
-function toggleMenu() {
-    document.getElementById("sideMenu").classList.toggle("open");
-}
+    const childrenRes = await fetch(`/api/children?key=${KEY}`);
+    const children = await childrenRes.json();
 
-function getParam(name) {
-    const url = new URL(window.location.href);
-    return url.searchParams.get(name);
-}
-
-async function loadChildren() {
-    const res = await fetch(`/api/children?key=${KEY}`);
-    const data = await res.json();
     const select = document.getElementById("childSelect");
     select.innerHTML = "";
-    data.forEach(child => {
+    children.forEach(c => {
         const opt = document.createElement("option");
-        opt.value = child.id;
-        opt.textContent = child.name;
+        opt.value = c.id;
+        opt.textContent = c.name;
         select.appendChild(opt);
     });
-}
 
-async function loadVisit() {
-    const id = getParam("id");
-    if (!id) {
-        alert("חסר מזהה שיבוץ");
-        return;
-    }
     const res = await fetch(`/api/schedule?key=${KEY}`);
     const data = await res.json();
-    const row = data.find(r => r.id === Number(id));
-    if (!row) {
-        alert("שיבוץ לא נמצא");
-        return;
-    }
+    const row = data.find(r => r.id === id);
+
     document.getElementById("childSelect").value = row.child_id;
     document.getElementById("day").value = row.day;
     document.getElementById("start_time").value = row.start_time;
@@ -140,37 +50,24 @@ async function loadVisit() {
 }
 
 async function saveEdit() {
-    const id = getParam("id");
-    const child_id = document.getElementById("childSelect").value;
-    const day = document.getElementById("day").value;
-    const start_time = document.getElementById("start_time").value;
-    const end_time = document.getElementById("end_time").value;
+    const id = document.getElementById("visitId").value;
 
-    const formData = new FormData();
-    formData.append("child_id", child_id);
-    formData.append("day", day);
-    formData.append("start_time", start_time);
-    formData.append("end_time", end_time);
+    const form = new FormData();
+    form.append("child_id", document.getElementById("childSelect").value);
+    form.append("day", document.getElementById("day").value);
+    form.append("start_time", document.getElementById("start_time").value);
+    form.append("end_time", document.getElementById("end_time").value);
 
     const res = await fetch(`/api/schedule/edit/${id}?key=${KEY}`, {
         method: "POST",
-        body: formData
+        body: form
     });
 
     if (res.ok) {
-        alert("השיבוץ עודכן");
-        window.location.href = `/home.html?key=${KEY}`;
+        navigate("home");
     } else {
         const txt = await res.text();
-        alert("שגיאה בעדכון: " + txt);
+        alert("שגיאה: " + txt);
     }
 }
-
-(async () => {
-    await loadChildren();
-    await loadVisit();
-})();
 </script>
-
-</body>
-</html>
