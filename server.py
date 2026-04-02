@@ -1,28 +1,15 @@
 import sqlite3
-from typing import Optional
-
 from fastapi import FastAPI, Request, Form, HTTPException, Depends
-from fastapi.responses import HTMLResponse, FileResponse
-from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
+from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
-import openpyxl
+from fastapi.staticfiles import StaticFiles
 
-# -----------------------------
-# SECRET KEY
-# -----------------------------
 SECRET_KEY = "ShellySecureKey_9843_2024_XYZ"
 
-
 def verify_key(request: Request):
-    key = request.query_params.get("key")
-    if key != SECRET_KEY:
+    if request.query_params.get("key") != SECRET_KEY:
         raise HTTPException(status_code=401, detail="Unauthorized")
 
-
-# -----------------------------
-# APP
-# -----------------------------
 app = FastAPI()
 
 app.add_middleware(
@@ -33,200 +20,99 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# static (למשל CSS/JS)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# templates (לשאר הדפים, לא home.html)
-templates = Jinja2Templates(directory="templates")
-
-
-# -----------------------------
-# DATABASE
-# -----------------------------
 def get_db():
     conn = sqlite3.connect("schedule.db")
     conn.row_factory = sqlite3.Row
     return conn
 
-
-def init_db():
-    conn = get_db()
-    cursor = conn.cursor()
-
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS children (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL
-        )
-    """)
-
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS schedule (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            child_id INTEGER NOT NULL,
-            day TEXT NOT NULL,
-            start_time TEXT NOT NULL,
-            end_time TEXT NOT NULL,
-            FOREIGN KEY (child_id) REFERENCES children(id)
-        )
-    """)
-
-    conn.commit()
-    conn.close()
-
-
-init_db()
-
-
 # -----------------------------
-# HOME – קובץ סטטי, בלי Jinja
+# HOME PAGE (STATIC)
 # -----------------------------
-@app.get("/", response_class=HTMLResponse)
-def home(request: Request, _: None = Depends(verify_key)):
-    # home.html נמצא בשורש הפרויקט: WorkScedulear/home.html
+@app.get("/")
+def home(_: None = Depends(verify_key)):
     return FileResponse("home.html")
 
+# -----------------------------
+# STATIC PAGES
+# -----------------------------
+@app.get("/children.html")
+def children_page(_: None = Depends(verify_key)):
+    return FileResponse("children.html")
+
+@app.get("/visit_add.html")
+def visit_add_page(_: None = Depends(verify_key)):
+    return FileResponse("visit_add.html")
 
 # -----------------------------
-# API למערכת השעות (בשביל home.html)
+# API: ADD CHILD
 # -----------------------------
-@app.get("/api/schedule")
-def api_schedule(_: None = Depends(verify_key)):
-    conn = get_db()
-    cursor = conn.cursor()
-    cursor.execute("""
-        SELECT schedule.id,
-               children.name,
-               schedule.day,
-               schedule.start_time,
-               schedule.end_time
-        FROM schedule
-        JOIN children ON schedule.child_id = children.id
-        ORDER BY schedule.day, schedule.start_time
-    """)
-    rows = cursor.fetchall()
-    conn.close()
-
-    return [
-        {
-            "id": row["id"],
-            "name": row["name"],
-            "day": row["day"],
-            "start_time": row["start_time"],
-            "end_time": row["end_time"],
-        }
-        for row in rows
-    ]
-
-
-# -----------------------------
-# CHILDREN PAGES
-# -----------------------------
-@app.get("/children", response_class=HTMLResponse)
-def children_page(request: Request, _: None = Depends(verify_key)):
-    return templates.TemplateResponse(
-        "children.html",
-        {"request": request, "secret_key": SECRET_KEY},
-    )
-
-
-@app.post("/children/add")
-def add_child(name: str = Form(...), _: None = Depends(verify_key)):
-    conn = get_db()
-    cursor = conn.cursor()
-    cursor.execute("INSERT INTO children (name) VALUES (?)", (name,))
-    conn.commit()
-    conn.close()
-    return {"status": "success"}
-
-
-@app.post("/children/delete")
-def delete_child(child_id: int = Form(...), _: None = Depends(verify_key)):
-    conn = get_db()
-    cursor = conn.cursor()
-    cursor.execute("DELETE FROM children WHERE id = ?", (child_id,))
-    cursor.execute("DELETE FROM schedule WHERE child_id = ?", (child_id,))
-    conn.commit()
-    conn.close()
-    return {"status": "success"}
-
-
-# -----------------------------
-# SCHEDULE / VISITS PAGES
-# -----------------------------
-@app.get("/schedule", response_class=HTMLResponse)
-def schedule_page(request: Request, _: None = Depends(verify_key)):
-    return templates.TemplateResponse(
-        "visit_add.html",
-        {"request": request, "secret_key": SECRET_KEY},
-    )
-
-
-@app.post("/schedule/add")
-def add_schedule(
-    child_id: int = Form(...),
-    day: str = Form(...),
-    start_time: str = Form(...),
-    end_time: str = Form(...),
-    _: None = Depends(verify_key),
+@app.post("/api/children/add")
+def add_child(
+    name: str = Form(...),
+    parent: str = Form(...),
+    phone: str = Form(...),
+    address: str = Form(...),
+    _: None = Depends(verify_key)
 ):
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute(
-        """
-        INSERT INTO schedule (child_id, day, start_time, end_time)
+    cursor.execute("""
+        INSERT INTO children (name, parent, phone, address)
         VALUES (?, ?, ?, ?)
-        """,
-        (child_id, day, start_time, end_time),
-    )
+    """, (name, parent, phone, address))
     conn.commit()
     conn.close()
     return {"status": "success"}
 
-
-@app.post("/schedule/delete")
-def delete_schedule(schedule_id: int = Form(...), _: None = Depends(verify_key)):
+# -----------------------------
+# API: GET CHILDREN
+# -----------------------------
+@app.get("/api/children")
+def get_children(_: None = Depends(verify_key)):
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute("DELETE FROM schedule WHERE id = ?", (schedule_id,))
-    conn.commit()
+    cursor.execute("SELECT * FROM children")
+    rows = cursor.fetchall()
     conn.close()
-    return {"status": "success"}
-
+    return [dict(row) for row in rows]
 
 # -----------------------------
-# EXPORT EXCEL
+# API: ADD SCHEDULE ENTRY
 # -----------------------------
-@app.get("/export")
-def export_excel(_: None = Depends(verify_key)):
+@app.post("/api/schedule/add")
+async def add_schedule(data: dict, _: None = Depends(verify_key)):
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute("""
-        SELECT schedule.id,
-               children.name,
-               schedule.day,
-               schedule.start_time,
-               schedule.end_time
+        INSERT INTO schedule (child_name, parent_name, phone, address, day, start_time, end_time)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    """, (
+        data["child_name"],
+        data["parent_name"],
+        data["phone"],
+        data["address"],
+        data["day"],
+        data["start_time"],
+        data["end_time"]
+    ))
+    conn.commit()
+    conn.close()
+    return {"status": "success"}
+
+# -----------------------------
+# API: GET SCHEDULE
+# -----------------------------
+@app.get("/api/schedule")
+def get_schedule(_: None = Depends(verify_key)):
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT child_name, parent_name, phone, address, day, start_time, end_time
         FROM schedule
-        JOIN children ON schedule.child_id = children.id
+        ORDER BY day, start_time
     """)
     rows = cursor.fetchall()
     conn.close()
-
-    wb = openpyxl.Workbook()
-    ws = wb.active
-    ws.append(["ID", "Child", "Day", "Start", "End"])
-
-    for row in rows:
-        ws.append([
-            row["id"],
-            row["name"],
-            row["day"],
-            row["start_time"],
-            row["end_time"],
-        ])
-
-    filename = "schedule_export.xlsx"
-    wb.save(filename)
-
-    return FileResponse(filename, filename=filename)
+    return [dict(row) for row in rows]
