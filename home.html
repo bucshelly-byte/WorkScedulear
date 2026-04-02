@@ -6,124 +6,68 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <style>
-        body {
-            font-family: Arial;
-            margin: 0;
-            padding: 0;
-            direction: rtl;
-            background: #f7f7f7;
-        }
+        body { font-family: Arial; margin: 0; padding: 0; background: #f7f7f7; }
 
-        /* כפתור המבורגר */
         .hamburger {
-            position: fixed;
-            top: 15px;
-            right: 15px;
-            width: 35px;
-            height: 30px;
-            cursor: pointer;
-            z-index: 1000;
+            position: fixed; top: 15px; right: 15px;
+            width: 35px; height: 30px; cursor: pointer; z-index: 1000;
         }
-
         .hamburger div {
-            width: 100%;
-            height: 5px;
-            background: #333;
-            margin: 6px 0;
-            border-radius: 5px;
+            width: 100%; height: 5px; background: #333;
+            margin: 6px 0; border-radius: 5px;
         }
 
-        /* תפריט צד */
         .side-menu {
-            position: fixed;
-            top: 0;
-            right: -250px;
-            width: 250px;
-            height: 100%;
-            background: #333;
-            color: white;
-            padding-top: 60px;
-            transition: 0.3s;
-            z-index: 999;
+            position: fixed; top: 0; right: -250px;
+            width: 250px; height: 100%; background: #333;
+            padding-top: 60px; transition: 0.3s; z-index: 999;
         }
-
         .side-menu a {
-            display: block;
-            padding: 15px;
-            color: white;
-            text-decoration: none;
-            border-bottom: 1px solid #444;
+            display: block; padding: 15px; color: white;
+            text-decoration: none; border-bottom: 1px solid #444;
         }
-
-        .side-menu a:hover {
-            background: #444;
-        }
-
-        .side-menu.open {
-            right: 0;
-        }
+        .side-menu.open { right: 0; }
 
         header {
-            background: #4CAF50;
-            color: white;
-            padding: 15px;
-            text-align: center;
-            font-size: 22px;
-        }
-
-        .container {
-            padding: 20px;
+            background: #4CAF50; color: white;
+            padding: 15px; text-align: center; font-size: 22px;
         }
 
         table {
-            width: 100%;
-            border-collapse: collapse;
-            background: white;
-            margin-top: 20px;
+            width: 100%; border-collapse: collapse; background: white; margin-top: 20px;
         }
-
         th, td {
-            border: 1px solid #ccc;
-            padding: 10px;
-            text-align: center;
+            border: 1px solid #ccc; padding: 10px; text-align: center;
         }
-
-        th {
-            background: #eaeaea;
-        }
+        th { background: #eaeaea; }
     </style>
 </head>
 
 <body>
 
-<header>
-    מערכת שעות – דף הבית
-</header>
+<header>מערכת שעות – דף הבית</header>
 
-<!-- כפתור המבורגר -->
 <div class="hamburger" onclick="toggleMenu()">
-    <div></div>
-    <div></div>
-    <div></div>
+    <div></div><div></div><div></div>
 </div>
 
-<!-- תפריט צד -->
 <div id="sideMenu" class="side-menu">
-    <a href="/children?key=ShellySecureKey_9843_2024_XYZ">ניהול ילדים</a>
-    <a href="/schedule?key=ShellySecureKey_9843_2024_XYZ">ניהול משמרות</a>
-    <a href="/export?key=ShellySecureKey_9843_2024_XYZ">ייצוא לאקסל</a>
+    <a href="/home.html?key=ShellySecureKey_9843_2024_XYZ">דף הבית</a>
+    <a href="/children.html?key=ShellySecureKey_9843_2024_XYZ">ניהול ילדים</a>
+    <a href="/visit_add.html?key=ShellySecureKey_9843_2024_XYZ">שיבוץ ילד</a>
 </div>
 
 <div class="container">
-    <h2>מערכת שעות</h2>
-
     <table id="scheduleTable">
         <thead>
             <tr>
                 <th>ילד</th>
+                <th>הורה</th>
+                <th>טלפון</th>
+                <th>כתובת</th>
                 <th>יום</th>
-                <th>שעת התחלה</th>
-                <th>עד שעה</th>
+                <th>התחלה</th>
+                <th>סיום</th>
             </tr>
         </thead>
         <tbody></tbody>
@@ -147,7 +91,10 @@ async function loadSchedule() {
     data.forEach(row => {
         const tr = document.createElement("tr");
         tr.innerHTML = `
-            <td>${row.name}</td>
+            <td>${row.child_name}</td>
+            <td>${row.parent_name}</td>
+            <td>${row.phone}</td>
+            <td>${row.address}</td>
             <td>${row.day}</td>
             <td>${row.start_time}</td>
             <td>${row.end_time}</td>
