@@ -1,0 +1,59 @@
+<h2>הוספת שיבוץ</h2>
+
+<label>בחר ילד</label>
+<select id="childSelect"></select>
+
+<label>יום</label>
+<select id="day">
+    <option>ראשון</option>
+    <option>שני</option>
+    <option>שלישי</option>
+    <option>רביעי</option>
+    <option>חמישי</option>
+    <option>שישי</option>
+</select>
+
+<label>שעת התחלה</label>
+<input type="time" id="start_time">
+
+<label>שעת סיום</label>
+<input type="time" id="end_time">
+
+<button onclick="saveVisit()">שמור</button>
+
+<script>
+async function init_visit_add() {
+    const res = await fetch(`/api/children?key=${KEY}`);
+    const data = await res.json();
+
+    const select = document.getElementById("childSelect");
+    select.innerHTML = "";
+
+    data.forEach(child => {
+        const opt = document.createElement("option");
+        opt.value = child.id;
+        opt.textContent = child.name;
+        select.appendChild(opt);
+    });
+}
+
+async function saveVisit() {
+    const form = new FormData();
+    form.append("child_id", document.getElementById("childSelect").value);
+    form.append("day", document.getElementById("day").value);
+    form.append("start_time", document.getElementById("start_time").value);
+    form.append("end_time", document.getElementById("end_time").value);
+
+    const res = await fetch(`/api/schedule/add?key=${KEY}`, {
+        method: "POST",
+        body: form
+    });
+
+    if (res.ok) {
+        navigate("home");
+    } else {
+        const txt = await res.text();
+        alert("שגיאה: " + txt);
+    }
+}
+</script>

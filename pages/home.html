@@ -1,0 +1,68 @@
+<h2>מבט שבועי</h2>
+
+<button class="btn" onclick="exportAll()">📤 ייצוא מערכת כללית</button>
+
+<table id="scheduleTable">
+    <thead>
+        <tr>
+            <th>ילד</th>
+            <th>הורה</th>
+            <th>טלפון</th>
+            <th>כתובת</th>
+            <th>יום</th>
+            <th>התחלה</th>
+            <th>סיום</th>
+            <th>פעולות</th>
+        </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+
+<script>
+async function init_home() {
+    const res = await fetch(`/api/schedule?key=${KEY}`);
+    const data = await res.json();
+
+    const tbody = document.querySelector("#scheduleTable tbody");
+    tbody.innerHTML = "";
+
+    data.forEach(row => {
+        const tr = document.createElement("tr");
+
+        tr.innerHTML = `
+            <td>${row.child_name}</td>
+            <td>${row.parent_name || ""}</td>
+            <td>${row.phone || ""}</td>
+            <td>${row.address || ""}</td>
+            <td>${row.day}</td>
+            <td>${row.start_time}</td>
+            <td>${row.end_time}</td>
+            <td>
+                <span style="cursor:pointer;font-size:20px;margin-left:8px" onclick="navigate('visit_edit', ${row.id})">✏️</span>
+                <span style="cursor:pointer;font-size:20px;margin-left:8px" onclick="deleteVisit(${row.id})">🗑️</span>
+                <span style="cursor:pointer;font-size:20px" onclick="navigate('child_profile', ${row.child_id})">👤</span>
+            </td>
+        `;
+
+        tbody.appendChild(tr);
+    });
+}
+
+async function deleteVisit(id) {
+    if (!confirm("למחוק את השיבוץ?")) return;
+
+    const res = await fetch(`/api/schedule/delete/${id}?key=${KEY}`, {
+        method: "POST"
+    });
+
+    if (res.ok) {
+        navigate("home");
+    } else {
+        alert("שגיאה במחיקה");
+    }
+}
+
+function exportAll() {
+    window.location.href = `/export/image/all?key=${KEY}`;
+}
+</script>
