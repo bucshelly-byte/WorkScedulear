@@ -1,6 +1,6 @@
 <h2>מבט שבועי</h2>
 
-<button class="btn" onclick="exportAll()">ייצוא מערכת כללית כתמונה</button>
+<button class="btn" onclick="exportAll()">📤 ייצוא מערכת כללית</button>
 
 <table id="scheduleTable">
     <thead>
@@ -38,9 +38,9 @@ async function init_home() {
             <td>${row.start_time}</td>
             <td>${row.end_time}</td>
             <td>
-                <button class="btn" onclick="navigate('visit_edit', ${row.id})">עריכה</button>
-                <button class="btn" onclick="deleteVisit(${row.id})">מחיקה</button>
-                <button class="btn" onclick="navigate('child_profile', ${row.child_id})">פרופיל</button>
+                <span style="cursor:pointer;font-size:20px;margin-left:8px" onclick="navigate('visit_edit', ${row.id})">✏️</span>
+                <span style="cursor:pointer;font-size:20px;margin-left:8px" onclick="deleteVisit(${row.id})">🗑️</span>
+                <span style="cursor:pointer;font-size:20px" onclick="navigate('child_profile', ${row.child_id})">👤</span>
             </td>
         `;
 
