@@ -1,26 +1,222 @@
-{% extends "base.html" %}
-{% block content %}
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>ניהול ילדים</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<h2>ניהול ילדים</h2>
+    <style>
+        body { font-family: Arial; margin: 0; padding: 0; background: #f7f7f7; }
 
-<a class="btn" href="/children/add">הוספת ילד</a>
+        .hamburger {
+            position: fixed; top: 15px; right: 15px;
+            width: 35px; height: 30px; cursor: pointer; z-index: 1000;
+        }
+        .hamburger div {
+            width: 100%; height: 5px; background: #333;
+            margin: 6px 0; border-radius: 5px;
+        }
 
-<table>
-    <tr>
-        <th>שם</th>
-        <th>הורה</th>
-        <th>טלפון</th>
-        <th>פרופיל</th>
-    </tr>
+        .side-menu {
+            position: fixed; top: 0; right: -250px;
+            width: 250px; height: 100%; background: #333;
+            padding-top: 60px; transition: 0.3s; z-index: 999;
+        }
+        .side-menu a {
+            display: block; padding: 15px; color: white;
+            text-decoration: none; border-bottom: 1px solid #444;
+        }
+        .side-menu.open { right: 0; }
 
-    {% for c in children %}
-    <tr>
-        <td>{{ c.name }}</td>
-        <td>{{ c.parent_name }}</td>
-        <td>{{ c.phone }}</td>
-        <td><a class="btn" href="/children/{{ c.id }}">לצפייה</a></td>
-    </tr>
-    {% endfor %}
-</table>
+        header {
+            background: #4CAF50; color: white;
+            padding: 15px; text-align: center; font-size: 22px;
+        }
 
-{% endblock %}
+        .container { padding: 20px; }
+
+        table {
+            width: 100%; border-collapse: collapse; background: white; margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ccc; padding: 8px; text-align: center; font-size: 14px;
+        }
+        th { background: #eaeaea; }
+
+        input {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            padding: 6px 10px;
+            margin: 3px;
+            font-size: 13px;
+        }
+
+        .form-box {
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+
+<body>
+
+<header>ניהול ילדים</header>
+
+<div class="hamburger" onclick="toggleMenu()">
+    <div></div><div></div><div></div>
+</div>
+
+<div id="sideMenu" class="side-menu">
+    <a href="/home.html?key=ShellySecureKey_9843_2024_XYZ">דף הבית</a>
+    <a href="/children.html?key=ShellySecureKey_9843_2024_XYZ">ניהול ילדים</a>
+    <a href="/visit_add.html?key=ShellySecureKey_9843_2024_XYZ">שיבוץ ילד</a>
+</div>
+
+<div class="container">
+
+    <div class="form-box">
+        <h3 id="formTitle">הוספת ילד</h3>
+        <input id="childId" type="hidden">
+        <label>שם הילד</label>
+        <input id="name" type="text">
+        <label>שם ההורה</label>
+        <input id="parent_name" type="text">
+        <label>טלפון</label>
+        <input id="phone" type="tel">
+        <label>כתובת</label>
+        <input id="address" type="text">
+        <button onclick="saveChild()">שמור</button>
+        <button onclick="resetForm()">נקה</button>
+    </div>
+
+    <table id="childrenTable">
+        <thead>
+            <tr>
+                <th>שם</th>
+                <th>הורה</th>
+                <th>טלפון</th>
+                <th>כתובת</th>
+                <th>פעולות</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+
+<script>
+const KEY = "ShellySecureKey_9843_2024_XYZ";
+
+function toggleMenu() {
+    document.getElementById("sideMenu").classList.toggle("open");
+}
+
+async function loadChildren() {
+    const res = await fetch(`/api/children?key=${KEY}`);
+    const data = await res.json();
+
+    const tbody = document.querySelector("#childrenTable tbody");
+    tbody.innerHTML = "";
+
+    data.forEach(row => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td>${row.name}</td>
+            <td>${row.parent_name || ""}</td>
+            <td>${row.phone || ""}</td>
+            <td>${row.address || ""}</td>
+            <td>
+                <button onclick="editChild(${row.id})">עריכה</button>
+                <button onclick="deleteChild(${row.id})">מחיקה</button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+async function saveChild() {
+    const id = document.getElementById("childId").value;
+    const name = document.getElementById("name").value;
+    const parent_name = document.getElementById("parent_name").value;
+    const phone = document.getElementById("phone").value;
+    const address = document.getElementById("address").value;
+
+    if (!name) {
+        alert("חייב שם ילד");
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append("name", name);
+    formData.append("parent_name", parent_name);
+    formData.append("phone", phone);
+    formData.append("address", address);
+
+    let url;
+    if (id) {
+        url = `/api/children/edit/${id}?key=${KEY}`;
+    } else {
+        url = `/api/children/add?key=${KEY}`;
+    }
+
+    const res = await fetch(url, {
+        method: "POST",
+        body: formData
+    });
+
+    if (res.ok) {
+        resetForm();
+        loadChildren();
+    } else {
+        alert("שגיאה בשמירה");
+    }
+}
+
+function resetForm() {
+    document.getElementById("childId").value = "";
+    document.getElementById("name").value = "";
+    document.getElementById("parent_name").value = "";
+    document.getElementById("phone").value = "";
+    document.getElementById("address").value = "";
+    document.getElementById("formTitle").innerText = "הוספת ילד";
+}
+
+async function editChild(id) {
+    const res = await fetch(`/api/children/${id}?key=${KEY}`);
+    if (!res.ok) {
+        alert("שגיאה בטעינת ילד");
+        return;
+    }
+    const data = await res.json();
+    document.getElementById("childId").value = data.id;
+    document.getElementById("name").value = data.name;
+    document.getElementById("parent_name").value = data.parent_name || "";
+    document.getElementById("phone").value = data.phone || "";
+    document.getElementById("address").value = data.address || "";
+    document.getElementById("formTitle").innerText = "עריכת ילד";
+}
+
+async function deleteChild(id) {
+    if (!confirm("למחוק את הילד וכל השיבוצים שלו?")) return;
+    const res = await fetch(`/api/children/delete/${id}?key=${KEY}`, {
+        method: "POST"
+    });
+    if (res.ok) {
+        loadChildren();
+    } else {
+        alert("שגיאה במחיקה");
+    }
+}
+
+loadChildren();
+</script>
+
+</body>
+</html>
