@@ -33,13 +33,30 @@
             padding: 15px; text-align: center; font-size: 22px;
         }
 
+        .container { padding: 20px; }
+
         table {
             width: 100%; border-collapse: collapse; background: white; margin-top: 20px;
         }
         th, td {
-            border: 1px solid #ccc; padding: 10px; text-align: center;
+            border: 1px solid #ccc; padding: 8px; text-align: center; font-size: 14px;
         }
         th { background: #eaeaea; }
+
+        button {
+            padding: 5px 10px;
+            font-size: 12px;
+            margin: 2px;
+        }
+
+        .top-actions {
+            margin-top: 10px;
+        }
+
+        .top-actions button {
+            width: 100%;
+            margin-bottom: 5px;
+        }
     </style>
 </head>
 
@@ -58,6 +75,10 @@
 </div>
 
 <div class="container">
+    <div class="top-actions">
+        <button onclick="exportAll()">ייצוא מערכת כללית כתמונה</button>
+    </div>
+
     <table id="scheduleTable">
         <thead>
             <tr>
@@ -68,6 +89,7 @@
                 <th>יום</th>
                 <th>התחלה</th>
                 <th>סיום</th>
+                <th>פעולות</th>
             </tr>
         </thead>
         <tbody></tbody>
@@ -92,15 +114,44 @@ async function loadSchedule() {
         const tr = document.createElement("tr");
         tr.innerHTML = `
             <td>${row.child_name}</td>
-            <td>${row.parent_name}</td>
-            <td>${row.phone}</td>
-            <td>${row.address}</td>
+            <td>${row.parent_name || ""}</td>
+            <td>${row.phone || ""}</td>
+            <td>${row.address || ""}</td>
             <td>${row.day}</td>
             <td>${row.start_time}</td>
             <td>${row.end_time}</td>
+            <td>
+                <button onclick="editVisit(${row.id})">עריכה</button>
+                <button onclick="deleteVisit(${row.id})">מחיקה</button>
+                <button onclick="exportChild(${row.child_id})">ייצוא ילד</button>
+            </td>
         `;
         tbody.appendChild(tr);
     });
+}
+
+async function deleteVisit(id) {
+    if (!confirm("למחוק את השיבוץ?")) return;
+    const res = await fetch(`/api/schedule/delete/${id}?key=${KEY}`, {
+        method: "POST"
+    });
+    if (res.ok) {
+        loadSchedule();
+    } else {
+        alert("שגיאה במחיקה");
+    }
+}
+
+function editVisit(id) {
+    window.location.href = `/visit_edit.html?key=${KEY}&id=${id}`;
+}
+
+function exportAll() {
+    window.location.href = `/export/image/all?key=${KEY}`;
+}
+
+function exportChild(childId) {
+    window.location.href = `/export/image/child/${childId}?key=${KEY}`;
 }
 
 loadSchedule();
