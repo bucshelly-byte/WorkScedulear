@@ -1,17 +1,19 @@
-<h2>ניהול ילדים</h2>
+<div class="page">
+    <h1>רשימת ילדים</h1>
 
-<button class="btn" onclick="navigate('child_add')">➕ הוספת ילד</button>
-<br><br>
+    <table id="childrenTable">
+        <thead>
+            <tr>
+                <th>שם ילד</th>
+                <th>שם הורה</th>
+                <th>טלפון</th>
+                <th>כתובת</th>
+                <th>פעולות</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
 
-<table id="childrenTable">
-    <thead>
-        <tr>
-            <th>שם</th>
-            <th>שם הורה</th>
-            <th>טלפון</th>
-            <th>כתובת</th>
-            <th>פעולות</th>
-        </tr>
-    </thead>
-    <tbody></tbody>
-</table>
+    <br>
+    <button class="export-btn" onclick="navigate('child_add')">➕ הוספת ילד</button>
+</div>
