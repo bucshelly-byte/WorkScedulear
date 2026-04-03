@@ -1,27 +1,28 @@
-<h2>עריכת ילד</h2>
+<div class="page">
+    <h1>עריכת ילד</h1>
 
-<input type="hidden" id="childId">
+    <input type="hidden" id="childId">
 
-<div class="form-grid">
-    <div class="field">
-        <label>שם ילד</label>
-        <input id="name">
+    <div>
+        <label>שם ילד:</label><br>
+        <input id="name" type="text">
     </div>
-    <div class="field">
-        <label>שם הורה</label>
-        <input id="parent_name">
+
+    <div>
+        <label>שם הורה:</label><br>
+        <input id="parent_name" type="text">
     </div>
-    <div class="field">
-        <label>טלפון</label>
-        <input id="phone">
+
+    <div>
+        <label>טלפון:</label><br>
+        <input id="phone" type="text">
     </div>
-    <div class="field">
-        <label>כתובת</label>
-        <input id="address">
+
+    <div>
+        <label>כתובת:</label><br>
+        <input id="address" type="text">
     </div>
+
+    <br>
+    <button class="export-btn" onclick="saveEdit()">עדכון</button>
 </div>
-
-<br>
-
-<button class="btn" onclick="saveEdit()">שמור</button>
-<button class="btn secondary" onclick="navigate('children')">ביטול</button>
