@@ -1,7 +1,14 @@
 <h2>מבט שבועי</h2>
+<div class="subtitle">תצוגה מרוכזת של כל השיבוצים השבועיים</div>
 
-<button class="btn" onclick="exportAll()">📤 ייצוא מערכת כללית</button>
-<button class="btn" onclick="navigate('visit_add')">➕ הוספת שיבוץ</button>
+<div class="toolbar">
+    <button class="btn" onclick="exportAll()">
+        📤 ייצוא מערכת כללית
+    </button>
+    <button class="btn secondary" onclick="navigate('visit_add')">
+        ➕ הוספת שיבוץ
+    </button>
+</div>
 
 <table id="scheduleTable">
     <thead>
@@ -38,9 +45,9 @@ async function init_home() {
             <td>${row.start_time}</td>
             <td>${row.end_time}</td>
             <td>
-                <span class="icon-btn" onclick="navigate('visit_edit', ${row.id})">✏️</span>
-                <span class="icon-btn" onclick="deleteVisit(${row.id})">🗑️</span>
-                <span class="icon-btn" onclick="navigate('child_profile', ${row.child_id})">👤</span>
+                <span class="icon-btn" title="עריכת שיבוץ" onclick="navigate('visit_edit', ${row.id})">✏️</span>
+                <span class="icon-btn" title="מחיקה" onclick="deleteVisit(${row.id})">🗑️</span>
+                <span class="icon-btn" title="פרופיל ילד" onclick="navigate('child_profile', ${row.child_id})">👤</span>
             </td>
         `;
         tbody.appendChild(tr);
