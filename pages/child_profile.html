@@ -1,6 +1,13 @@
 <h2 id="childName">פרופיל ילד</h2>
+<div class="subtitle">שיבוצים של הילד הנבחר</div>
 
-<button class="btn" onclick="exportChild()">📤 ייצוא מערכת</button>
+<div class="toolbar">
+    <span class="pill">
+        👧 <span id="childMeta"></span>
+    </span>
+    <button class="btn secondary" onclick="navigate('children')">חזרה לרשימת ילדים</button>
+    <button class="btn" onclick="exportChild()">📤 ייצוא מערכת לילד</button>
+</div>
 
 <table id="childSchedule">
     <thead>
@@ -23,6 +30,8 @@ async function init_child_profile(id) {
     const resChild = await fetch(`/api/children/${id}?key=${KEY}`);
     const child = await resChild.json();
     document.getElementById("childName").innerText = child.name;
+    document.getElementById("childMeta").innerText =
+        (child.parent_name || "ללא הורה") + " • " + (child.phone || "ללא טלפון");
 
     const res = await fetch(`/api/schedule/by_child/${id}?key=${KEY}`);
     const data = await res.json();
@@ -37,8 +46,8 @@ async function init_child_profile(id) {
             <td>${row.start_time}</td>
             <td>${row.end_time}</td>
             <td>
-                <span class="icon-btn" onclick="navigate('visit_edit', ${row.id})">✏️</span>
-                <span class="icon-btn" onclick="deleteVisitChild(${row.id})">🗑️</span>
+                <span class="icon-btn" title="עריכה" onclick="navigate('visit_edit', ${row.id})">✏️</span>
+                <span class="icon-btn" title="מחיקה" onclick="deleteVisitChild(${row.id})">🗑️</span>
             </td>
         `;
         tbody.appendChild(tr);
@@ -52,7 +61,7 @@ function exportChild() {
 async function deleteVisitChild(id) {
     if (!confirm("למחוק את השיבוץ?")) return;
     const res = await fetch(`/api/schedule/delete/${id}?key=${KEY}`, { method: "POST" });
-    if (res.ok) navigate("child_profile", CURRENT_CHILD);
+    if (res.ok) init_child_profile(CURRENT_CHILD);
     else alert("שגיאה במחיקה");
 }
 </script>
