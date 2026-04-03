@@ -1,15 +1,9 @@
 <h2 id="childName">פרופיל ילד</h2>
-<div class="subtitle">שיבוצים של הילד הנבחר</div>
+<div class="subtitle" id="childMeta"></div>
 
-<div class="toolbar">
-    <span class="pill">
-        👧 <span id="childMeta"></span>
-    </span>
-    <button class="btn secondary" onclick="navigate('children')">חזרה לרשימת ילדים</button>
-    <button class="btn" onclick="exportChild()">📤 ייצוא מערכת לילד</button>
-</div>
+<button class="btn" onclick="exportChild()">📤 ייצוא מערכת לילד</button>
 
-<table id="childSchedule">
+<table id="childSchedule" style="margin-top:12px;">
     <thead>
         <tr>
             <th>יום</th>
@@ -20,48 +14,3 @@
     </thead>
     <tbody></tbody>
 </table>
-
-<script>
-let CURRENT_CHILD = null;
-
-async function init_child_profile(id) {
-    CURRENT_CHILD = id;
-
-    const resChild = await fetch(`/api/children/${id}?key=${KEY}`);
-    const child = await resChild.json();
-    document.getElementById("childName").innerText = child.name;
-    document.getElementById("childMeta").innerText =
-        (child.parent_name || "ללא הורה") + " • " + (child.phone || "ללא טלפון");
-
-    const res = await fetch(`/api/schedule/by_child/${id}?key=${KEY}`);
-    const data = await res.json();
-
-    const tbody = document.querySelector("#childSchedule tbody");
-    tbody.innerHTML = "";
-
-    data.forEach(row => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-            <td>${row.day}</td>
-            <td>${row.start_time}</td>
-            <td>${row.end_time}</td>
-            <td>
-                <span class="icon-btn" title="עריכה" onclick="navigate('visit_edit', ${row.id})">✏️</span>
-                <span class="icon-btn" title="מחיקה" onclick="deleteVisitChild(${row.id})">🗑️</span>
-            </td>
-        `;
-        tbody.appendChild(tr);
-    });
-}
-
-function exportChild() {
-    window.location.href = `/export/image/child/${CURRENT_CHILD}?key=${KEY}`;
-}
-
-async function deleteVisitChild(id) {
-    if (!confirm("למחוק את השיבוץ?")) return;
-    const res = await fetch(`/api/schedule/delete/${id}?key=${KEY}`, { method: "POST" });
-    if (res.ok) init_child_profile(CURRENT_CHILD);
-    else alert("שגיאה במחיקה");
-}
-</script>
