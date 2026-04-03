@@ -42,10 +42,7 @@ async function saveEdit() {
         body: form
     });
 
-    if (res.ok) {
-        navigate("children");
-    } else {
-        alert("שגיאה בעדכון");
-    }
+    if (res.ok) navigate("children");
+    else alert("שגיאה בעדכון");
 }
 </script>
