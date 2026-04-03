@@ -5,7 +5,7 @@
 
 <div class="form-grid">
     <div class="field">
-        <label>בחר ילד</label>
+        <label>ילד</label>
         <select id="childSelect"></select>
     </div>
     <div class="field">
@@ -20,66 +20,16 @@
         </select>
     </div>
     <div class="field">
-        <label>שעת התחלה</label>
+        <label>התחלה</label>
         <input type="time" id="start_time">
     </div>
     <div class="field">
-        <label>שעת סיום</label>
+        <label>סיום</label>
         <input type="time" id="end_time">
     </div>
 </div>
 
-<div class="form-actions">
+<div style="margin-top:12px;">
     <button class="btn" onclick="saveEditVisit()">שמור</button>
     <button class="btn secondary" onclick="navigate('home')">ביטול</button>
 </div>
-
-<script>
-async function init_visit_edit(id) {
-    document.getElementById("visitId").value = id;
-
-    const childrenRes = await fetch(`/api/children?key=${KEY}`);
-    const children = await childrenRes.json();
-
-    const select = document.getElementById("childSelect");
-    select.innerHTML = "";
-    children.forEach(c => {
-        const opt = document.createElement("option");
-        opt.value = c.id;
-        opt.textContent = c.name;
-        select.appendChild(opt);
-    });
-
-    const res = await fetch(`/api/schedule?key=${KEY}`);
-    const data = await res.json();
-    const row = data.find(r => r.id === id);
-
-    if (!row) return;
-
-    document.getElementById("childSelect").value = row.child_id;
-    document.getElementById("day").value = row.day;
-    document.getElementById("start_time").value = row.start_time;
-    document.getElementById("end_time").value = row.end_time;
-}
-
-async function saveEditVisit() {
-    const id = document.getElementById("visitId").value;
-
-    const form = new FormData();
-    form.append("child_id", document.getElementById("childSelect").value);
-    form.append("day", document.getElementById("day").value);
-    form.append("start_time", document.getElementById("start_time").value);
-    form.append("end_time", document.getElementById("end_time").value);
-
-    const res = await fetch(`/api/schedule/edit/${id}?key=${KEY}`, {
-        method: "POST",
-        body: form
-    });
-
-    if (res.ok) navigate("home");
-    else {
-        const txt = await res.text();
-        alert("שגיאה: " + txt);
-    }
-}
-</script>
