@@ -1,33 +1,36 @@
 <h2>הוספת שיבוץ</h2>
-<div class="subtitle">יצירת שיבוץ חדש</div>
 
 <div class="form-grid">
+
     <div class="field">
-        <label>ילד</label>
+        <label>בחר ילד</label>
         <select id="childSelect"></select>
     </div>
+
     <div class="field">
         <label>יום</label>
         <select id="day">
-            <option>ראשון</option>
-            <option>שני</option>
-            <option>שלישי</option>
-            <option>רביעי</option>
-            <option>חמישי</option>
-            <option>שישי</option>
+            <option value="ראשון">ראשון</option>
+            <option value="שני">שני</option>
+            <option value="שלישי">שלישי</option>
+            <option value="רביעי">רביעי</option>
+            <option value="חמישי">חמישי</option>
         </select>
     </div>
+
     <div class="field">
-        <label>התחלה</label>
-        <input type="time" id="start_time">
+        <label>שעת התחלה</label>
+        <select id="start_time"></select>
     </div>
+
     <div class="field">
-        <label>סיום</label>
-        <input type="time" id="end_time">
+        <label>שעת סיום</label>
+        <select id="end_time"></select>
     </div>
+
 </div>
 
-<div style="margin-top:12px;">
-    <button class="btn" onclick="saveVisit()">שמור</button>
-    <button class="btn secondary" onclick="navigate('home')">ביטול</button>
-</div>
+<br>
+
+<button class="btn" onclick="saveVisit()">שמור</button>
+<button class="btn secondary" onclick="navigate('home')">ביטול</button>
