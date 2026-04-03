@@ -1,20 +1,31 @@
 <h2>עריכת ילד</h2>
+<div class="subtitle">עדכון פרטי ילד קיים</div>
 
 <input type="hidden" id="childId">
 
-<label>שם הילד</label>
-<input id="name">
+<div class="form-grid">
+    <div class="field">
+        <label>שם הילד</label>
+        <input id="name">
+    </div>
+    <div class="field">
+        <label>שם ההורה</label>
+        <input id="parent_name">
+    </div>
+    <div class="field">
+        <label>טלפון</label>
+        <input id="phone">
+    </div>
+    <div class="field">
+        <label>כתובת</label>
+        <input id="address">
+    </div>
+</div>
 
-<label>שם ההורה</label>
-<input id="parent_name">
-
-<label>טלפון</label>
-<input id="phone">
-
-<label>כתובת</label>
-<input id="address">
-
-<button onclick="saveEdit()">שמור</button>
+<div class="form-actions">
+    <button class="btn" onclick="saveEdit()">שמור</button>
+    <button class="btn secondary" onclick="navigate('children')">ביטול</button>
+</div>
 
 <script>
 async function init_child_edit(id) {
@@ -22,7 +33,7 @@ async function init_child_edit(id) {
     const data = await res.json();
 
     document.getElementById("childId").value = data.id;
-    document.getElementById("name").value = data.name;
+    document.getElementById("name").value = data.name || "";
     document.getElementById("parent_name").value = data.parent_name || "";
     document.getElementById("phone").value = data.phone || "";
     document.getElementById("address").value = data.address || "";
@@ -30,12 +41,17 @@ async function init_child_edit(id) {
 
 async function saveEdit() {
     const id = document.getElementById("childId").value;
+    const name = document.getElementById("name").value.trim();
+    if (!name) {
+        alert("חובה למלא שם ילד");
+        return;
+    }
 
     const form = new FormData();
-    form.append("name", document.getElementById("name").value);
-    form.append("parent_name", document.getElementById("parent_name").value);
-    form.append("phone", document.getElementById("phone").value);
-    form.append("address", document.getElementById("address").value);
+    form.append("name", name);
+    form.append("parent_name", document.getElementById("parent_name").value.trim());
+    form.append("phone", document.getElementById("phone").value.trim());
+    form.append("address", document.getElementById("address").value.trim());
 
     const res = await fetch(`/api/children/edit/${id}?key=${KEY}`, {
         method: "POST",
