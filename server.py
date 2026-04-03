@@ -76,10 +76,6 @@ init_db()
 def spa(_: None = Depends(verify_key)):
     return FileResponse("base.html")
 
-@app.get("/home.html")
-def spa_home(_: None = Depends(verify_key)):
-    return FileResponse("base.html")
-
 # -----------------------------
 # CHILDREN API
 # -----------------------------
