@@ -149,6 +149,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+    cursor: pointer;
 }
 
 /* מקרא */
@@ -200,4 +201,45 @@ tr:hover {
     padding: 10px;
     margin-bottom: 6px;
     border-radius: 6px;
+}
+
+/* כפתורי עריכה/מחיקה מקצועיים */
+.action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    font-size: 18px;
+    cursor: pointer;
+    margin: 0 4px;
+    transition: 0.2s;
+}
+
+.action-edit {
+    background: #3b82f6;
+    color: white;
+}
+
+.action-edit:hover {
+    background: #2563eb;
+}
+
+.action-delete {
+    background: #ef4444;
+    color: white;
+}
+
+.action-delete:hover {
+    background: #dc2626;
+}
+
+@media (max-width: 768px) {
+    .action-btn {
+        width: 40px;
+        height: 40px;
+        font-size: 20px;
+        margin: 4px;
+    }
 }
