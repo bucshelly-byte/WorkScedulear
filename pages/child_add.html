@@ -4,49 +4,23 @@
 <div class="form-grid">
     <div class="field">
         <label>שם הילד</label>
-        <input id="name" placeholder="לדוגמה: נועה כהן">
+        <input id="name">
     </div>
     <div class="field">
         <label>שם ההורה</label>
-        <input id="parent_name" placeholder="לדוגמה: יעל כהן">
+        <input id="parent_name">
     </div>
     <div class="field">
         <label>טלפון</label>
-        <input id="phone" placeholder="050-1234567">
+        <input id="phone">
     </div>
     <div class="field">
         <label>כתובת</label>
-        <input id="address" placeholder="רחוב, עיר">
+        <input id="address">
     </div>
 </div>
 
-<div class="form-actions">
+<div style="margin-top:12px;">
     <button class="btn" onclick="saveChild()">שמור</button>
     <button class="btn secondary" onclick="navigate('children')">ביטול</button>
 </div>
-
-<script>
-function init_child_add() {}
-
-async function saveChild() {
-    const name = document.getElementById("name").value.trim();
-    if (!name) {
-        alert("חובה למלא שם ילד");
-        return;
-    }
-
-    const form = new FormData();
-    form.append("name", name);
-    form.append("parent_name", document.getElementById("parent_name").value.trim());
-    form.append("phone", document.getElementById("phone").value.trim());
-    form.append("address", document.getElementById("address").value.trim());
-
-    const res = await fetch(`/api/children/add?key=${KEY}`, {
-        method: "POST",
-        body: form
-    });
-
-    if (res.ok) navigate("children");
-    else alert("שגיאה בשמירה");
-}
-</script>
