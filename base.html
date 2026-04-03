@@ -5,20 +5,41 @@
     <title>מערכת ניהול</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
+    <!-- קובץ העיצוב שלך -->
     <link rel="stylesheet" href="/static/style.css">
 </head>
-    
+
 <body>
 
-    <div id="sidebar">
-        <a onclick="navigate('home')">🏠 דף הבית</a>
-        <a onclick="navigate('children')">👧 ילדים</a>
-        <a onclick="navigate('child_add')">➕ הוספת ילד</a>
-        <a onclick="navigate('visit_add')">📅 הוספת שיבוץ</a>
+    <!-- כפתור המבורגר למובייל -->
+    <div id="menuBtn" class="menu-btn" onclick="toggleMenu()">☰</div>
+
+    <!-- תפריט צד -->
+    <div id="sidebar" class="sidebar">
+        <a onclick="navigateAndClose('home')">🏠 דף הבית</a>
+        <a onclick="navigateAndClose('children')">👧 ילדים</a>
+        <a onclick="navigateAndClose('child_add')">➕ הוספת ילד</a>
+        <a onclick="navigateAndClose('visit_add')">📅 הוספת שיבוץ</a>
     </div>
 
+    <!-- אזור התוכן -->
     <div id="app"></div>
 
+    <script>
+        function toggleMenu() {
+            document.getElementById("sidebar").classList.toggle("open");
+        }
+
+        function navigateAndClose(page) {
+            navigate(page);
+            document.getElementById("sidebar").classList.remove("open");
+        }
+    </script>
+
+    <!-- ספרייה לייצוא תמונה (חייבת להיות כאן כדי לעבוד ב‑SPA) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <!-- קובץ ה‑SPA שלך -->
     <script src="/static/app.js"></script>
 </body>
 </html>
