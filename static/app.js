@@ -33,6 +33,27 @@ window.addEventListener("load", () => navigate("home"));
 
 
 // ----------------------------
+// HOURS LIST (07:00–16:00)
+// ----------------------------
+function generateMorningHours(selectId) {
+    const select = document.getElementById(selectId);
+    select.innerHTML = "";
+
+    for (let h = 7; h <= 16; h++) {
+        for (let m of ["00", "30"]) {
+            if (h === 16 && m !== "00") continue;
+
+            const time = `${String(h).padStart(2, "0")}:${m}`;
+            const opt = document.createElement("option");
+            opt.value = time;
+            opt.textContent = time;
+            select.appendChild(opt);
+        }
+    }
+}
+
+
+// ----------------------------
 // HOME (SCHEDULE LIST)
 // ----------------------------
 window.init_home = async function () {
@@ -250,6 +271,9 @@ window.init_visit_add = async function () {
         opt.textContent = child.name;
         select.appendChild(opt);
     });
+
+    generateMorningHours("start_time");
+    generateMorningHours("end_time");
 };
 
 window.saveVisit = async function () {
@@ -286,6 +310,9 @@ window.init_visit_edit = async function (id) {
         opt.textContent = c.name;
         select.appendChild(opt);
     });
+
+    generateMorningHours("start_time");
+    generateMorningHours("end_time");
 
     const res = await fetch(`/api/schedule?key=${KEY}`);
     const data = await res.json();
