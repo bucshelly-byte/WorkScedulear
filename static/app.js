@@ -1,6 +1,8 @@
 // ----------------------------
 // קונפיגורציה בסיסית
 // ----------------------------
+const KEY = "ShellySecureKey_9843_2024_XYZ";
+
 const routes = {
     home:          { path: "/pages/home.html" },
     children:      { path: "/pages/children.html" },
@@ -8,24 +10,24 @@ const routes = {
     child_edit:    { path: "/pages/child_edit.html" },
     child_profile: { path: "/pages/child_profile.html" },
     visit_add:     { path: "/pages/visit_add.html" },
-    visit_edit:    { path: "/pages/visit_edit.html" },
+    visit_edit:    { path: "/pages/visit_edit.html" }
 };
 
 const DAYS = ["ראשון", "שני", "שלישי", "רביעי", "חמישי"];
-const HOURS = []; // 07:00–16:00 בקפיצות של 30 דק'
+const HOURS = [];
 for (let h = 7; h <= 16; h++) {
     for (let m of ["00", "30"]) {
         if (h === 16 && m !== "00") continue;
         HOURS.push(`${String(h).padStart(2, "0")}:${m}`);
+    }
 }
 
-// צבעים לילדים
 const CHILD_COLORS = [
     "#f97316", "#22c55e", "#3b82f6", "#e11d48",
     "#a855f7", "#14b8a6", "#facc15", "#ec4899"
 ];
 
-let childColorMap = {}; // child_id -> color
+let childColorMap = {};
 
 // ----------------------------
 // SPA NAVIGATION
@@ -37,7 +39,9 @@ async function navigate(page, param = null) {
     const res = await fetch(route.path + `?key=${KEY}`);
     const html = await res.text();
 
-    document.getElementById("app").innerHTML = html;
+    const app = document.getElementById("app");
+    if (!app) return;
+    app.innerHTML = html;
 
     const initName = "init_" + page;
     if (typeof window[initName] === "function") {
@@ -48,7 +52,7 @@ async function navigate(page, param = null) {
 window.addEventListener("load", () => navigate("home"));
 
 // ----------------------------
-// עזר: השוואת שעות
+// עזר: שעות
 // ----------------------------
 function timeToMinutes(t) {
     const [h, m] = t.split(":").map(Number);
@@ -60,25 +64,40 @@ function rangesOverlap(start1, end1, start2, end2) {
            timeToMinutes(start2) < timeToMinutes(end1);
 }
 
+function add30(time) {
+    let [h, m] = time.split(":").map(Number);
+    m += 30;
+    if (m >= 60) {
+        m -= 60;
+        h += 1;
+    }
+    return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+}
+
 // ----------------------------
 // HOME — מערכת שעות
 // ----------------------------
 window.init_home = async function () {
-    const [scheduleRes, childrenRes] = await Promise.all([
-        fetch(`/api/schedule?key=${KEY}`),
-        fetch(`/api/children?key=${KEY}`)
-    ]);
+    try {
+        const [scheduleRes, childrenRes] = await Promise.all([
+            fetch(`/api/schedule?key=${KEY}`),
+            fetch(`/api/children?key=${KEY}`)
+        ]);
 
-    const schedule = await scheduleRes.json();
-    const children = await childrenRes.json();
+        const schedule = await scheduleRes.json();
+        const children = await childrenRes.json();
 
-    // מיפוי צבעים לילדים
-    childColorMap = {};
-    children.forEach((c, idx) => {
-        childColorMap[c.id] = CHILD_COLORS[idx % CHILD_COLORS.length];
-    });
+        childColorMap = {};
+        children.forEach((c, idx) => {
+            childColorMap[c.id] = CHILD_COLORS[idx % CHILD_COLORS.length];
+        });
 
-    renderCalendar(schedule, children);
+        renderCalendar(schedule, children);
+    } catch (e) {
+        console.error(e);
+        const container = document.getElementById("calendarContainer");
+        if (container) container.innerHTML = "שגיאה בטעינת מערכת השעות";
+    }
 };
 
 function renderCalendar(schedule, children) {
@@ -86,7 +105,6 @@ function renderCalendar(schedule, children) {
     const legend = document.getElementById("calendarLegend");
     if (!container) return;
 
-    // בניית גריד
     let html = `<div class="calendar-grid">`;
 
     // כותרת
@@ -119,7 +137,8 @@ function renderCalendar(schedule, children) {
         const color = childColorMap[childId] || "#4b5563";
 
         HOURS.forEach(time => {
-            if (rangesOverlap(start, end, time, add30(time))) {
+            const slotEnd = add30(time);
+            if (rangesOverlap(start, end, time, slotEnd)) {
                 const cell = container.querySelector(
                     `.calendar-cell[data-day="${day}"][data-time="${time}"]`
                 );
@@ -151,43 +170,38 @@ function renderCalendar(schedule, children) {
     }
 }
 
-function add30(time) {
-    let [h, m] = time.split(":").map(Number);
-    m += 30;
-    if (m >= 60) {
-        m -= 60;
-        h += 1;
-    }
-    return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
-}
-
 // ----------------------------
 // CHILDREN LIST
 // ----------------------------
 window.init_children = async function () {
-    const res = await fetch(`/api/children?key=${KEY}`);
-    const data = await res.json();
+    try {
+        const res = await fetch(`/api/children?key=${KEY}`);
+        const data = await res.json();
 
-    const tbody = document.querySelector("#childrenTable tbody");
-    tbody.innerHTML = "";
+        const tbody = document.querySelector("#childrenTable tbody");
+        if (!tbody) return;
+        tbody.innerHTML = "";
 
-    data.forEach(row => {
-        const tr = document.createElement("tr");
+        data.forEach(row => {
+            const tr = document.createElement("tr");
 
-        tr.innerHTML = `
-            <td>${row.name}</td>
-            <td>${row.parent_name || ""}</td>
-            <td>${row.phone || ""}</td>
-            <td>${row.address || ""}</td>
-            <td>
-                <span class="icon-btn" onclick="navigate('child_edit', ${row.id})">✏️</span>
-                <span class="icon-btn" onclick="deleteChild(${row.id})">🗑️</span>
-                <span class="icon-btn" onclick="navigate('child_profile', ${row.id})">👤</span>
-            </td>
-        `;
+            tr.innerHTML = `
+                <td>${row.name}</td>
+                <td>${row.parent_name || ""}</td>
+                <td>${row.phone || ""}</td>
+                <td>${row.address || ""}</td>
+                <td>
+                    <span class="icon-btn" onclick="navigate('child_edit', ${row.id})">✏️</span>
+                    <span class="icon-btn" onclick="deleteChild(${row.id})">🗑️</span>
+                    <span class="icon-btn" onclick="navigate('child_profile', ${row.id})">👤</span>
+                </td>
+            `;
 
-        tbody.appendChild(tr);
-    });
+            tbody.appendChild(tr);
+        });
+    } catch (e) {
+        console.error(e);
+    }
 };
 
 window.deleteChild = async function (id) {
@@ -204,7 +218,9 @@ window.deleteChild = async function (id) {
 // ----------------------------
 // CHILD ADD
 // ----------------------------
-window.init_child_add = function () {};
+window.init_child_add = function () {
+    // אין צורך באתחול מיוחד
+};
 
 window.saveChild = async function () {
     const name = document.getElementById("name").value.trim();
@@ -232,14 +248,18 @@ window.saveChild = async function () {
 // CHILD EDIT
 // ----------------------------
 window.init_child_edit = async function (id) {
-    const res = await fetch(`/api/children/${id}?key=${KEY}`);
-    const data = await res.json();
+    try {
+        const res = await fetch(`/api/children/${id}?key=${KEY}`);
+        const data = await res.json();
 
-    document.getElementById("childId").value = data.id;
-    document.getElementById("name").value = data.name || "";
-    document.getElementById("parent_name").value = data.parent_name || "";
-    document.getElementById("phone").value = data.phone || "";
-    document.getElementById("address").value = data.address || "";
+        document.getElementById("childId").value = data.id;
+        document.getElementById("name").value = data.name || "";
+        document.getElementById("parent_name").value = data.parent_name || "";
+        document.getElementById("phone").value = data.phone || "";
+        document.getElementById("address").value = data.address || "";
+    } catch (e) {
+        console.error(e);
+    }
 };
 
 window.saveEdit = async function () {
@@ -266,34 +286,43 @@ window.saveEdit = async function () {
 window.init_child_profile = async function (id) {
     window.CURRENT_CHILD = id;
 
-    const resChild = await fetch(`/api/children/${id}?key=${KEY}`);
-    const child = await resChild.json();
+    try {
+        const resChild = await fetch(`/api/children/${id}?key=${KEY}`);
+        const child = await resChild.json();
 
-    document.getElementById("childName").innerText = child.name;
-    document.getElementById("childMeta").innerText =
-        (child.parent_name || "ללא הורה") + " • " + (child.phone || "ללא טלפון");
+        const nameEl = document.getElementById("childName");
+        const metaEl = document.getElementById("childMeta");
+        if (nameEl) nameEl.innerText = child.name;
+        if (metaEl) {
+            metaEl.innerText =
+                (child.parent_name || "ללא הורה") + " • " + (child.phone || "ללא טלפון");
+        }
 
-    const res = await fetch(`/api/schedule/by_child/${id}?key=${KEY}`);
-    const data = await res.json();
+        const res = await fetch(`/api/schedule/by_child/${id}?key=${KEY}`);
+        const data = await res.json();
 
-    const tbody = document.querySelector("#childSchedule tbody");
-    tbody.innerHTML = "";
+        const tbody = document.querySelector("#childSchedule tbody");
+        if (!tbody) return;
+        tbody.innerHTML = "";
 
-    data.forEach(row => {
-        const tr = document.createElement("tr");
+        data.forEach(row => {
+            const tr = document.createElement("tr");
 
-        tr.innerHTML = `
-            <td>${row.day}</td>
-            <td>${row.start_time}</td>
-            <td>${row.end_time}</td>
-            <td>
-                <span class="icon-btn" onclick="navigate('visit_edit', ${row.id})">✏️</span>
-                <span class="icon-btn" onclick="deleteVisitChild(${row.id})">🗑️</span>
-            </td>
-        `;
+            tr.innerHTML = `
+                <td>${row.day}</td>
+                <td>${row.start_time}</td>
+                <td>${row.end_time}</td>
+                <td>
+                    <span class="icon-btn" onclick="navigate('visit_edit', ${row.id})">✏️</span>
+                    <span class="icon-btn" onclick="deleteVisitChild(${row.id})">🗑️</span>
+                </td>
+            `;
 
-        tbody.appendChild(tr);
-    });
+            tbody.appendChild(tr);
+        });
+    } catch (e) {
+        console.error(e);
+    }
 };
 
 window.deleteVisitChild = async function (id) {
@@ -308,48 +337,73 @@ window.deleteVisitChild = async function (id) {
 };
 
 // ----------------------------
-// VISIT ADD — עם כמה ימים + בקרה על חפיפות
+// VISIT ADD — כמה ימים + בקרה על חפיפות
 // ----------------------------
 let OCCUPIED_SLOTS_ADD = {}; // day -> [{start,end}]
 
 window.init_visit_add = async function () {
-    const [childrenRes, scheduleRes] = await Promise.all([
-        fetch(`/api/children?key=${KEY}`),
-        fetch(`/api/schedule?key=${KEY}`)
-    ]);
+    try {
+        const [childrenRes, scheduleRes] = await Promise.all([
+            fetch(`/api/children?key=${KEY}`),
+            fetch(`/api/schedule?key=${KEY}`)
+        ]);
 
-    const children = await childrenRes.json();
-    const schedule = await scheduleRes.json();
+        const children = await childrenRes.json();
+        const schedule = await scheduleRes.json();
 
-    const select = document.getElementById("childSelect");
-    select.innerHTML = "";
-    children.forEach(child => {
-        const opt = document.createElement("option");
-        opt.value = child.id;
-        opt.textContent = child.name;
-        select.appendChild(opt);
-    });
-
-    // בניית מבנה שעות תפוסות
-    OCCUPIED_SLOTS_ADD = {};
-    DAYS.forEach(d => OCCUPIED_SLOTS_ADD[d] = []);
-    schedule.forEach(row => {
-        OCCUPIED_SLOTS_ADD[row.day].push({
-            start: row.start_time,
-            end: row.end_time
+        const select = document.getElementById("childSelect");
+        if (!select) return;
+        select.innerHTML = "";
+        children.forEach(child => {
+            const opt = document.createElement("option");
+            opt.value = child.id;
+            opt.textContent = child.name;
+            select.appendChild(opt);
         });
-    });
 
-    buildTimeSelectsAdd();
+        OCCUPIED_SLOTS_ADD = {};
+        DAYS.forEach(d => OCCUPIED_SLOTS_ADD[d] = []);
+        schedule.forEach(row => {
+            OCCUPIED_SLOTS_ADD[row.day].push({
+                start: row.start_time,
+                end: row.end_time
+            });
+        });
+
+        buildTimeSelectsAdd();
+    } catch (e) {
+        console.error(e);
+    }
 };
+
+function getSelectedDaysAdd() {
+    const boxes = document.querySelectorAll(".day-checkbox");
+    const days = [];
+    boxes.forEach(b => {
+        if (b.checked) days.push(b.value);
+    });
+    return days;
+}
+
+function isTimeFreeForAllDays(time, days) {
+    if (days.length === 0) return true;
+    const next = add30(time);
+    return days.every(day => {
+        const arr = OCCUPIED_SLOTS_ADD[day] || [];
+        return !arr.some(r => rangesOverlap(r.start, r.end, time, next));
+    });
+}
 
 function buildTimeSelectsAdd() {
     const startSel = document.getElementById("start_time");
     const endSel = document.getElementById("end_time");
+    if (!startSel || !endSel) return;
+
     startSel.innerHTML = "";
     endSel.innerHTML = "";
 
     const selectedDays = getSelectedDaysAdd();
+
     HOURS.forEach(time => {
         const opt = document.createElement("option");
         opt.value = time;
@@ -373,30 +427,14 @@ function buildTimeSelectsAdd() {
         endSel.appendChild(opt);
     });
 
-    startSel.addEventListener("change", updateEndTimesAdd);
-}
-
-function getSelectedDaysAdd() {
-    const boxes = document.querySelectorAll(".day-checkbox");
-    const days = [];
-    boxes.forEach(b => {
-        if (b.checked) days.push(b.value);
-    });
-    return days;
-}
-
-function isTimeFreeForAllDays(time, days) {
-    if (days.length === 0) return true;
-    const next = add30(time);
-    return days.every(day => {
-        const arr = OCCUPIED_SLOTS_ADD[day] || [];
-        return !arr.some(r => rangesOverlap(r.start, r.end, time, next));
-    });
+    startSel.onchange = updateEndTimesAdd;
 }
 
 function updateEndTimesAdd() {
     const startSel = document.getElementById("start_time");
     const endSel = document.getElementById("end_time");
+    if (!startSel || !endSel) return;
+
     const startTime = startSel.value;
     const selectedDays = getSelectedDaysAdd();
 
@@ -409,7 +447,6 @@ function updateEndTimesAdd() {
         opt.value = time;
         opt.textContent = time;
 
-        // בודקים שכל הטווח פנוי בכל הימים
         const ok = selectedDays.every(day => {
             const arr = OCCUPIED_SLOTS_ADD[day] || [];
             return !arr.some(r => rangesOverlap(r.start, r.end, startTime, time));
@@ -440,7 +477,6 @@ window.saveVisit = async function () {
         return;
     }
 
-    // בדיקה אחרונה של חפיפות
     const badDay = days.find(day => {
         const arr = OCCUPIED_SLOTS_ADD[day] || [];
         return arr.some(r => rangesOverlap(r.start, r.end, start, end));
@@ -451,7 +487,6 @@ window.saveVisit = async function () {
         return;
     }
 
-    // שולחים שיבוץ לכל יום בנפרד
     for (const day of days) {
         const form = new FormData();
         form.append("child_id", childId);
@@ -481,47 +516,55 @@ let CURRENT_EDIT_ID = null;
 
 window.init_visit_edit = async function (id) {
     CURRENT_EDIT_ID = id;
-    document.getElementById("visitId").value = id;
+    const visitIdInput = document.getElementById("visitId");
+    if (visitIdInput) visitIdInput.value = id;
 
-    const [childrenRes, scheduleRes] = await Promise.all([
-        fetch(`/api/children?key=${KEY}`),
-        fetch(`/api/schedule?key=${KEY}`)
-    ]);
+    try {
+        const [childrenRes, scheduleRes] = await Promise.all([
+            fetch(`/api/children?key=${KEY}`),
+            fetch(`/api/schedule?key=${KEY}`)
+        ]);
 
-    const children = await childrenRes.json();
-    const schedule = await scheduleRes.json();
+        const children = await childrenRes.json();
+        const schedule = await scheduleRes.json();
 
-    const select = document.getElementById("childSelect");
-    select.innerHTML = "";
-    children.forEach(c => {
-        const opt = document.createElement("option");
-        opt.value = c.id;
-        opt.textContent = c.name;
-        select.appendChild(opt);
-    });
-
-    OCCUPIED_SLOTS_EDIT = {};
-    DAYS.forEach(d => OCCUPIED_SLOTS_EDIT[d] = []);
-    schedule.forEach(row => {
-        OCCUPIED_SLOTS_EDIT[row.day].push({
-            id: row.id,
-            start: row.start_time,
-            end: row.end_time
+        const select = document.getElementById("childSelect");
+        if (!select) return;
+        select.innerHTML = "";
+        children.forEach(c => {
+            const opt = document.createElement("option");
+            opt.value = c.id;
+            opt.textContent = c.name;
+            select.appendChild(opt);
         });
-    });
 
-    const row = schedule.find(r => r.id === id);
-    if (!row) return;
+        OCCUPIED_SLOTS_EDIT = {};
+        DAYS.forEach(d => OCCUPIED_SLOTS_EDIT[d] = []);
+        schedule.forEach(row => {
+            OCCUPIED_SLOTS_EDIT[row.day].push({
+                id: row.id,
+                start: row.start_time,
+                end: row.end_time
+            });
+        });
 
-    document.getElementById("childSelect").value = row.child_id;
-    document.getElementById("day").value = row.day;
+        const row = schedule.find(r => r.id === id);
+        if (!row) return;
 
-    buildTimeSelectsEdit(row.day, row.start_time, row.end_time, id);
+        document.getElementById("childSelect").value = row.child_id;
+        document.getElementById("day").value = row.day;
+
+        buildTimeSelectsEdit(row.day, row.start_time, row.end_time, id);
+    } catch (e) {
+        console.error(e);
+    }
 };
 
 function buildTimeSelectsEdit(day, currentStart, currentEnd, visitId) {
     const startSel = document.getElementById("start_time");
     const endSel = document.getElementById("end_time");
+    if (!startSel || !endSel) return;
+
     startSel.innerHTML = "";
     endSel.innerHTML = "";
 
@@ -569,14 +612,15 @@ function buildTimeSelectsEdit(day, currentStart, currentEnd, visitId) {
         endSel.appendChild(opt);
     });
 
-    startSel.addEventListener("change", () => updateEndTimesEdit(day, visitId));
+    startSel.onchange = () => updateEndTimesEdit(day, visitId);
 }
 
 function updateEndTimesEdit(day, visitId) {
     const startSel = document.getElementById("start_time");
     const endSel = document.getElementById("end_time");
-    const startTime = startSel.value;
+    if (!startSel || !endSel) return;
 
+    const startTime = startSel.value;
     endSel.innerHTML = "";
 
     HOURS.forEach(time => {
@@ -650,38 +694,6 @@ window.deleteVisit = async function (id) {
         method: "POST"
     });
 
-  if (res.ok) navigate("home");
-else alert("שגיאה במחיקה");
-};
-
-// ----------------------------
-// מחיקת שיבוץ מתוך פרופיל ילד
-// ----------------------------
-window.deleteVisitChild = async function (id) {
-    if (!confirm("למחוק את השיבוץ?")) return;
-
-    const res = await fetch(`/api/schedule/delete/${id}?key=${KEY}`, {
-        method: "POST"
-    });
-
-    if (res.ok) init_child_profile(window.CURRENT_CHILD);
-    else alert("שגיאה במחיקה");
-};
-
-// ----------------------------
-// מחיקת שיבוץ כללית (מהמערכת הראשית)
-// ----------------------------
-window.deleteVisit = async function (id) {
-    if (!confirm("למחוק את השיבוץ?")) return;
-
-    const res = await fetch(`/api/schedule/delete/${id}?key=${KEY}`, {
-        method: "POST"
-    });
-
     if (res.ok) navigate("home");
     else alert("שגיאה במחיקה");
 };
-
-// ----------------------------
-// סוף הקובץ — הכל תקין וסגור
-// ----------------------------
