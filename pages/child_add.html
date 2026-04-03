@@ -1,28 +1,45 @@
 <h2>הוספת ילד</h2>
+<div class="subtitle">יצירת כרטיס ילד חדש</div>
 
-<label>שם הילד</label>
-<input id="name">
+<div class="form-grid">
+    <div class="field">
+        <label>שם הילד</label>
+        <input id="name" placeholder="לדוגמה: נועה כהן">
+    </div>
+    <div class="field">
+        <label>שם ההורה</label>
+        <input id="parent_name" placeholder="לדוגמה: יעל כהן">
+    </div>
+    <div class="field">
+        <label>טלפון</label>
+        <input id="phone" placeholder="050-1234567">
+    </div>
+    <div class="field">
+        <label>כתובת</label>
+        <input id="address" placeholder="רחוב, עיר">
+    </div>
+</div>
 
-<label>שם ההורה</label>
-<input id="parent_name">
-
-<label>טלפון</label>
-<input id="phone">
-
-<label>כתובת</label>
-<input id="address">
-
-<button onclick="saveChild()">שמור</button>
+<div class="form-actions">
+    <button class="btn" onclick="saveChild()">שמור</button>
+    <button class="btn secondary" onclick="navigate('children')">ביטול</button>
+</div>
 
 <script>
 function init_child_add() {}
 
 async function saveChild() {
+    const name = document.getElementById("name").value.trim();
+    if (!name) {
+        alert("חובה למלא שם ילד");
+        return;
+    }
+
     const form = new FormData();
-    form.append("name", document.getElementById("name").value);
-    form.append("parent_name", document.getElementById("parent_name").value);
-    form.append("phone", document.getElementById("phone").value);
-    form.append("address", document.getElementById("address").value);
+    form.append("name", name);
+    form.append("parent_name", document.getElementById("parent_name").value.trim());
+    form.append("phone", document.getElementById("phone").value.trim());
+    form.append("address", document.getElementById("address").value.trim());
 
     const res = await fetch(`/api/children/add?key=${KEY}`, {
         method: "POST",
