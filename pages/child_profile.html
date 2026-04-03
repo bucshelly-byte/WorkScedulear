@@ -32,17 +32,15 @@ async function init_child_profile(id) {
 
     data.forEach(row => {
         const tr = document.createElement("tr");
-
         tr.innerHTML = `
             <td>${row.day}</td>
             <td>${row.start_time}</td>
             <td>${row.end_time}</td>
             <td>
-                <span style="cursor:pointer;font-size:20px;margin-left:8px" onclick="navigate('visit_edit', ${row.id})">✏️</span>
-                <span style="cursor:pointer;font-size:20px" onclick="deleteVisit(${row.id})">🗑️</span>
+                <span class="icon-btn" onclick="navigate('visit_edit', ${row.id})">✏️</span>
+                <span class="icon-btn" onclick="deleteVisitChild(${row.id})">🗑️</span>
             </td>
         `;
-
         tbody.appendChild(tr);
     });
 }
@@ -51,17 +49,10 @@ function exportChild() {
     window.location.href = `/export/image/child/${CURRENT_CHILD}?key=${KEY}`;
 }
 
-async function deleteVisit(id) {
+async function deleteVisitChild(id) {
     if (!confirm("למחוק את השיבוץ?")) return;
-
-    const res = await fetch(`/api/schedule/delete/${id}?key=${KEY}`, {
-        method: "POST"
-    });
-
-    if (res.ok) {
-        navigate("child_profile", CURRENT_CHILD);
-    } else {
-        alert("שגיאה במחיקה");
-    }
+    const res = await fetch(`/api/schedule/delete/${id}?key=${KEY}`, { method: "POST" });
+    if (res.ok) navigate("child_profile", CURRENT_CHILD);
+    else alert("שגיאה במחיקה");
 }
 </script>
