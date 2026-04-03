@@ -1,13 +1,9 @@
 <h2>ניהול ילדים</h2>
 <div class="subtitle">רשימת כל הילדים במערכת</div>
 
-<div class="toolbar">
-    <button class="btn" onclick="navigate('child_add')">
-        ➕ הוספת ילד
-    </button>
-</div>
+<button class="btn" onclick="navigate('child_add')">➕ הוספת ילד</button>
 
-<table id="childrenTable">
+<table id="childrenTable" style="margin-top:12px;">
     <thead>
         <tr>
             <th>שם</th>
@@ -19,36 +15,3 @@
     </thead>
     <tbody></tbody>
 </table>
-
-<script>
-async function init_children() {
-    const res = await fetch(`/api/children?key=${KEY}`);
-    const data = await res.json();
-
-    const tbody = document.querySelector("#childrenTable tbody");
-    tbody.innerHTML = "";
-
-    data.forEach(row => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-            <td>${row.name}</td>
-            <td>${row.parent_name || ""}</td>
-            <td>${row.phone || ""}</td>
-            <td>${row.address || ""}</td>
-            <td>
-                <span class="icon-btn" title="עריכה" onclick="navigate('child_edit', ${row.id})">✏️</span>
-                <span class="icon-btn" title="מחיקה" onclick="deleteChild(${row.id})">🗑️</span>
-                <span class="icon-btn" title="פרופיל" onclick="navigate('child_profile', ${row.id})">👤</span>
-            </td>
-        `;
-        tbody.appendChild(tr);
-    });
-}
-
-async function deleteChild(id) {
-    if (!confirm("למחוק את הילד וכל השיבוצים שלו?")) return;
-    const res = await fetch(`/api/children/delete/${id}?key=${KEY}`, { method: "POST" });
-    if (res.ok) navigate("children");
-    else alert("שגיאה במחיקה");
-}
-</script>
