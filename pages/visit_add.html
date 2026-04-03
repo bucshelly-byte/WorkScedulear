@@ -1,36 +1,32 @@
-<h2>הוספת שיבוץ</h2>
+<div class="page">
+    <h1>הוספת שיבוץ</h1>
 
-<div class="form-grid">
-
-    <div class="field">
-        <label>בחר ילד</label>
-        <select id="childSelect"></select>
+    <div>
+        <label>בחר ילד:</label><br>
+        <select id="child_id"></select>
     </div>
 
-    <div class="field">
-        <label>בחר ימים</label>
-        <div>
-            <label><input type="checkbox" class="day-checkbox" value="ראשון" onchange="onDaysChangeAdd()"> ראשון</label><br>
-            <label><input type="checkbox" class="day-checkbox" value="שני" onchange="onDaysChangeAdd()"> שני</label><br>
-            <label><input type="checkbox" class="day-checkbox" value="שלישי" onchange="onDaysChangeAdd()"> שלישי</label><br>
-            <label><input type="checkbox" class="day-checkbox" value="רביעי" onchange="onDaysChangeAdd()"> רביעי</label><br>
-            <label><input type="checkbox" class="day-checkbox" value="חמישי" onchange="onDaysChangeAdd()"> חמישי</label>
-        </div>
+    <div>
+        <label>יום:</label><br>
+        <select id="day">
+            <option value="ראשון">ראשון</option>
+            <option value="שני">שני</option>
+            <option value="שלישי">שלישי</option>
+            <option value="רביעי">רביעי</option>
+            <option value="חמישי">חמישי</option>
+        </select>
     </div>
 
-    <div class="field">
-        <label>שעת התחלה</label>
-        <select id="start_time"></select>
+    <div>
+        <label>שעת התחלה:</label><br>
+        <input id="start_time" type="time">
     </div>
 
-    <div class="field">
-        <label>שעת סיום</label>
-        <select id="end_time"></select>
+    <div>
+        <label>שעת סיום:</label><br>
+        <input id="end_time" type="time">
     </div>
 
+    <br>
+    <button class="export-btn" onclick="saveVisit()">שמירה</button>
 </div>
-
-<br>
-
-<button class="btn" onclick="saveVisit()">שמור</button>
-<button class="btn secondary" onclick="navigate('home')">ביטול</button>
