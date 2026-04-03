@@ -11,7 +11,6 @@ const routes = {
     visit_edit:    { path: "/pages/visit_edit.html" },
 };
 
-
 // ----------------------------
 // SPA NAVIGATION
 // ----------------------------
