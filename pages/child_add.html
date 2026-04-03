@@ -15,7 +15,7 @@
 <button onclick="saveChild()">שמור</button>
 
 <script>
-async function init_child_add() {}
+function init_child_add() {}
 
 async function saveChild() {
     const form = new FormData();
@@ -29,10 +29,7 @@ async function saveChild() {
         body: form
     });
 
-    if (res.ok) {
-        navigate("children");
-    } else {
-        alert("שגיאה בשמירה");
-    }
+    if (res.ok) navigate("children");
+    else alert("שגיאה בשמירה");
 }
 </script>
