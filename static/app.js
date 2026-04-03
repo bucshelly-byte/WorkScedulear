@@ -650,6 +650,38 @@ window.deleteVisit = async function (id) {
         method: "POST"
     });
 
+  if (res.ok) navigate("home");
+else alert("שגיאה במחיקה");
+};
+
+// ----------------------------
+// מחיקת שיבוץ מתוך פרופיל ילד
+// ----------------------------
+window.deleteVisitChild = async function (id) {
+    if (!confirm("למחוק את השיבוץ?")) return;
+
+    const res = await fetch(`/api/schedule/delete/${id}?key=${KEY}`, {
+        method: "POST"
+    });
+
+    if (res.ok) init_child_profile(window.CURRENT_CHILD);
+    else alert("שגיאה במחיקה");
+};
+
+// ----------------------------
+// מחיקת שיבוץ כללית (מהמערכת הראשית)
+// ----------------------------
+window.deleteVisit = async function (id) {
+    if (!confirm("למחוק את השיבוץ?")) return;
+
+    const res = await fetch(`/api/schedule/delete/${id}?key=${KEY}`, {
+        method: "POST"
+    });
+
     if (res.ok) navigate("home");
     else alert("שגיאה במחיקה");
 };
+
+// ----------------------------
+// סוף הקובץ — הכל תקין וסגור
+// ----------------------------
