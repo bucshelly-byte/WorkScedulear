@@ -238,12 +238,16 @@ def api_delete_schedule(schedule_id: int, _: None = Depends(verify_key)):
     conn.close()
     return {"status": "success"}
 
+# -----------------------------
+# ⭐ פונקציה חדשה לייצוא תמונה בעברית RTL
+# -----------------------------
 def render_schedule_to_image(rows, title: str, filename: str):
     col_titles = ["ילד", "הורה", "טלפון", "כתובת", "יום", "התחלה", "סיום"]
     col_widths = [180, 180, 140, 220, 100, 100, 100]
-    row_height = 40
-    header_height = 60
-    margin = 20
+
+    row_height = 45
+    header_height = 70
+    margin = 30
 
     width = sum(col_widths) + margin * 2
     height = header_height + (len(rows) + 1) * row_height + margin * 2
@@ -252,23 +256,28 @@ def render_schedule_to_image(rows, title: str, filename: str):
     draw = ImageDraw.Draw(img)
 
     try:
-        font = ImageFont.truetype("arial.ttf", 18)
-        font_bold = ImageFont.truetype("arial.ttf", 20)
+        font = ImageFont.truetype("Rubik-Regular.ttf", 22)
+        font_bold = ImageFont.truetype("Rubik-Bold.ttf", 24)
     except:
         font = ImageFont.load_default()
         font_bold = font
 
-    draw.text((margin, margin), title, fill="black", font=font_bold)
+    draw.text((width - margin, margin), title[::-1], fill="black", font=font_bold, anchor="ra")
 
-    x = margin
-    y = margin + header_height - row_height
+    y = margin + header_height
+    x_start = margin
+    x_end = width - margin
+
+    draw.line((x_start, y, x_end, y), fill="black", width=2)
+
+    x = width - margin
     for i, col in enumerate(col_titles):
-        draw.text((x + 5, y + 5), col, fill="black", font=font_bold)
-        x += col_widths[i]
+        draw.text((x - 10, y - row_height + 10), col[::-1], fill="black", font=font_bold, anchor="ra")
+        x -= col_widths[i]
 
-    y += row_height
+    y += 5
     for row in rows:
-        x = margin
+        x = width - margin
         values = [
             row["child_name"],
             row["parent_name"],
@@ -278,10 +287,22 @@ def render_schedule_to_image(rows, title: str, filename: str):
             row["start_time"],
             row["end_time"],
         ]
+
+        draw.line((x_start, y + row_height - 5, x_end, y + row_height - 5), fill="gray", width=1)
+
         for i, val in enumerate(values):
-            draw.text((x + 5, y + 5), str(val), fill="black", font=font)
-            x += col_widths[i]
+            draw.text((x - 10, y + 5), str(val)[::-1], fill="black", font=font, anchor="ra")
+            x -= col_widths[i]
+
         y += row_height
+
+    x = width - margin
+    draw.line((x, margin + header_height, x, height - margin), fill="black", width=2)
+    for w in col_widths:
+        x -= w
+        draw.line((x, margin + header_height, x, height - margin), fill="gray", width=1)
+
+    draw.line((x_start, height - margin, x_end, height - margin), fill="black", width=2)
 
     img.save(filename)
 
