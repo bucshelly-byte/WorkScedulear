@@ -1,5 +1,21 @@
 <div class="page">
-    <h1>מערכת שעות</h1>
+    <h1>מערכת שעות כללית</h1>
+
+    <div style="margin-bottom: 10px;">
+        <label for="dayFilter">בחר יום:</label>
+        <select id="dayFilter" onchange="filterByDay()">
+            <option value="">כל הימים</option>
+            <option value="ראשון">ראשון</option>
+            <option value="שני">שני</option>
+            <option value="שלישי">שלישי</option>
+            <option value="רביעי">רביעי</option>
+            <option value="חמישי">חמישי</option>
+        </select>
+    </div>
+
+    <button class="export-btn" onclick="exportCalendarAsImage()">
+        📸 ייצוא המערכת הכללית
+    </button>
 
     <div id="calendarLegend" class="legend"></div>
 
