@@ -21,7 +21,7 @@
 <label>שעת סיום</label>
 <input type="time" id="end_time">
 
-<button onclick="saveEdit()">שמור</button>
+<button onclick="saveEditVisit()">שמור</button>
 
 <script>
 async function init_visit_edit(id) {
@@ -43,13 +43,15 @@ async function init_visit_edit(id) {
     const data = await res.json();
     const row = data.find(r => r.id === id);
 
+    if (!row) return;
+
     document.getElementById("childSelect").value = row.child_id;
     document.getElementById("day").value = row.day;
     document.getElementById("start_time").value = row.start_time;
     document.getElementById("end_time").value = row.end_time;
 }
 
-async function saveEdit() {
+async function saveEditVisit() {
     const id = document.getElementById("visitId").value;
 
     const form = new FormData();
@@ -63,9 +65,8 @@ async function saveEdit() {
         body: form
     });
 
-    if (res.ok) {
-        navigate("home");
-    } else {
+    if (res.ok) navigate("home");
+    else {
         const txt = await res.text();
         alert("שגיאה: " + txt);
     }
