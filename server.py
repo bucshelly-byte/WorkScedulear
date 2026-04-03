@@ -6,7 +6,6 @@ from fastapi.staticfiles import StaticFiles
 from typing import Optional
 from PIL import Image, ImageDraw, ImageFont
 import datetime
-import os
 
 SECRET_KEY = "ShellySecureKey_9843_2024_XYZ"
 
@@ -16,7 +15,6 @@ def verify_key(request: Request):
 
 app = FastAPI()
 
-# CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -25,7 +23,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Static files
 app.mount("/static", StaticFiles(directory="static"), name="static")
 app.mount("/pages", StaticFiles(directory="pages"), name="pages")
 
@@ -36,9 +33,6 @@ def get_db():
     conn.row_factory = sqlite3.Row
     return conn
 
-# -----------------------------
-# DB INIT
-# -----------------------------
 def init_db():
     conn = get_db()
     c = conn.cursor()
@@ -69,16 +63,10 @@ def init_db():
 
 init_db()
 
-# -----------------------------
-# SPA ENTRY POINT
-# -----------------------------
 @app.get("/")
 def spa(_: None = Depends(verify_key)):
     return FileResponse("base.html")
 
-# -----------------------------
-# CHILDREN API
-# -----------------------------
 @app.get("/api/children")
 def api_get_children(_: None = Depends(verify_key)):
     conn = get_db()
@@ -147,9 +135,6 @@ def api_delete_child(child_id: int, _: None = Depends(verify_key)):
     conn.close()
     return {"status": "success"}
 
-# -----------------------------
-# SCHEDULE API + CONFLICT CHECK
-# -----------------------------
 def has_conflict(conn, child_id: int, day: str, start_time: str, end_time: str, exclude_id: Optional[int] = None):
     c = conn.cursor()
     query = """
@@ -253,9 +238,6 @@ def api_delete_schedule(schedule_id: int, _: None = Depends(verify_key)):
     conn.close()
     return {"status": "success"}
 
-# -----------------------------
-# EXPORT AS IMAGE (PNG)
-# -----------------------------
 def render_schedule_to_image(rows, title: str, filename: str):
     col_titles = ["ילד", "הורה", "טלפון", "כתובת", "יום", "התחלה", "סיום"]
     col_widths = [180, 180, 140, 220, 100, 100, 100]
