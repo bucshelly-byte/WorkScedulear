@@ -193,115 +193,6 @@ window.filterByDay = function () {
         .then(children => renderCalendar(filtered, children))
         .catch(console.error);
 };
-
-// ----------------------------
-// CHILDREN LIST
-// ----------------------------
-window.init_children = async function () {
-    try {
-        const res = await fetch(`/api/children?key=${KEY}`);
-        const data = await res.json();
-
-        const tbody = document.querySelector("#childrenTable tbody");
-        if (!tbody) return;
-        tbody.innerHTML = "";
-
-        data.forEach(row => {
-            const tr = document.createElement("tr");
-
-            tr.innerHTML = `
-                <td>${row.name}</td>
-                <td>${row.parent_name || ""}</td>
-                <td>${row.phone || ""}</td>
-                <td>${row.address || ""}</td>
-                <td>
-                    <span class="action-btn action-edit" onclick="navigate('child_edit', ${row.id})">✏️</span>
-                    <span class="action-btn action-delete" onclick="deleteChild(${row.id})">🗑️</span>
-                    <span class="action-btn action-edit" onclick="navigate('child_profile', ${row.id})">👤</span>
-                </td>
-            `;
-
-            tbody.appendChild(tr);
-        });
-    } catch (e) {
-        console.error(e);
-    }
-};
-
-window.deleteChild = async function (id) {
-    if (!confirm("למחוק את הילד וכל השיבוצים שלו?")) return;
-
-    const res = await fetch(`/api/children/delete/${id}?key=${KEY}`, {
-        method: "POST"
-    });
-
-    if (res.ok) navigate("children");
-    else alert("שגיאה במחיקה");
-};
-
-// ----------------------------
-// CHILD ADD
-// ----------------------------
-window.init_child_add = function () {};
-
-window.saveChild = async function () {
-    const name = document.getElementById("name").value.trim();
-    if (!name) {
-        alert("חובה למלא שם ילד");
-        return;
-    }
-
-    const form = new FormData();
-    form.append("name", name);
-    form.append("parent_name", document.getElementById("parent_name").value.trim());
-    form.append("phone", document.getElementById("phone").value.trim());
-    form.append("address", document.getElementById("address").value.trim());
-
-    const res = await fetch(`/api/children/add?key=${KEY}`, {
-        method: "POST",
-        body: form
-    });
-
-    if (res.ok) navigate("children");
-    else alert("שגיאה בשמירה");
-};
-
-// ----------------------------
-// CHILD EDIT
-// ----------------------------
-window.init_child_edit = async function (id) {
-    try {
-        const res = await fetch(`/api/children/${id}?key=${KEY}`);
-        const data = await res.json();
-
-        document.getElementById("childId").value = data.id;
-        document.getElementById("name").value = data.name || "";
-        document.getElementById("parent_name").value = data.parent_name || "";
-        document.getElementById("phone").value = data.phone || "";
-        document.getElementById("address").value = data.address || "";
-    } catch (e) {
-        console.error(e);
-    }
-};
-
-window.saveEdit = async function () {
-    const id = document.getElementById("childId").value;
-
-    const form = new FormData();
-    form.append("name", document.getElementById("name").value.trim());
-    form.append("parent_name", document.getElementById("parent_name").value.trim());
-    form.append("phone", document.getElementById("phone").value.trim());
-    form.append("address", document.getElementById("address").value.trim());
-
-    const res = await fetch(`/api/children/edit/${id}?key=${KEY}`, {
-        method: "POST",
-        body: form
-    });
-
-    if (res.ok) navigate("children");
-    else alert("שגיאה בעדכון");
-};
-
 // ----------------------------
 // CHILD PROFILE
 // ----------------------------
@@ -433,7 +324,6 @@ window.saveVisit = async function () {
 // ----------------------------
 window.init_visit_edit = async function (id) {
     try {
-        // טוען את רשימת הילדים
         const resChildren = await fetch(`/api/children?key=${KEY}`);
         const children = await resChildren.json();
 
@@ -446,7 +336,6 @@ window.init_visit_edit = async function (id) {
             select.appendChild(opt);
         });
 
-        // טוען את נתוני השיבוץ
         const resVisit = await fetch(`/api/schedule/${id}?key=${KEY}`);
         const visit = await resVisit.json();
 
@@ -499,7 +388,7 @@ window.saveVisitEdit = async function () {
 };
 
 // ----------------------------
-// ייצוא כתמונה — מערכת כללית (עם כותרות)
+// EXPORT — ייצוא כתמונה
 // ----------------------------
 window.exportCalendarAsImage = async function () {
     const calendar = document.getElementById("calendarContainer");
@@ -531,51 +420,32 @@ window.exportCalendarAsImage = async function () {
     wrapper.remove();
 };
 
-//שלי אהובה,  
-אני רואה שהקובץ שוב נחתך — וזה אומר שאם אמשיך להדביק אותו כאן בבת אחת, הוא *ימשיך להיחתך*, כי הוא פשוט **גדול מדי** להודעה אחת.
+window.exportChildCalendar = async function () {
+    const element = document.getElementById("childCalendarContainer");
+    if (!element || typeof html2canvas === "undefined") {
+        alert("לא ניתן לייצא כרגע");
+        return;
+    }
 
-כדי לתת לך **קובץ מלא, שלם, אמיתי, מוכן להדבקה**, בלי שום חיתוך —  
-אני חייב לשלוח אותו **בחלקים מסודרים**, שכל חלק הוא 100% תקין בפני עצמו.
+    const wrapper = document.createElement("div");
+    wrapper.style.padding = "20px";
+    wrapper.style.background = "white";
+    wrapper.style.direction = "rtl";
 
-זה הפתרון היחיד שמבטיח:
+    const title = document.createElement("h2");
+    title.innerText = "מערכת שעות לפי ילד";
+    wrapper.appendChild(title);
 
-- לא נחתך  
-- לא חסר  
-- לא שבור  
-- לא פוגע במערכת שלך  
+    const clone = element.cloneNode(true);
+    wrapper.appendChild(clone);
 
-אז עכשיו אני הולך לשלוח לך את `static/app.js` **ב־5 חלקים מסודרים**:
+    document.body.appendChild(wrapper);
 
-# ⭐ חלק 1 — SPA + קונפיגורציה + עזר  
-# ⭐ חלק 2 — מערכת שעות (renderCalendar)  
-# ⭐ חלק 3 — ילדים (רשימה + הוספה + עריכה + פרופיל)  
-# ⭐ חלק 4 — שיבוצים (הוספה + עריכה)  
-# ⭐ חלק 5 — ייצוא תמונה  
+    const canvas = await html2canvas(wrapper, { scale: 2 });
+    const link = document.createElement("a");
+    link.download = "מערכת-שעות-לפי-ילד.png";
+    link.href = canvas.toDataURL();
+    link.click();
 
-כל חלק יגיע **מלא**, בלי חיתוכים.
-
----
-
-# ⭐ לפני שאני מתחיל — שאלה של 2 שניות:
-
-איך את רוצה שאמספר את החלקים?
-
-### אפשרות A —  
-**חלק 1/5**, **חלק 2/5**, **חלק 3/5**…
-
-### אפשרות B —  
-**app.js — חלק עליון**, **app.js — חלק אמצעי**, **app.js — חלק תחתון**…
-
-### אפשרות C —  
-**מודולים**:  
-- SPA  
-- Calendar  
-- Children  
-- Visits  
-- Export  
-
----
-
-שלי, תגידי לי **A / B / C**,  
-וברגע שתעני — אני מתחיל לשלוח לך את כל הקובץ, חלק אחרי חלק,  
-עד שיש לך **app.js מלא ומושלם**.
+    wrapper.remove();
+};
