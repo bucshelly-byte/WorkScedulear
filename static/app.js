@@ -143,13 +143,22 @@ function renderCalendar(schedule, children) {
         block.className = "slot-block";
         block.style.background = color;
         block.style.color = "#0b1120";
-        block.textContent = `${childName} (${start} - ${end})`;
+        block.textContent = childName;
 
         block.style.height = `calc(${count} * 40px)`;
         block.style.position = "absolute";
         block.style.top = "0";
         block.style.left = "0";
         block.style.right = "0";
+        block.style.borderRadius = "6px";
+        block.style.display = "flex";
+        block.style.alignItems = "center";
+        block.style.justifyContent = "center";
+        block.style.fontWeight = "bold";
+        block.style.cursor = "pointer";
+
+        // לחיצה על המשבצת → עריכת שיבוץ
+        block.onclick = () => navigate('visit_edit', row.id);
 
         firstCell.style.position = "relative";
         firstCell.appendChild(block);
@@ -186,7 +195,7 @@ window.filterByDay = function () {
 };
 
 // ----------------------------
-// CHILDREN LIST (נשאר כמו שהיה אצלך)
+// CHILDREN LIST
 // ----------------------------
 window.init_children = async function () {
     try {
@@ -206,9 +215,9 @@ window.init_children = async function () {
                 <td>${row.phone || ""}</td>
                 <td>${row.address || ""}</td>
                 <td>
-                    <span class="icon-btn" onclick="navigate('child_edit', ${row.id})">✏️</span>
-                    <span class="icon-btn" onclick="deleteChild(${row.id})">🗑️</span>
-                    <span class="icon-btn" onclick="navigate('child_profile', ${row.id})">👤</span>
+                    <span class="action-btn action-edit" onclick="navigate('child_edit', ${row.id})">✏️</span>
+                    <span class="action-btn action-delete" onclick="deleteChild(${row.id})">🗑️</span>
+                    <span class="action-btn action-edit" onclick="navigate('child_profile', ${row.id})">👤</span>
                 </td>
             `;
 
@@ -325,8 +334,8 @@ window.init_child_profile = async function (id) {
                     <td>${row.start_time}</td>
                     <td>${row.end_time}</td>
                     <td>
-                        <span class="icon-btn" onclick="navigate('visit_edit', ${row.id})">✏️</span>
-                        <span class="icon-btn" onclick="deleteVisitChild(${row.id})">🗑️</span>
+                        <span class="action-btn action-edit" onclick="navigate('visit_edit', ${row.id})">✏️</span>
+                        <span class="action-btn action-delete" onclick="deleteVisitChild(${row.id})">🗑️</span>
                     </td>
                 `;
 
@@ -361,19 +370,36 @@ window.deleteVisitChild = async function (id) {
 };
 
 // ----------------------------
-// ייצוא כתמונה — מערכת כללית
+// ייצוא כתמונה — מערכת כללית (עם כותרות)
 // ----------------------------
 window.exportCalendarAsImage = async function () {
-    const element = document.getElementById("calendarContainer");
-    if (!element || typeof html2canvas === "undefined") {
+    const calendar = document.getElementById("calendarContainer");
+    if (!calendar || typeof html2canvas === "undefined") {
         alert("לא ניתן לייצא כרגע");
         return;
     }
-    const canvas = await html2canvas(element, { scale: 2 });
+
+    const wrapper = document.createElement("div");
+    wrapper.style.padding = "20px";
+    wrapper.style.background = "white";
+    wrapper.style.direction = "rtl";
+
+    const title = document.createElement("h2");
+    title.innerText = "מערכת שעות כללית";
+    wrapper.appendChild(title);
+
+    const clone = calendar.cloneNode(true);
+    wrapper.appendChild(clone);
+
+    document.body.appendChild(wrapper);
+
+    const canvas = await html2canvas(wrapper, { scale: 2 });
     const link = document.createElement("a");
     link.download = "מערכת-שעות-כללית.png";
     link.href = canvas.toDataURL();
     link.click();
+
+    wrapper.remove();
 };
 
 // ----------------------------
@@ -385,9 +411,25 @@ window.exportChildCalendar = async function () {
         alert("לא ניתן לייצא כרגע");
         return;
     }
-    const canvas = await html2canvas(element, { scale: 2 });
+    const wrapper = document.createElement("div");
+    wrapper.style.padding = "20px";
+    wrapper.style.background = "white";
+    wrapper.style.direction = "rtl";
+
+    const title = document.createElement("h2");
+    title.innerText = "מערכת שעות לפי ילד";
+    wrapper.appendChild(title);
+
+    const clone = element.cloneNode(true);
+    wrapper.appendChild(clone);
+
+    document.body.appendChild(wrapper);
+
+    const canvas = await html2canvas(wrapper, { scale: 2 });
     const link = document.createElement("a");
     link.download = "מערכת-שעות-לפי-ילד.png";
     link.href = canvas.toDataURL();
     link.click();
+
+    wrapper.remove();
 };
