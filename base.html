@@ -18,28 +18,21 @@
             --danger: #f97373;
         }
 
-        * {
-            box-sizing: border-box;
-        }
-
         body {
             margin: 0;
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
             background: radial-gradient(circle at top, #1e293b 0, #020617 55%);
             color: var(--text-main);
         }
 
         header {
-            position: sticky;
-            top: 0;
-            z-index: 20;
             background: rgba(15, 23, 42, 0.9);
-            backdrop-filter: blur(16px);
-            border-bottom: 1px solid rgba(148, 163, 184, 0.15);
-            padding: 10px 14px;
+            padding: 12px 16px;
             display: flex;
-            align-items: center;
             justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(148,163,184,0.2);
+            backdrop-filter: blur(10px);
         }
 
         .brand {
@@ -49,268 +42,143 @@
         }
 
         .brand-icon {
-            width: 26px;
-            height: 26px;
+            width: 28px;
+            height: 28px;
             border-radius: 10px;
-            background: radial-gradient(circle at 30% 0, #a855f7, #4f46e5);
+            background: linear-gradient(135deg, #4f46e5, #a855f7);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 14px;
             font-weight: 700;
-        }
-
-        #pageTitle {
-            font-size: 16px;
-            font-weight: 600;
+            font-size: 14px;
         }
 
         .burger {
             font-size: 22px;
             cursor: pointer;
             padding: 6px 10px;
-            border-radius: 999px;
-            border: 1px solid rgba(148, 163, 184, 0.3);
-            background: rgba(15, 23, 42, 0.7);
-        }
-
-        .burger:hover {
-            background: rgba(30, 64, 175, 0.6);
+            border-radius: 8px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
         }
 
         .layout {
             display: flex;
-            min-height: calc(100vh - 52px);
+            min-height: calc(100vh - 50px);
         }
 
-        .menu {
+        nav.menu {
             width: 230px;
-            background: rgba(15, 23, 42, 0.9);
-            border-left: 1px solid rgba(148, 163, 184, 0.15);
-            padding: 14px 10px;
+            background: rgba(15,23,42,0.9);
+            border-left: 1px solid rgba(148,163,184,0.2);
+            padding: 14px;
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            gap: 8px;
         }
 
-        .menu-title {
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: var(--text-muted);
-            margin-bottom: 4px;
-            padding-inline: 6px;
-        }
-
-        .menu a {
-            border-radius: 999px;
-            padding: 7px 10px;
-            font-size: 13px;
+        nav.menu a {
+            padding: 8px 12px;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.05);
             color: var(--text-main);
             text-decoration: none;
+            font-size: 14px;
             display: flex;
             align-items: center;
             gap: 8px;
-            border: 1px solid transparent;
-            background: transparent;
-            cursor: pointer;
         }
 
-        .menu a span.icon {
-            font-size: 16px;
-        }
-
-        .menu a:hover {
-            background: rgba(55, 65, 81, 0.7);
-            border-color: rgba(129, 140, 248, 0.5);
+        nav.menu a:hover {
+            background: rgba(255,255,255,0.12);
         }
 
         .content-wrapper {
             flex: 1;
-            padding: 14px;
-        }
-
-        .content-inner {
-            max-width: 1100px;
-            margin: 0 auto;
+            padding: 16px;
         }
 
         .card {
-            background: rgba(15, 23, 42, 0.9);
-            border-radius: 16px;
-            border: 1px solid rgba(148, 163, 184, 0.2);
-            padding: 14px;
-            box-shadow: 0 18px 45px rgba(15, 23, 42, 0.9);
+            background: rgba(15,23,42,0.9);
+            border-radius: 14px;
+            padding: 16px;
+            border: 1px solid rgba(148,163,184,0.2);
         }
 
         h2 {
             margin: 0 0 10px;
-            font-size: 17px;
-            font-weight: 600;
+            font-size: 18px;
         }
 
         .subtitle {
-            font-size: 12px;
+            font-size: 13px;
             color: var(--text-muted);
-            margin-bottom: 10px;
-        }
-
-        .toolbar {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-bottom: 10px;
-        }
-
-        .btn {
-            border-radius: 999px;
-            padding: 6px 12px;
-            font-size: 12px;
-            border: 1px solid rgba(129, 140, 248, 0.7);
-            background: linear-gradient(135deg, #4f46e5, #6366f1);
-            color: white;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            cursor: pointer;
-        }
-
-        .btn.secondary {
-            background: transparent;
-            border-color: rgba(148, 163, 184, 0.7);
-            color: var(--text-main);
-        }
-
-        .btn.danger {
-            border-color: rgba(248, 113, 113, 0.7);
-            background: linear-gradient(135deg, #b91c1c, #ef4444);
-        }
-
-        .btn:hover {
-            filter: brightness(1.05);
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 12px;
-        }
-
-        thead {
-            background: rgba(15, 23, 42, 0.9);
-        }
-
-        th, td {
-            padding: 6px 8px;
-            border-bottom: 1px solid rgba(31, 41, 55, 0.9);
-            text-align: right;
-            white-space: nowrap;
-        }
-
-        th {
-            font-weight: 500;
-            color: var(--text-muted);
-            font-size: 11px;
-        }
-
-        tr:nth-child(even) td {
-            background: rgba(15, 23, 42, 0.7);
-        }
-
-        .icon-btn {
-            cursor: pointer;
-            font-size: 16px;
-            margin-left: 4px;
-            opacity: 0.85;
-        }
-
-        .icon-btn:hover {
-            opacity: 1;
+            margin-bottom: 12px;
         }
 
         .form-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 10px 12px;
-            margin-top: 6px;
-        }
-
-        .field {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 12px;
         }
 
         .field label {
-            font-size: 11px;
+            font-size: 12px;
             color: var(--text-muted);
         }
 
         .field input,
         .field select {
-            border-radius: 10px;
-            border: 1px solid rgba(55, 65, 81, 0.9);
-            background: rgba(15, 23, 42, 0.9);
-            padding: 6px 9px;
-            font-size: 12px;
+            width: 100%;
+            padding: 8px;
+            border-radius: 8px;
+            border: 1px solid rgba(148,163,184,0.3);
+            background: rgba(255,255,255,0.05);
             color: var(--text-main);
-            outline: none;
+            font-size: 14px;
         }
 
-        .field input:focus,
-        .field select:focus {
-            border-color: rgba(129, 140, 248, 0.9);
-            box-shadow: 0 0 0 1px rgba(129, 140, 248, 0.5);
+        .btn {
+            padding: 8px 14px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            background: var(--accent);
+            color: white;
         }
 
-        .form-actions {
-            margin-top: 12px;
-            display: flex;
-            gap: 8px;
-            justify-content: flex-start;
+        .btn.secondary {
+            background: rgba(255,255,255,0.1);
         }
 
-        .pill {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 3px 8px;
-            border-radius: 999px;
-            font-size: 11px;
-            background: rgba(15, 23, 42, 0.9);
-            border: 1px solid rgba(148, 163, 184, 0.4);
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        th, td {
+            padding: 8px;
+            border-bottom: 1px solid rgba(148,163,184,0.1);
+        }
+
+        th {
             color: var(--text-muted);
+            font-weight: 500;
         }
 
-        @media (max-width: 900px) {
-            .layout {
-                flex-direction: column;
-            }
-            .menu {
-                position: fixed;
-                top: 52px;
-                right: -260px;
-                height: calc(100vh - 52px);
-                z-index: 30;
-                transition: right 0.25s ease-out;
-            }
-            .menu.open {
-                right: 0;
-            }
+        .icon-btn {
+            cursor: pointer;
+            margin-left: 6px;
+            font-size: 16px;
         }
     </style>
 
     <script>
         const KEY = "ShellySecureKey_9843_2024_XYZ";
-
         function toggleMenu() {
-            const m = document.getElementById("menu");
-            m.classList.toggle("open");
-        }
-
-        function closeMenu() {
-            const m = document.getElementById("menu");
-            m.classList.remove("open");
+            document.getElementById("menu").classList.toggle("open");
         }
     </script>
 </head>
@@ -320,8 +188,8 @@
     <div class="brand">
         <div class="brand-icon">WS</div>
         <div>
-            <div style="font-size:13px;font-weight:600;">מערכת שיבוצים</div>
-            <div style="font-size:11px;color:#9ca3af;">ניהול ילדים ושיבוצים שבועיים</div>
+            <div style="font-size:15px;font-weight:600;">מערכת שיבוצים</div>
+            <div style="font-size:12px;color:#9ca3af;">ניהול ילדים ושיבוצים</div>
         </div>
     </div>
     <div class="burger" onclick="toggleMenu()">☰</div>
@@ -329,27 +197,13 @@
 
 <div class="layout">
     <nav id="menu" class="menu">
-        <div class="menu-title">ניווט</div>
-        <a onclick="closeMenu(); navigate('home')">
-            <span class="icon">📅</span>
-            <span>מבט שבועי</span>
-        </a>
-        <a onclick="closeMenu(); navigate('visit_add')">
-            <span class="icon">➕</span>
-            <span>הוספת שיבוץ</span>
-        </a>
-        <a onclick="closeMenu(); navigate('children')">
-            <span class="icon">👧</span>
-            <span>ניהול ילדים</span>
-        </a>
+        <a onclick="navigate('home')">📅 מבט שבועי</a>
+        <a onclick="navigate('visit_add')">➕ הוספת שיבוץ</a>
+        <a onclick="navigate('children')">👧 ניהול ילדים</a>
     </nav>
 
     <main class="content-wrapper">
-        <div class="content-inner">
-            <div id="app" class="card">
-                טוען...
-            </div>
-        </div>
+        <div id="app" class="card">טוען...</div>
     </main>
 </div>
 
