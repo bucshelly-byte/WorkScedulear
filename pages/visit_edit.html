@@ -1,27 +1,38 @@
 <h2>עריכת שיבוץ</h2>
+<div class="subtitle">עדכון שיבוץ קיים</div>
 
 <input type="hidden" id="visitId">
 
-<label>בחר ילד</label>
-<select id="childSelect"></select>
+<div class="form-grid">
+    <div class="field">
+        <label>בחר ילד</label>
+        <select id="childSelect"></select>
+    </div>
+    <div class="field">
+        <label>יום</label>
+        <select id="day">
+            <option>ראשון</option>
+            <option>שני</option>
+            <option>שלישי</option>
+            <option>רביעי</option>
+            <option>חמישי</option>
+            <option>שישי</option>
+        </select>
+    </div>
+    <div class="field">
+        <label>שעת התחלה</label>
+        <input type="time" id="start_time">
+    </div>
+    <div class="field">
+        <label>שעת סיום</label>
+        <input type="time" id="end_time">
+    </div>
+</div>
 
-<label>יום</label>
-<select id="day">
-    <option>ראשון</option>
-    <option>שני</option>
-    <option>שלישי</option>
-    <option>רביעי</option>
-    <option>חמישי</option>
-    <option>שישי</option>
-</select>
-
-<label>שעת התחלה</label>
-<input type="time" id="start_time">
-
-<label>שעת סיום</label>
-<input type="time" id="end_time">
-
-<button onclick="saveEditVisit()">שמור</button>
+<div class="form-actions">
+    <button class="btn" onclick="saveEditVisit()">שמור</button>
+    <button class="btn secondary" onclick="navigate('home')">ביטול</button>
+</div>
 
 <script>
 async function init_visit_edit(id) {
