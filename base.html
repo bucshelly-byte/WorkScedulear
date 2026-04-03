@@ -3,20 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>מערכת ניהול</title>
+    <title>מערכת שיבוצים</title>
 
     <style>
         body {
             margin: 0;
-            font-family: "Alef", Arial;
-            background: #faf7ff;
-            color: #444;
+            font-family: "Alef", Arial, sans-serif;
+            background: #f7f4ff;
+            color: #333;
         }
 
         header {
-            background: #bda7ff;
-            padding: 14px;
-            font-size: 22px;
+            background: #b79cff;
+            padding: 14px 18px;
+            font-size: 20px;
             color: white;
             display: flex;
             justify-content: space-between;
@@ -25,13 +25,16 @@
             direction: rtl;
         }
 
+        #pageTitle {
+            font-weight: bold;
+        }
+
         .burger {
-            font-size: 28px;
+            font-size: 26px;
             cursor: pointer;
             margin-right: 10px;
         }
 
-        /* תפריט צד */
         .menu {
             position: fixed;
             top: 0;
@@ -57,19 +60,23 @@
             color: #5a3e9b;
             text-decoration: none;
             border-radius: 8px;
-            font-size: 18px;
-            font-weight: bold;
+            font-size: 17px;
+            font-weight: 600;
         }
 
         .menu a:hover {
-            background: #d9c4ff;
+            background: #d7c2ff;
         }
 
         .content {
-            padding: 20px;
+            padding: 18px;
         }
 
-        /* טבלאות */
+        h2 {
+            margin-top: 0;
+            color: #4b3a8f;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
@@ -81,25 +88,32 @@
 
         th {
             background: #e8d9ff;
-            padding: 12px;
-            font-size: 16px;
+            padding: 10px;
+            font-size: 15px;
+            text-align: right;
         }
 
         td {
-            padding: 12px;
+            padding: 10px;
             border-bottom: 1px solid #eee;
+            font-size: 14px;
         }
 
-        /* כפתורים */
+        tr:nth-child(even) td {
+            background: #faf7ff;
+        }
+
         .btn {
             background: #b48cff;
             color: white;
-            padding: 10px 16px;
+            padding: 8px 14px;
             border-radius: 8px;
             text-decoration: none;
             display: inline-block;
             margin: 6px 0;
-            font-size: 16px;
+            font-size: 14px;
+            border: none;
+            cursor: pointer;
         }
 
         .btn:hover {
@@ -108,30 +122,40 @@
 
         input, select {
             width: 100%;
-            padding: 12px;
-            margin: 8px 0;
+            padding: 10px;
+            margin: 6px 0 12px;
             border-radius: 8px;
             border: 1px solid #ccc;
             background: #fff;
+            font-size: 14px;
         }
 
         button {
             width: 100%;
-            padding: 12px;
+            padding: 10px;
             background: #b48cff;
             color: white;
             border: none;
             border-radius: 8px;
-            font-size: 18px;
-            margin-top: 10px;
+            font-size: 16px;
+            margin-top: 8px;
+            cursor: pointer;
         }
 
         button:hover {
             background: #a378ff;
         }
+
+        .icon-btn {
+            cursor: pointer;
+            font-size: 20px;
+            margin-left: 6px;
+        }
     </style>
 
     <script>
+        const KEY = "ShellySecureKey_9843_2024_XYZ";
+
         function toggleMenu() {
             document.getElementById("menu").classList.toggle("open");
         }
@@ -143,9 +167,8 @@
 </head>
 
 <body>
-
 <header>
-    <div id="pageTitle">מערכת ניהול</div>
+    <div id="pageTitle">מערכת שיבוצים</div>
     <div class="burger" onclick="toggleMenu()">☰</div>
 </header>
 
@@ -160,6 +183,5 @@
 </div>
 
 <script src="/static/app.js"></script>
-
 </body>
 </html>
