@@ -25,34 +25,25 @@ async function init_children() {
 
     data.forEach(row => {
         const tr = document.createElement("tr");
-
         tr.innerHTML = `
             <td>${row.name}</td>
             <td>${row.parent_name || ""}</td>
             <td>${row.phone || ""}</td>
             <td>${row.address || ""}</td>
             <td>
-                <span style="cursor:pointer;font-size:20px;margin-left:8px" onclick="navigate('child_edit', ${row.id})">✏️</span>
-                <span style="cursor:pointer;font-size:20px;margin-left:8px" onclick="deleteChild(${row.id})">🗑️</span>
-                <span style="cursor:pointer;font-size:20px" onclick="navigate('child_profile', ${row.id})">👤</span>
+                <span class="icon-btn" onclick="navigate('child_edit', ${row.id})">✏️</span>
+                <span class="icon-btn" onclick="deleteChild(${row.id})">🗑️</span>
+                <span class="icon-btn" onclick="navigate('child_profile', ${row.id})">👤</span>
             </td>
         `;
-
         tbody.appendChild(tr);
     });
 }
 
 async function deleteChild(id) {
     if (!confirm("למחוק את הילד וכל השיבוצים שלו?")) return;
-
-    const res = await fetch(`/api/children/delete/${id}?key=${KEY}`, {
-        method: "POST"
-    });
-
-    if (res.ok) {
-        navigate("children");
-    } else {
-        alert("שגיאה במחיקה");
-    }
+    const res = await fetch(`/api/children/delete/${id}?key=${KEY}`, { method: "POST" });
+    if (res.ok) navigate("children");
+    else alert("שגיאה במחיקה");
 }
 </script>
