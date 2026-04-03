@@ -55,11 +55,6 @@ window.addEventListener("load", () => navigate("home"));
 // ----------------------------
 // עזר: שעות
 // ----------------------------
-function timeToMinutes(t) {
-    const [h, m] = t.split(":").map(Number);
-    return h * 60 + m;
-}
-
 function add30(time) {
     let [h, m] = time.split(":").map(Number);
     m += 30;
@@ -123,7 +118,7 @@ function renderCalendar(schedule, children) {
     html += `</div>`;
     container.innerHTML = html;
 
-    // ציור בלוקים — קובייה אחת לכל טווח
+    // ציור בלוקים — קובייה אחת רציפה לכל טווח
     schedule.forEach(row => {
         const day = row.day;
         const start = row.start_time;
@@ -137,7 +132,6 @@ function renderCalendar(schedule, children) {
         );
         if (!firstCell) return;
 
-        // חישוב כמה חצאי שעות
         let count = 0;
         let t = start;
         while (t < end) {
@@ -149,9 +143,8 @@ function renderCalendar(schedule, children) {
         block.className = "slot-block";
         block.style.background = color;
         block.style.color = "#0b1120";
-        block.textContent = childName;
+        block.textContent = `${childName} (${start} - ${end})`;
 
-        // נמתח את הבלוק לגובה של כמה תאים (ויזואלית)
         block.style.height = `calc(${count} * 40px)`;
         block.style.position = "absolute";
         block.style.top = "0";
@@ -186,7 +179,6 @@ window.filterByDay = function () {
         ? FULL_SCHEDULE.filter(r => r.day === selected)
         : FULL_SCHEDULE;
 
-    // צריך גם את רשימת הילדים כדי לצייר מקרא
     fetch(`/api/children?key=${KEY}`)
         .then(r => r.json())
         .then(children => renderCalendar(filtered, children))
@@ -194,7 +186,115 @@ window.filterByDay = function () {
 };
 
 // ----------------------------
-// CHILD PROFILE — מערכת לפי ילד
+// CHILDREN LIST (נשאר כמו שהיה אצלך)
+// ----------------------------
+window.init_children = async function () {
+    try {
+        const res = await fetch(`/api/children?key=${KEY}`);
+        const data = await res.json();
+
+        const tbody = document.querySelector("#childrenTable tbody");
+        if (!tbody) return;
+        tbody.innerHTML = "";
+
+        data.forEach(row => {
+            const tr = document.createElement("tr");
+
+            tr.innerHTML = `
+                <td>${row.name}</td>
+                <td>${row.parent_name || ""}</td>
+                <td>${row.phone || ""}</td>
+                <td>${row.address || ""}</td>
+                <td>
+                    <span class="icon-btn" onclick="navigate('child_edit', ${row.id})">✏️</span>
+                    <span class="icon-btn" onclick="deleteChild(${row.id})">🗑️</span>
+                    <span class="icon-btn" onclick="navigate('child_profile', ${row.id})">👤</span>
+                </td>
+            `;
+
+            tbody.appendChild(tr);
+        });
+    } catch (e) {
+        console.error(e);
+    }
+};
+
+window.deleteChild = async function (id) {
+    if (!confirm("למחוק את הילד וכל השיבוצים שלו?")) return;
+
+    const res = await fetch(`/api/children/delete/${id}?key=${KEY}`, {
+        method: "POST"
+    });
+
+    if (res.ok) navigate("children");
+    else alert("שגיאה במחיקה");
+};
+
+// ----------------------------
+// CHILD ADD
+// ----------------------------
+window.init_child_add = function () {};
+
+window.saveChild = async function () {
+    const name = document.getElementById("name").value.trim();
+    if (!name) {
+        alert("חובה למלא שם ילד");
+        return;
+    }
+
+    const form = new FormData();
+    form.append("name", name);
+    form.append("parent_name", document.getElementById("parent_name").value.trim());
+    form.append("phone", document.getElementById("phone").value.trim());
+    form.append("address", document.getElementById("address").value.trim());
+
+    const res = await fetch(`/api/children/add?key=${KEY}`, {
+        method: "POST",
+        body: form
+    });
+
+    if (res.ok) navigate("children");
+    else alert("שגיאה בשמירה");
+};
+
+// ----------------------------
+// CHILD EDIT
+// ----------------------------
+window.init_child_edit = async function (id) {
+    try {
+        const res = await fetch(`/api/children/${id}?key=${KEY}`);
+        const data = await res.json();
+
+        document.getElementById("childId").value = data.id;
+        document.getElementById("name").value = data.name || "";
+        document.getElementById("parent_name").value = data.parent_name || "";
+        document.getElementById("phone").value = data.phone || "";
+        document.getElementById("address").value = data.address || "";
+    } catch (e) {
+        console.error(e);
+    }
+};
+
+window.saveEdit = async function () {
+    const id = document.getElementById("childId").value;
+
+    const form = new FormData();
+    form.append("name", document.getElementById("name").value.trim());
+    form.append("parent_name", document.getElementById("parent_name").value.trim());
+    form.append("phone", document.getElementById("phone").value.trim());
+    form.append("address", document.getElementById("address").value.trim());
+
+    const res = await fetch(`/api/children/edit/${id}?key=${KEY}`, {
+        method: "POST",
+        body: form
+    });
+
+    if (res.ok) navigate("children");
+    else alert("שגיאה בעדכון");
+};
+
+// ----------------------------
+// CHILD PROFILE
 // ----------------------------
 window.init_child_profile = async function (id) {
     window.CURRENT_CHILD = id;
