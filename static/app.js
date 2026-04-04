@@ -574,10 +574,16 @@ async function exportFreeTable() {
                 rowHeight * span - 4
             );
 
-            // שם הילד
-            ctx.fillStyle = "#ffffff";
-            ctx.font = "bold 14px Assistant";
-            ctx.fillText(child, x + 10, y + 20);
+           // שם הילד במרכז התא
+ctx.fillStyle = "#ffffff";
+ctx.font = "bold 14px Assistant";
+ctx.textAlign = "center";
+ctx.textBaseline = "middle";
+ctx.fillText(
+    child,
+    x + (colWidth / 2),
+    y + (rowHeight * span) / 2
+);
 
             j += span;
         }
