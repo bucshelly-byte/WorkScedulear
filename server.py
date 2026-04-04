@@ -12,10 +12,7 @@ KEY = "ShellySecureKey_9843_2024_XYZ"
 # בדיקת מפתח
 # ----------------------------------------------------
 def check_key():
-    k = request.args.get("key")
-    if k != KEY:
-        return False
-    return True
+    return request.args.get("key") == KEY
 
 # ----------------------------------------------------
 # יצירת מסד נתונים אם לא קיים
@@ -246,27 +243,82 @@ def get_schedule_by_child(id):
         for r in rows
     ])
 
+# ----------------------------------------------------
+# בדיקת התנגשות מרובה ימים
+# ----------------------------------------------------
+@app.route("/api/schedule/conflict_multi")
+def conflict_multi():
+    if not check_key():
+        return jsonify({"error": "invalid key"}), 404
+
+    days = request.args.getlist("days[]")
+    start = request.args.get("start")
+    end = request.args.get("end")
+    ignore = request.args.get("ignore")
+
+    conn = sqlite3.connect(DB)
+    c = conn.cursor()
+
+    for day in days:
+        if ignore:
+            c.execute("""
+                SELECT schedule.id, children.name
+                FROM schedule
+                JOIN children ON children.id = schedule.child_id
+                WHERE day=? AND id!=? AND (
+                    (start_time < ? AND end_time > ?) OR
+                    (start_time >= ? AND start_time < ?)
+                )
+            """, (day, ignore, end, start, start, end))
+        else:
+            c.execute("""
+                SELECT schedule.id, children.name
+                FROM schedule
+                JOIN children ON children.id = schedule.child_id
+                WHERE day=? AND (
+                    (start_time < ? AND end_time > ?) OR
+                    (start_time >= ? AND start_time < ?)
+                )
+            """, (day, end, start, start, end))
+
+        r = c.fetchone()
+        if r:
+            conn.close()
+            return jsonify({"conflict": True, "child_name": r[1], "day": day})
+
+    conn.close()
+    return jsonify({"conflict": False})
+
+# ----------------------------------------------------
+# הוספת שיבוץ מרובה ימים
+# ----------------------------------------------------
 @app.route("/api/schedule/add", methods=["POST"])
 def add_visit():
     if not check_key():
         return jsonify({"error": "invalid key"}), 404
 
     child_id = request.form.get("child_id")
-    day = request.form.get("day")
+    days = request.form.getlist("days[]")
     start = request.form.get("start_time")
     end = request.form.get("end_time")
 
     conn = sqlite3.connect(DB)
     c = conn.cursor()
-    c.execute("""
-        INSERT INTO schedule (child_id, day, start_time, end_time)
-        VALUES (?, ?, ?, ?)
-    """, (child_id, day, start, end))
+
+    for day in days:
+        c.execute("""
+            INSERT INTO schedule (child_id, day, start_time, end_time)
+            VALUES (?, ?, ?, ?)
+        """, (child_id, day, start, end))
+
     conn.commit()
     conn.close()
 
     return jsonify({"status": "ok"})
 
+# ----------------------------------------------------
+# עריכת שיבוץ (יום יחיד)
+# ----------------------------------------------------
 @app.route("/api/schedule/edit/<int:id>", methods=["POST"])
 def edit_visit(id):
     if not check_key():
@@ -301,48 +353,6 @@ def delete_visit(id):
     conn.close()
 
     return jsonify({"status": "ok"})
-
-@app.route("/api/schedule/conflict")
-def check_conflict():
-    if not check_key():
-        return jsonify({"error": "invalid key"}), 404
-
-    day = request.args.get("day")
-    start = request.args.get("start")
-    end = request.args.get("end")
-    ignore = request.args.get("ignore")
-
-    conn = sqlite3.connect(DB)
-    c = conn.cursor()
-
-    if ignore:
-        c.execute("""
-            SELECT schedule.id, children.name
-            FROM schedule
-            JOIN children ON children.id = schedule.child_id
-            WHERE day=? AND id!=? AND (
-                (start_time < ? AND end_time > ?) OR
-                (start_time >= ? AND start_time < ?)
-            )
-        """, (day, ignore, end, start, start, end))
-    else:
-        c.execute("""
-            SELECT schedule.id, children.name
-            FROM schedule
-            JOIN children ON children.id = schedule.child_id
-            WHERE day=? AND (
-                (start_time < ? AND end_time > ?) OR
-                (start_time >= ? AND start_time < ?)
-            )
-        """, (day, end, start, start, end))
-
-    r = c.fetchone()
-    conn.close()
-
-    if r:
-        return jsonify({"conflict": True, "child_name": r[1]})
-
-    return jsonify({"conflict": False})
 
 # ----------------------------------------------------
 # RUN
