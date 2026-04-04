@@ -1,31 +1,21 @@
-<div class="page-header">הוספת שיבוץ</div>
-
 <div class="form-container">
+    <h2>הוספת שיבוץ</h2>
+    <p>בחרי ילד, ימים ושעות כדי להוסיף שיבוץ חדש.</p>
+
     <form id="visitAddForm">
 
-        <div class="form-row">
-            <label>בחרי ילד:</label>
-            <select id="childId" name="child_id" class="input-field"></select>
-        </div>
+        <label>בחרי ילד</label>
+        <select id="childId" name="child_id" required></select>
 
-        <div class="form-row">
-            <label>בחרי ימים:</label>
-            <div id="dayButtons" class="day-buttons"></div>
-        </div>
+        <label>בחרי ימים</label>
+        <div id="dayButtons"></div>
 
-        <div class="form-row">
-            <label>שעת התחלה:</label>
-            <select id="startTime" name="start_time" class="input-field"></select>
-        </div>
+        <label>שעת התחלה</label>
+        <select id="startTime" name="start_time" required></select>
 
-        <div class="form-row">
-            <label>שעת סיום:</label>
-            <select id="endTime" name="end_time" class="input-field"></select>
-        </div>
+        <label>שעת סיום</label>
+        <select id="endTime" name="end_time" required></select>
 
-        <div class="form-actions">
-            <button class="btn primary-btn" type="submit">שמור</button>
-        </div>
-
+        <button class="btn primary-btn" type="submit">הוספה</button>
     </form>
 </div>
