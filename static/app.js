@@ -3,7 +3,15 @@
 // ------------------------------------------------------
 const API_KEY = "ShellySecureKey_9843_2024_XYZ";
 const API_BASE = "/api";
-
+// ------------------------------------------------------
+// הורדת תמונה מהקנבס
+// ------------------------------------------------------
+function downloadCanvasImage(canvas, filename) {
+    const link = document.createElement("a");
+    link.download = filename;
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+}
 // ------------------------------------------------------
 // ניהול מצב כהה (Dark Mode)
 // ------------------------------------------------------
