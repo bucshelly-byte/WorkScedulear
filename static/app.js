@@ -148,14 +148,10 @@ async function init_home() {
     container.innerHTML = "";
     legend.innerHTML = "";
 
-    const colors = {};
-
-    schedule.forEach(s => {
-        if (!colors[s.child_name]) {
-            colors[s.child_name] = "#" + Math.floor(Math.random() * 16777215).toString(16);
-        }
-    });
-
+   const colors = {};
+schedule.forEach(s => {
+    colors[s.child_name] = getChildColor(s.child_name);
+});
     days.forEach(day => {
         const card = document.createElement("div");
         card.className = "day-card fade-in";
