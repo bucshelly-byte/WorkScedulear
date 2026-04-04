@@ -432,34 +432,72 @@ async function exportChildTable(id) {
     const child = await fetch(`${API_BASE}/children/${id}?key=${API_KEY}`).then(r => r.json());
     const visits = await fetch(`${API_BASE}/schedule/by_child/${id}?key=${API_KEY}`).then(r => r.json());
 
-    const days = ["ראשון","שני","שלישי","רביעי","חמישי"];
-    const slots = getTimeSlots(); // כאן את שולטת על טווח השעות
+    // --- יצירת טווח שעות רק לפי השיבוצים של הילד ---
+    let times = [];
+
+    visits.forEach(v => {
+        let start = v.start_time;
+        let end = v.end_time;
+
+        // מגבילים ל-17:00
+        if (end > "17:00") end = "17:00";
+
+        let current = start;
+
+        while (current < end) {
+            times.push(current);
+
+            // קפיצות של חצי שעה
+            let [h, m] = current.split(":").map(Number);
+            m += 30;
+            if (m >= 60) { h++; m = 0; }
+
+            current = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+        }
+    });
+
+    // מסירים כפילויות וממיינים
+    times = [...new Set(times)].sort();
+
+    // אם אין שעות — אין מה לייצא
+    if (times.length === 0) {
+        alert("אין שיבוצים לילד הזה");
+        return;
+    }
+
+    // --- ימים שבהם הילד באמת משובץ ---
+    const days = [...new Set(visits.map(v => v.day))];
 
     // מפה של שיבוצים לפי יום ושעה
     const map = {};
     days.forEach(d => map[d] = {});
 
     visits.forEach(v => {
-        const startIndex = slots.indexOf(v.start_time);
-        const endIndex = slots.indexOf(v.end_time);
-        if (startIndex === -1 || endIndex === -1) return;
+        let start = v.start_time;
+        let end = v.end_time;
+        if (end > "17:00") end = "17:00";
 
-        for (let i = startIndex; i < endIndex; i++) {
-            map[v.day][slots[i]] = child.name;
+        let current = start;
+        while (current < end) {
+            map[v.day][current] = child.name;
+
+            let [h, m] = current.split(":").map(Number);
+            m += 30;
+            if (m >= 60) { h++; m = 0; }
+
+            current = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
         }
     });
 
-    // קנבס
+    // --- קנבס ---
     const canvas = document.createElement("canvas");
     canvas.width = 900;
     canvas.height = 600;
     const ctx = canvas.getContext("2d");
 
-    // רקע
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // כותרת
     ctx.fillStyle = "#333";
     ctx.font = "20px Assistant";
     ctx.fillText(`מערכת שעות - ${child.name}`, 20, 30);
@@ -467,7 +505,7 @@ async function exportChildTable(id) {
     const leftMargin = 80;
     const topMargin = 60;
     const colWidth = (canvas.width - leftMargin - 20) / days.length;
-    const rowHeight = (canvas.height - topMargin - 40) / slots.length;
+    const rowHeight = (canvas.height - topMargin - 40) / times.length;
 
     ctx.font = "14px Assistant";
 
@@ -479,7 +517,7 @@ async function exportChildTable(id) {
     });
 
     // שעות בצד שמאל
-    slots.forEach((t, j) => {
+    times.forEach((t, j) => {
         const y = topMargin + j * rowHeight;
         ctx.fillStyle = "#555";
         ctx.fillText(t, 10, y + rowHeight / 2);
@@ -491,10 +529,10 @@ async function exportChildTable(id) {
         const x = leftMargin + i * colWidth;
         ctx.beginPath();
         ctx.moveTo(x, topMargin);
-        ctx.lineTo(x, topMargin + rowHeight * slots.length);
+        ctx.lineTo(x, topMargin + rowHeight * times.length);
         ctx.stroke();
     }
-    for (let j = 0; j <= slots.length; j++) {
+    for (let j = 0; j <= times.length; j++) {
         const y = topMargin + j * rowHeight;
         ctx.beginPath();
         ctx.moveTo(leftMargin, y);
@@ -502,28 +540,27 @@ async function exportChildTable(id) {
         ctx.stroke();
     }
 
-    // ציור תאים עם מיזוג רצפים
+    // --- ציור תאים עם מיזוג רצפים ---
     days.forEach((d, i) => {
         let j = 0;
 
-        while (j < slots.length) {
-            const childName = map[d][slots[j]];
+        while (j < times.length) {
+            const childName = map[d][times[j]];
             const x = leftMargin + i * colWidth + 2;
             const y = topMargin + j * rowHeight + 2;
 
             if (!childName) {
-                // תא פנוי
                 ctx.fillStyle = "#ffffff";
                 ctx.fillRect(x, y, colWidth - 4, rowHeight - 4);
                 j++;
                 continue;
             }
 
-            // מחשבים כמה שעות רצופות הילד נמצא
+            // מיזוג רצפים
             let span = 1;
             while (
-                j + span < slots.length &&
-                map[d][slots[j + span]] === childName
+                j + span < times.length &&
+                map[d][times[j + span]] === childName
             ) {
                 span++;
             }
@@ -537,7 +574,7 @@ async function exportChildTable(id) {
                 rowHeight * span - 4
             );
 
-            // שם הילד במרכז התא
+            // שם הילד במרכז
             ctx.fillStyle = "#ffffff";
             ctx.font = "bold 14px Assistant";
             ctx.textAlign = "center";
