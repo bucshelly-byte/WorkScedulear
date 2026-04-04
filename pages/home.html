@@ -1,8 +1,15 @@
-<div class="page-header">לוח שיבוצים שבועי</div>
+<div class="form-container">
+    <h2>לוח שיבוצים</h2>
+    <p>כאן תראי את כל השיבוצים השבועיים לפי ימים ושעות.</p>
+</div>
 
-<!-- כאן יוצג לוח השיבוצים החדש -->
-<div id="schedule"></div>
+<div id="weeklySchedule" style="margin-top:20px;"></div>
 
-<!-- טעינת קבצי עיצוב וסקריפט -->
-<link rel="stylesheet" href="/static/style.css">
-<script src="/static/app.js"></script>
+<div class="form-container" style="margin-top:20px;">
+    <h3>מקרא צבעים</h3>
+    <div id="calendarLegend"></div>
+</div>
+
+<div style="margin-top:20px;">
+    <button class="btn primary-btn" onclick="exportFreeTable()">ייצוא טבלת פנויות</button>
+</div>
