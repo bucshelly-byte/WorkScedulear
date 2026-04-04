@@ -1,33 +1,273 @@
-<!DOCTYPE html>
-<html lang="he" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <title>מערכת ניהול</title>
-    <link rel="stylesheet" href="/static/style.css">
-    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-</head>
+/* --------------------------------------------------
+   RESET בסיסי
+-------------------------------------------------- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Assistant", sans-serif;
+}
 
-<body>
+body {
+    background: #f5f6fa;
+    color: #333;
+    direction: rtl;
+}
 
-    <!-- תפריט צד -->
-    <div id="sidebar" class="sidebar">
-        <h2 class="sidebar-title">תפריט</h2>
+/* --------------------------------------------------
+   תפריט צד
+-------------------------------------------------- */
+.sidebar {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 240px;
+    height: 100%;
+    background: #ffffff;
+    box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+    padding: 20px;
+    transform: translateX(0);
+    transition: 0.3s ease;
+    z-index: 1000;
+}
 
-        <a onclick="navigate('home')">🏠 דף הבית</a>
-        <a onclick="navigate('children')">👶 רשימת ילדים</a>
-        <a onclick="navigate('child_add')">➕ הוספת ילד</a>
-        <a onclick="navigate('visit_add')">📅 הוספת שיבוץ</a>
-    </div>
+.sidebar.hidden {
+    transform: translateX(260px);
+}
 
-    <!-- באנר עליון -->
-    <div class="top-bar">
-        <div class="menu-btn" onclick="toggleMenu()">☰</div>
-        <div class="page-title" id="pageTitle">טוען...</div>
-    </div>
+.sidebar-title {
+    font-size: 22px;
+    margin-bottom: 20px;
+    font-weight: bold;
+}
 
-    <!-- אזור התוכן -->
-    <div id="app" class="app-container"></div>
+.sidebar a {
+    display: block;
+    padding: 12px 0;
+    font-size: 18px;
+    cursor: pointer;
+    border-bottom: 1px solid #eee;
+    transition: 0.2s;
+}
 
-    <script src="/static/app.js"></script>
-</body>
-</html>
+.sidebar a:hover {
+    color: #007aff;
+}
+
+/* --------------------------------------------------
+   כותרת עליונה
+-------------------------------------------------- */
+.top-bar {
+    position: fixed;
+    top: 0;
+    right: 0;
+    left: 0;
+    height: 55px;
+    background: #ffffff;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    display: flex;
+    align-items: center;
+    padding: 0 15px;
+    z-index: 900;
+}
+
+.menu-btn {
+    font-size: 26px;
+    cursor: pointer;
+    margin-left: 10px;
+}
+
+.page-title {
+    font-size: 20px;
+    font-weight: bold;
+}
+
+/* --------------------------------------------------
+   אזור התוכן
+-------------------------------------------------- */
+.app-container {
+    margin-top: 70px;
+    padding: 20px;
+}
+
+/* --------------------------------------------------
+   כותרות
+-------------------------------------------------- */
+.page-header {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+/* --------------------------------------------------
+   טפסים
+-------------------------------------------------- */
+.form-container {
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 14px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.form-row {
+    margin-bottom: 15px;
+}
+
+.form-row label {
+    display: block;
+    font-size: 16px;
+    margin-bottom: 6px;
+}
+
+.input-field {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    font-size: 16px;
+    transition: 0.2s;
+}
+
+.input-field:focus {
+    border-color: #007aff;
+    outline: none;
+}
+
+/* --------------------------------------------------
+   כפתורים
+-------------------------------------------------- */
+.btn {
+    padding: 12px 20px;
+    border-radius: 10px;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.primary-btn {
+    background: #007aff;
+    color: white;
+}
+
+.primary-btn:hover {
+    background: #0062cc;
+}
+
+.secondary-btn {
+    background: #e5e5ea;
+}
+
+.secondary-btn:hover {
+    background: #d1d1d6;
+}
+
+.form-actions {
+    margin-top: 20px;
+    text-align: left;
+}
+
+/* --------------------------------------------------
+   טבלאות
+-------------------------------------------------- */
+.table-container {
+    background: #ffffff;
+    padding: 15px;
+    border-radius: 14px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.children-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.children-table th,
+.children-table td {
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+    font-size: 16px;
+}
+
+.children-table th {
+    background: #f0f0f5;
+    font-weight: bold;
+}
+
+/* --------------------------------------------------
+   לוח שיבוצים
+-------------------------------------------------- */
+.weekly-schedule {
+    display: grid;
+    gap: 15px;
+}
+
+.day-card {
+    background: #ffffff;
+    padding: 15px;
+    border-radius: 14px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.day-title {
+    font-size: 20px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.slot-item {
+    background: #007aff;
+    color: white;
+    padding: 10px;
+    border-radius: 10px;
+    margin-bottom: 8px;
+    font-size: 16px;
+}
+
+/* --------------------------------------------------
+   מקרא
+-------------------------------------------------- */
+.calendar-legend {
+    margin-top: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #ffffff;
+    padding: 8px 12px;
+    border-radius: 10px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+
+.legend-color {
+    width: 18px;
+    height: 18px;
+    border-radius: 6px;
+}
+
+/* --------------------------------------------------
+   מובייל
+-------------------------------------------------- */
+@media (max-width: 600px) {
+    .sidebar {
+        width: 220px;
+    }
+
+    .page-header {
+        font-size: 20px;
+    }
+
+    .slot-item {
+        font-size: 14px;
+    }
+
+    .children-table th,
+    .children-table td {
+        font-size: 14px;
+    }
+}
