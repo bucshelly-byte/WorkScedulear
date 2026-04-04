@@ -107,6 +107,9 @@ function getSelectedDays(container) {
 // ------------------------------------------------------
 // דף הבית — לוח שיבוצים
 // ------------------------------------------------------
+// ------------------------------------------------------
+// דף הבית — לוח שיבוצים (עם מיזוג רצפים של אותו ילד)
+// ------------------------------------------------------
 async function init_home() {
     const schedule = await fetch(`${API_BASE}/schedule?key=${API_KEY}`).then(r => r.json());
 
@@ -118,14 +121,15 @@ async function init_home() {
     container.innerHTML = "";
     legend.innerHTML = "";
 
+    // צבע קבוע לכל ילד
     const colors = {};
-
     schedule.forEach(s => {
         if (!colors[s.child_name]) {
             colors[s.child_name] = "#" + Math.floor(Math.random() * 16777215).toString(16);
         }
     });
 
+    // בניית כרטיס לכל יום
     days.forEach(day => {
         const card = document.createElement("div");
         card.className = "day-card fade-in";
@@ -135,12 +139,39 @@ async function init_home() {
         title.innerText = day;
         card.appendChild(title);
 
-        const slots = schedule.filter(s => s.day === day);
+        // כל השיבוצים של היום
+        let slots = schedule.filter(s => s.day === day);
 
         if (slots.length === 0) {
             card.innerHTML += "<div class='slot-item empty'>אין שיבוצים</div>";
         } else {
+
+            // ממיינים לפי שעה
+            slots.sort((a, b) => a.start_time.localeCompare(b.start_time));
+
+            // מאחדים רצפים של אותו ילד
+            const merged = [];
+            let current = null;
+
             slots.forEach(s => {
+                if (!current) {
+                    current = { ...s };
+                    return;
+                }
+
+                // אם זה אותו ילד והרצף ממשיך
+                if (current.child_name === s.child_name && current.end_time === s.start_time) {
+                    current.end_time = s.end_time; // מאריכים את השיבוץ
+                } else {
+                    merged.push(current);
+                    current = { ...s };
+                }
+            });
+
+            if (current) merged.push(current);
+
+            // מציגים את השיבוצים המאוחדים
+            merged.forEach(s => {
                 const slot = document.createElement("div");
                 slot.className = "slot-item bounce-in";
                 slot.style.background = colors[s.child_name];
@@ -153,6 +184,7 @@ async function init_home() {
         container.appendChild(card);
     });
 
+    // אגדה (Legend)
     Object.keys(colors).forEach(name => {
         const item = document.createElement("div");
         item.className = "legend-item";
@@ -164,9 +196,7 @@ async function init_home() {
 
         legend.appendChild(item);
     });
-}
-
-// ------------------------------------------------------
+}// ------------------------------------------------------
 // רשימת ילדים
 // ------------------------------------------------------
 async function init_children() {
