@@ -433,16 +433,33 @@ async function exportChildTable(id) {
     const visits = await fetch(`${API_BASE}/schedule/by_child/${id}?key=${API_KEY}`).then(r => r.json());
 
     const days = ["ראשון","שני","שלישי","רביעי","חמישי"];
-    const slots = getTimeSlots();
+    const slots = getTimeSlots(); // כאן את שולטת על טווח השעות
 
+    // מפה של שיבוצים לפי יום ושעה
+    const map = {};
+    days.forEach(d => map[d] = {});
+
+    visits.forEach(v => {
+        const startIndex = slots.indexOf(v.start_time);
+        const endIndex = slots.indexOf(v.end_time);
+        if (startIndex === -1 || endIndex === -1) return;
+
+        for (let i = startIndex; i < endIndex; i++) {
+            map[v.day][slots[i]] = child.name;
+        }
+    });
+
+    // קנבס
     const canvas = document.createElement("canvas");
     canvas.width = 900;
     canvas.height = 600;
     const ctx = canvas.getContext("2d");
 
+    // רקע
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+    // כותרת
     ctx.fillStyle = "#333";
     ctx.font = "20px Assistant";
     ctx.fillText(`מערכת שעות - ${child.name}`, 20, 30);
@@ -454,18 +471,21 @@ async function exportChildTable(id) {
 
     ctx.font = "14px Assistant";
 
+    // כותרות ימים
     days.forEach((day, i) => {
         const x = leftMargin + i * colWidth;
         ctx.fillStyle = "#555";
         ctx.fillText(day, x + 10, topMargin - 10);
     });
 
+    // שעות בצד שמאל
     slots.forEach((t, j) => {
         const y = topMargin + j * rowHeight;
         ctx.fillStyle = "#555";
         ctx.fillText(t, 10, y + rowHeight / 2);
     });
 
+    // קווי טבלה
     ctx.strokeStyle = "#ddd";
     for (let i = 0; i <= days.length; i++) {
         const x = leftMargin + i * colWidth;
@@ -482,25 +502,58 @@ async function exportChildTable(id) {
         ctx.stroke();
     }
 
-    ctx.fillStyle = "#007aff";
-    visits.forEach(v => {
-        const dayIndex = days.indexOf(v.day);
-        if (dayIndex === -1) return;
+    // ציור תאים עם מיזוג רצפים
+    days.forEach((d, i) => {
+        let j = 0;
 
-        const startIndex = slots.indexOf(v.start_time);
-        const endIndex = slots.indexOf(v.end_time);
-        if (startIndex === -1 || endIndex === -1) return;
+        while (j < slots.length) {
+            const childName = map[d][slots[j]];
+            const x = leftMargin + i * colWidth + 2;
+            const y = topMargin + j * rowHeight + 2;
 
-        const x = leftMargin + dayIndex * colWidth + 2;
-        const y = topMargin + startIndex * rowHeight + 2;
-        const h = (endIndex - startIndex) * rowHeight - 4;
+            if (!childName) {
+                // תא פנוי
+                ctx.fillStyle = "#ffffff";
+                ctx.fillRect(x, y, colWidth - 4, rowHeight - 4);
+                j++;
+                continue;
+            }
 
-        ctx.fillRect(x, y, colWidth - 4, h);
+            // מחשבים כמה שעות רצופות הילד נמצא
+            let span = 1;
+            while (
+                j + span < slots.length &&
+                map[d][slots[j + span]] === childName
+            ) {
+                span++;
+            }
+
+            // תא ממוזג
+            ctx.fillStyle = "#007aff";
+            ctx.fillRect(
+                x,
+                y,
+                colWidth - 4,
+                rowHeight * span - 4
+            );
+
+            // שם הילד במרכז התא
+            ctx.fillStyle = "#ffffff";
+            ctx.font = "bold 14px Assistant";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText(
+                childName,
+                x + (colWidth / 2),
+                y + (rowHeight * span) / 2
+            );
+
+            j += span;
+        }
     });
 
     downloadCanvasImage(canvas, `schedule_${child.name}.png`);
 }
-
 // ------------------------------------------------------
 // ייצוא טבלת פנויות (כללי) כתמונה
 // ------------------------------------------------------
