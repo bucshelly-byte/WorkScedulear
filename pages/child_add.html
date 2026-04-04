@@ -1,27 +1,29 @@
-<div class="page">
+<h2 class="page-header">הוספת ילד חדש</h2>
 
-    <h1>הוספת ילד</h1>
+<div class="form-container">
+    <form id="childAddForm">
+        <div class="form-row">
+            <label for="childName">שם הילד:</label>
+            <input type="text" id="childName" name="name" class="input-field" required>
+        </div>
 
-    <div>
-        <label>שם הילד:</label>
-        <input id="name" type="text">
-    </div>
+        <div class="form-row">
+            <label for="parentName">שם הורה:</label>
+            <input type="text" id="parentName" name="parent_name" class="input-field">
+        </div>
 
-    <div style="margin-top:10px;">
-        <label>שם הורה:</label>
-        <input id="parent_name" type="text">
-    </div>
+        <div class="form-row">
+            <label for="phone">טלפון:</label>
+            <input type="text" id="phone" name="phone" class="input-field">
+        </div>
 
-    <div style="margin-top:10px;">
-        <label>טלפון:</label>
-        <input id="phone" type="text">
-    </div>
+        <div class="form-row">
+            <label for="address">כתובת:</label>
+            <input type="text" id="address" name="address" class="input-field">
+        </div>
 
-    <div style="margin-top:10px;">
-        <label>כתובת:</label>
-        <input id="address" type="text">
-    </div>
-
-    <button class="export-btn" style="margin-top:20px;" onclick="saveChild()">שמירה</button>
-
+        <div class="form-actions">
+            <button type="submit" class="btn primary-btn">שמור</button>
+        </div>
+    </form>
 </div>
