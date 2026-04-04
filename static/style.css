@@ -1,6 +1,4 @@
-/* ----------------------------------------------------
-   בסיס
----------------------------------------------------- */
+/* בסיס */
 body {
     margin: 0;
     font-family: Arial, sans-serif;
@@ -12,36 +10,44 @@ body {
     padding: 20px;
 }
 
-/* ----------------------------------------------------
-   כפתור המבורגר
----------------------------------------------------- */
-.menu-btn {
-    position: fixed;
-    top: 15px;
-    right: 15px;
+/* HEADER + המבורגר */
+.top-bar {
+    position: sticky;
+    top: 0;
     background: #1e293b;
     color: white;
-    padding: 10px 14px;
-    border-radius: 6px;
-    font-size: 22px;
-    z-index: 1100;
-    cursor: pointer;
+    padding: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 1000;
 }
 
-/* ----------------------------------------------------
-   תפריט צד
----------------------------------------------------- */
+.page-title {
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.menu-btn {
+    font-size: 26px;
+    cursor: pointer;
+    padding: 6px 10px;
+    background: #334155;
+    border-radius: 6px;
+}
+
+/* תפריט צד */
 .sidebar {
-    width: 220px;
+    width: 240px;
     background: #1e293b;
     color: white;
     position: fixed;
     top: 0;
     bottom: 0;
-    right: -220px;
+    right: -240px;
     padding: 20px;
-    transition: 0.3s;
-    z-index: 1000;
+    transition: 0.3s ease;
+    z-index: 2000;
 }
 
 .sidebar.open {
@@ -60,9 +66,7 @@ body {
     font-size: 16px;
 }
 
-/* ----------------------------------------------------
-   כפתורי פעולה
----------------------------------------------------- */
+/* כפתורי פעולה */
 .export-btn {
     background: #0ea5e9;
     color: white;
@@ -70,7 +74,7 @@ body {
     border-radius: 6px;
     border: none;
     cursor: pointer;
-    margin-bottom: 10px;
+    margin-right: 6px;
     font-size: 15px;
 }
 
@@ -93,73 +97,26 @@ body {
     color: white;
 }
 
-/* ----------------------------------------------------
-   טבלת מערכת שעות — סגנון Google Calendar
----------------------------------------------------- */
-.schedule-wrapper {
-    overflow-x: auto;
-    margin-top: 20px;
-}
-
-.schedule-table {
+/* טבלאות כלליות */
+table {
     width: 100%;
-    min-width: 650px;
     border-collapse: collapse;
     background: white;
-    border-radius: 10px;
+    border-radius: 8px;
     overflow: hidden;
 }
 
-.schedule-table th {
+th, td {
+    padding: 10px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+th {
     background: #1e293b;
     color: white;
-    padding: 12px;
-    text-align: center;
-    font-size: 15px;
 }
 
-.schedule-table td {
-    border: 1px solid #e2e8f0;
-    height: 50px;
-    position: relative;
-    padding: 0;
-}
-
-.time-col {
-    background: #f1f5f9;
-    font-weight: bold;
-    text-align: center;
-}
-
-/* ----------------------------------------------------
-   בלוק שיבוץ
----------------------------------------------------- */
-.slot-block {
-    position: absolute;
-    left: 2px;
-    right: 2px;
-    top: 2px;
-    border-radius: 6px;
-    padding: 5px;
-    font-size: 14px;
-    font-weight: bold;
-    color: #0f172a;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    overflow: hidden;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
-    transition: transform 0.1s ease;
-}
-
-.slot-block:hover {
-    transform: scale(1.03);
-}
-
-/* ----------------------------------------------------
-   מקרא צבעים
----------------------------------------------------- */
+/* מקרא צבעים */
 .legend {
     display: flex;
     gap: 10px;
@@ -179,21 +136,53 @@ body {
     border-radius: 4px;
 }
 
-/* ----------------------------------------------------
-   מובייל
----------------------------------------------------- */
+/* כרטיסי ימים למערכת שעות (מובייל-פרנדלי) */
+.day-card {
+    background: white;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 10px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+
+.day-title {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.slot-item {
+    background: #e2e8f0;
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.slot-item small {
+    font-weight: normal;
+    color: #475569;
+}
+
+/* מובייל */
 @media (max-width: 600px) {
-    .slot-block {
-        font-size: 12px;
-        padding: 3px;
+    .page {
+        padding: 12px;
     }
 
-    .schedule-table th {
-        font-size: 13px;
-        padding: 8px;
+    .day-card {
+        padding: 12px;
     }
 
-    .schedule-table td {
-        height: 45px;
+    .day-title {
+        font-size: 16px;
+    }
+
+    .slot-item {
+        font-size: 14px;
     }
 }
