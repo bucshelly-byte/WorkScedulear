@@ -1,133 +1,33 @@
-/* בסיס */
-body {
-    margin: 0;
-    font-family: 'Rubik', sans-serif;
-    background: #0f172a;
-    color: #e2e8f0;
-}
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>מערכת ניהול</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+</head>
 
-/* אזור התוכן */
-.app-container {
-    padding: 20px;
-    margin-top: 70px;
-}
+<body>
 
-/* באנר עליון */
-.top-bar {
-    position: fixed;
-    top: 0;
-    width: 100%;
-    background: #1e293b;
-    color: white;
-    padding: 14px 20px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    z-index: 2000;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
-}
+    <!-- תפריט צד -->
+    <div id="sidebar" class="sidebar">
+        <h2 class="sidebar-title">תפריט</h2>
 
-.page-title {
-    font-size: 22px;
-    font-weight: bold;
-}
+        <a onclick="navigate('home')">🏠 דף הבית</a>
+        <a onclick="navigate('children')">👶 רשימת ילדים</a>
+        <a onclick="navigate('child_add')">➕ הוספת ילד</a>
+        <a onclick="navigate('visit_add')">📅 הוספת שיבוץ</a>
+    </div>
 
-/* כפתור המבורגר */
-.menu-btn {
-    font-size: 26px;
-    cursor: pointer;
-    padding: 6px 12px;
-    background: #334155;
-    border-radius: 8px;
-}
+    <!-- באנר עליון -->
+    <div class="top-bar">
+        <div class="menu-btn" onclick="toggleMenu()">☰</div>
+        <div class="page-title" id="pageTitle">טוען...</div>
+    </div>
 
-/* תפריט צד */
-.sidebar {
-    width: 260px;
-    background: #1e293b;
-    color: white;
-    position: fixed;
-    top: 0;
-    bottom: 0;
-    right: -260px;
-    padding: 20px;
-    transition: 0.3s ease;
-    z-index: 3000;
-    box-shadow: -4px 0 10px rgba(0,0,0,0.4);
-}
+    <!-- אזור התוכן -->
+    <div id="app" class="app-container"></div>
 
-.sidebar.open {
-    right: 0;
-}
-
-.sidebar-title {
-    font-size: 22px;
-    margin-bottom: 20px;
-}
-
-.sidebar a {
-    display: block;
-    padding: 12px;
-    margin-bottom: 10px;
-    background: #334155;
-    border-radius: 6px;
-    cursor: pointer;
-    text-decoration: none;
-    color: white;
-    font-size: 16px;
-    transition: 0.2s;
-}
-
-.sidebar a:hover {
-    background: #475569;
-}
-
-/* כפתורים */
-.export-btn {
-    background: #0ea5e9;
-    color: white;
-    padding: 12px 18px;
-    border-radius: 8px;
-    border: none;
-    cursor: pointer;
-    font-size: 16px;
-    margin-top: 10px;
-    transition: 0.2s;
-}
-
-.export-btn:hover {
-    background: #0284c7;
-}
-
-/* כרטיסי ימים */
-.day-card {
-    background: #1e293b;
-    padding: 15px;
-    margin-bottom: 15px;
-    border-radius: 12px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
-}
-
-.day-title {
-    font-size: 20px;
-    font-weight: bold;
-    margin-bottom: 10px;
-}
-
-.slot-item {
-    background: #334155;
-    padding: 12px;
-    border-radius: 8px;
-    margin-bottom: 8px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: 0.2s;
-}
-
-.slot-item:hover {
-    background: #475569;
-}
-
-.slot-item small {
-    color: #cbd5e1;
-}
+    <script src="/static/app.js"></script>
+</body>
+</html>
