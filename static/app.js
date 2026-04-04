@@ -53,7 +53,7 @@ async function navigate(page, param = null) {
 }
 
 // ------------------------------------------------------
-// רשימת שעות 08:00–20:00 בקפיצות 30 דק'
+// רשימת שעות 08:00–17:00 בקפיצות 30 דק'
 // ------------------------------------------------------
 function generateTimeOptions(selectElement) {
     selectElement.innerHTML = "";
@@ -71,7 +71,7 @@ function generateTimeOptions(selectElement) {
 
 function getTimeSlots() {
     const slots = [];
-    for (let h = 8; h <= 20; h++) {
+    for (let h = 8; h <= 17; h++) {
         for (let m of ["00", "30"]) {
             if (h === 20 && m === "30") continue;
             slots.push(`${String(h).padStart(2, "0")}:${m}`);
@@ -84,7 +84,7 @@ function getTimeSlots() {
 // כפתורי עיגול לבחירת ימים
 // ------------------------------------------------------
 function createDayButtons(container, selectedDays = []) {
-    const days = ["ראשון","שני","שלישי","רביעי","חמישי","שישי","שבת"];
+    const days = ["ראשון","שני","שלישי","רביעי","חמישי"];
     container.innerHTML = "";
 
     days.forEach(day => {
