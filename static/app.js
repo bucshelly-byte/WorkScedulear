@@ -307,37 +307,80 @@ async function deleteVisit(id) {
 }
 
 // ------------------------------------------------------
-// הוספת שיבוץ — מרובה ימים
+// הוספת שיבוץ חדש (מתוקן)
 // ------------------------------------------------------
 async function init_visit_add() {
-    const dayContainer = document.getElementById("dayButtons");
-    const startSelect = document.getElementById("startTime");
-    const endSelect = document.getElementById("endTime");
 
-    createDayButtons(dayContainer);
-    generateTimeOptions(startSelect);
-    generateTimeOptions(endSelect);
+    // טוען רשימת ילדים
+    const children = await api("children/list");
+    const childSelect = document.getElementById("childId");
+    childSelect.innerHTML = children.map(c => `<option value="${c.id}">${c.name}</option>`).join("");
 
-    const children = await fetch(`${API_BASE}/children?key=${API_KEY}`).then(r => r.json());
-    const select = document.getElementById("childId");
+    // יצירת כפתורי ימים
+    createDayButtons("dayButtons");
 
-    children.forEach(c => {
-        const opt = document.createElement("option");
-        opt.value = c.id;
-        opt.innerText = c.name;
-        select.appendChild(opt);
-    });
+    // יצירת שעות
+    generateTimeOptions("startTime");
+    generateTimeOptions("endTime");
 
-    const form = document.getElementById("visitAddForm");
-
-    form.addEventListener("submit", async e => {
+    // טיפול בשליחת הטופס
+    document.getElementById("visitAddForm").onsubmit = async (e) => {
         e.preventDefault();
 
-        const days = getSelectedDays(dayContainer);
+        const child_id = childSelect.value;
+        const start = document.getElementById("startTime").value;
+        const end = document.getElementById("endTime").value;
+        const days = getSelectedDays(); // מחזיר מערך ["ראשון","שלישי"]
+
         if (days.length === 0) {
-            alert("בחרי לפחות יום אחד");
+            alert("יש לבחור לפחות יום אחד");
             return;
         }
+
+        // -----------------------------
+        // בדיקת התנגשות מרובה (תיקון!)
+        // -----------------------------
+        const daysParam = encodeURIComponent(days.join(",")); // "ראשון,שלישי"
+
+        const conflictUrl =
+            `/api/schedule/conflict_multi?key=${API_KEY}` +
+            `&start=${start}` +
+            `&end=${end}` +
+            `&days=${daysParam}`;
+
+        let conflict;
+        try {
+            const res = await fetch(conflictUrl);
+            conflict = await res.json();
+        } catch (err) {
+            console.error("שגיאה בבדיקת התנגשות:", err);
+            alert("שגיאה בבדיקת התנגשות");
+            return;
+        }
+
+        if (conflict.conflict) {
+            alert("קיים שיבוץ חופף ביום/שעה שנבחרו");
+            return;
+        }
+
+        // -----------------------------
+        // שליחת השיבוץ לשרת
+        // -----------------------------
+        const result = await api("schedule/add", {
+            child_id,
+            start,
+            end,
+            days
+        });
+
+        if (result.success) {
+            alert("השיבוץ נוסף בהצלחה");
+            navigate("home");
+        } else {
+            alert("שגיאה בהוספת שיבוץ");
+        }
+    };
+}
 
         const start = startSelect.value;
         const end = endSelect.value;
