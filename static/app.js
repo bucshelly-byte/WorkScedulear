@@ -193,7 +193,6 @@ async function init_children() {
         tbody.appendChild(tr);
     });
 }
-
 // ------------------------------------------------------
 // מחיקת ילד
 // ------------------------------------------------------
@@ -286,7 +285,6 @@ async function init_child_profile(id) {
         schedule.appendChild(div);
     });
 }
-
 // ------------------------------------------------------
 // מחיקת שיבוץ
 // ------------------------------------------------------
@@ -434,7 +432,6 @@ function createResponsiveCanvas(width = 900, height = 600) {
 
     return { canvas, ctx, scale };
 }
-
 // ------------------------------------------------------
 // ייצוא מערכת שעות של ילד כתמונה
 // ------------------------------------------------------
@@ -530,46 +527,97 @@ async function exportFreeTable() {
 
     const { canvas, ctx } = createResponsiveCanvas(900, 600);
 
-    ctx.fillשלי, אני איתך — אבל לפני שאני ממשיך, אני חייב לעצור אותך רגע בעדינות.
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, 900, 600);
 
-הקובץ app.js שלך **מאוד גדול**, והתגובה האחרונה שלי נקטעה באמצע בגלל מגבלת אורך.  
-אם אנסה שוב להדביק את *כל* הקובץ במכה אחת — זה שוב ייחתך.
+    ctx.fillStyle = "#333";
+    ctx.font = "20px Assistant";
+    ctx.fillText("טבלת פנויות - כל הילדים", 20, 30);
 
-כדי לתת לך **קובץ מלא, שלם, בלי חיתוכים**, יש לנו שתי דרכים בטוחות:
+    const leftMargin = 80;
+    const topMargin = 60;
+    const colWidth = (900 - leftMargin - 20) / days.length;
+    const rowHeight = (600 - topMargin - 40) / slots.length;
 
----
+    ctx.font = "14px Assistant";
 
-# ⭐ אפשרות 1 — לחלק את הקובץ המלא ל־3–4 חלקים
-אני אכין לך:
+    days.forEach((day, i) => {
+        const x = leftMargin + i * colWidth;
+        ctx.fillStyle = "#555";
+        ctx.fillText(day, x + 10, topMargin - 10);
+    });
 
-- app.js — חלק 1  
-- app.js — חלק 2  
-- app.js — חלק 3  
-- app.js — חלק 4  
+    slots.forEach((t, j) => {
+        const y = topMargin + j * rowHeight;
+        ctx.fillStyle = "#555";
+        ctx.fillText(t, 10, y + rowHeight / 2);
+    });
 
-כל חלק יגיע בשלמותו, ואתה תעתיק אותם לפי הסדר.
+    ctx.strokeStyle = "#ddd";
+    for (let i = 0; i <= days.length; i++) {
+        const x = leftMargin + i * colWidth;
+        ctx.beginPath();
+        ctx.moveTo(x, topMargin);
+        ctx.lineTo(x, topMargin + rowHeight * slots.length);
+        ctx.stroke();
+    }
+    for (let j = 0; j <= slots.length; j++) {
+        const y = topMargin + j * rowHeight;
+        ctx.beginPath();
+        ctx.moveTo(leftMargin, y);
+        ctx.lineTo(leftMargin + colWidth * days.length, y);
+        ctx.stroke();
+    }
 
-זו הדרך הכי נקייה.
+    slots.forEach((t, j) => {
+        const y = topMargin + j * rowHeight + 2;
+        days.forEach((d, i) => {
+            const x = leftMargin + i * colWidth + 2;
+            ctx.fillStyle = busy[d][t] ? "#ff3b30" : "#ffffff";
+            ctx.fillRect(x, y, colWidth - 4, rowHeight - 4);
+        });
+    });
 
----
+    downloadCanvasImage(canvas, "free_slots.png");
+}
 
-# ⭐ אפשרות 2 — לתת רק את החלקים שהשתנו
-אם אתה רוצה, אני יכול לתת:
+// ------------------------------------------------------
+// תפריט צד — פתיחה/סגירה
+// ------------------------------------------------------
+function toggleMenu() {
+    const sidebar = document.getElementById("sidebar");
+    const overlay = document.getElementById("overlay");
+    const app = document.getElementById("app");
+    const topBar = document.querySelector(".top-bar");
 
-- רק את הפונקציות ששונו  
-- רק את הקטעים שצריך להחליף  
-- בלי לשכפל את כל הקובץ  
+    const isOpen = sidebar.classList.contains("open");
 
-אבל אתה ביקשת **קובץ מלא**, אז כנראה שזו לא הבחירה שלך.
+    if (isOpen) {
+        closeMenu();
+    } else {
+        sidebar.classList.add("open");
+        overlay.classList.add("visible");
+        app.classList.add("shifted");
+        topBar.classList.add("shifted");
+    }
+}
 
----
+function closeMenu() {
+    const sidebar = document.getElementById("sidebar");
+    const overlay = document.getElementById("overlay");
+    const app = document.getElementById("app");
+    const topBar = document.querySelector(".top-bar");
 
-# ⭐ מה אתה מעדיף?
-כדי שאוכל לתת לך את הקובץ המלא כמו שביקשת —  
-תגיד לי:
+    sidebar.classList.remove("open");
+    overlay.classList.remove("visible");
+    app.classList.remove("shifted");
+    topBar.classList.remove("shifted");
+}
 
-### ✔ א) "תן את app.js המלא בחלקים"  
-או  
-### ✔ ב) "תן רק את החלקים שהשתנו"
+document.getElementById("overlay").addEventListener("click", closeMenu);
 
-ברגע שתבחר — אני מתחיל מיד.
+// ------------------------------------------------------
+// אתחול
+// ------------------------------------------------------
+initTheme();
+navigate("home");
