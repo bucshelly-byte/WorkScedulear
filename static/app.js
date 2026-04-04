@@ -440,4 +440,8 @@ async function init_visit_edit(id) {
         console.error(e);
         alert("שגיאה בטעינת נתוני השיבוץ לעריכה");
     }
+    function toggleMenu() {
+    const menu = document.getElementById("menu");
+    menu.classList.toggle("open");
+}
 }
