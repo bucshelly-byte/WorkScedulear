@@ -2,40 +2,44 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>מערכת ניהול</title>
+
+    <!-- התאמה למובייל — חובה כדי שהאתר ייראה כמו אפליקציה -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>מערכת שיבוצים</title>
+
+    <!-- גופן -->
+    <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600&display=swap" rel="stylesheet">
+
+    <!-- קובץ עיצוב -->
     <link rel="stylesheet" href="/static/style.css">
-    <!-- html2canvas נשאר אם תרצי בעתיד, כרגע אנחנו משתמשים ב-canvas ישירות -->
-    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 </head>
 
 <body>
 
     <!-- תפריט צד -->
-    <div id="sidebar" class="sidebar">
-        <h2 class="sidebar-title">תפריט</h2>
-
-        <a onclick="navigate('home')">🏠 דף הבית</a>
-        <a onclick="navigate('children')">👶 רשימת ילדים</a>
-        <a onclick="navigate('child_add')">➕ הוספת ילד</a>
-        <a onclick="navigate('visit_add')">📅 הוספת שיבוץ</a>
-
-        <hr style="margin:15px 0; border:none; border-top:1px solid #eee;">
-
-        <a onclick="toggleDarkMode()">🌙 מצב כהה / בהיר</a>
+    <div id="sidebar">
+        <a href="#" onclick="navigate('home')">דף הבית</a>
+        <a href="#" onclick="navigate('children')">רשימת ילדים</a>
+        <a href="#" onclick="navigate('child_add')">הוספת ילד</a>
+        <a href="#" onclick="navigate('visit_add')">הוספת שיבוץ</a>
+        <a href="#" onclick="toggleDarkMode()">מצב כהה / בהיר</a>
     </div>
 
-    <!-- שכבת רקע -->
+    <!-- שכבת רקע כהה לתפריט -->
     <div id="overlay"></div>
 
-    <!-- באנר עליון -->
+    <!-- תפריט עליון -->
     <div class="top-bar">
-        <div class="menu-btn" onclick="toggleMenu()">☰</div>
-        <div class="page-title" id="pageTitle">טוען...</div>
+        <span class="menu-btn" onclick="toggleMenu()">☰</span>
+        <span id="pageTitle">מערכת</span>
     </div>
 
     <!-- אזור התוכן -->
-    <div id="app" class="app-container"></div>
+    <div id="app"></div>
 
+    <!-- קובץ JS -->
     <script src="/static/app.js"></script>
+
 </body>
 </html>
