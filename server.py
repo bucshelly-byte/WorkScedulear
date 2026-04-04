@@ -1,8 +1,10 @@
 from flask import Flask, request, send_from_directory, jsonify
+from flask_cors import CORS
 import sqlite3
 import os
 
 app = Flask(__name__, static_folder="static", template_folder="pages")
+CORS(app)
 
 KEY = "ShellySecureKey_9843_2024_XYZ"
 DB = "database.db"
@@ -262,4 +264,4 @@ def schedule_conflict():
 # Run
 # ----------------------------------------------------
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=8000, debug=True)
