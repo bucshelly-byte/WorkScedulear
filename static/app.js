@@ -31,7 +31,7 @@ async function navigate(page, param = null) {
     app.innerHTML = html;
 
     const titles = {
-        home: "דף הבית",
+        home: "תחזית שבועית",
         children: "רשימת ילדים",
         child_add: "הוספת ילד",
         child_edit: "עריכת ילד",
@@ -53,7 +53,7 @@ async function navigate(page, param = null) {
 }
 
 // ------------------------------------------------------
-// רשימת שעות 08:00–20:00 בקפיצות 30 דק'
+// רשימת שעות 08:00–17:00 בקפיצות 30 דק'
 // ------------------------------------------------------
 function generateTimeOptions(selectElement) {
     selectElement.innerHTML = "";
@@ -84,7 +84,7 @@ function getTimeSlots() {
 // כפתורי עיגול לבחירת ימים
 // ------------------------------------------------------
 function createDayButtons(container, selectedDays = []) {
-    const days = ["ראשון","שני","שלישי","רביעי","חמישי","שישי","שבת"];
+    const days = ["ראשון","שני","שלישי","רביעי","חמישי"];
     container.innerHTML = "";
 
     days.forEach(day => {
