@@ -9,6 +9,20 @@ body {
     padding: 20px;
 }
 
+/* כפתור המבורגר */
+.menu-btn {
+    position: fixed;
+    top: 15px;
+    right: 15px;
+    background: #1e293b;
+    color: white;
+    padding: 10px 14px;
+    border-radius: 6px;
+    font-size: 22px;
+    z-index: 1100;
+    cursor: pointer;
+}
+
 /* תפריט צד */
 .sidebar {
     width: 220px;
@@ -17,11 +31,14 @@ body {
     position: fixed;
     top: 0;
     bottom: 0;
-    right: 0;
+    right: -220px;
     padding: 20px;
-    transform: translateX(0);
     transition: 0.3s;
     z-index: 1000;
+}
+
+.sidebar.open {
+    right: 0;
 }
 
 .sidebar a {
@@ -36,79 +53,16 @@ body {
     font-size: 16px;
 }
 
-/* כפתור המבורגר */
-.menu-btn {
-    display: none;
-    position: fixed;
-    top: 15px;
-    right: 15px;
-    background: #1e293b;
-    color: white;
-    padding: 10px 14px;
-    border-radius: 6px;
-    font-size: 22px;
-    z-index: 1100;
-    cursor: pointer;
-}
-
-/* מובייל */
-@media (max-width: 768px) {
-    .sidebar {
-        transform: translateX(100%);
-    }
-    .sidebar.open {
-        transform: translateX(0);
-    }
-    .menu-btn {
-        display: block;
-    }
-}
-
 /* אזור התוכן */
 #app {
-    margin-right: 240px;
     padding: 20px;
 }
 
-@media (max-width: 768px) {
-    #app {
-        margin-right: 0;
-    }
-}
-
-/* כפתור ייצוא */
-.export-btn {
-    background: #0ea5e9;
-    color: white;
-    padding: 10px 16px;
-    border-radius: 6px;
-    border: none;
-    cursor: pointer;
-    margin-bottom: 15px;
-    font-size: 16px;
-}
-
-.export-btn:hover {
-    background: #0284c7;
-}
-
 /* מערכת שעות */
-.calendar {
-    display: grid;
-    gap: 2px;
-    background: #cbd5e1;
-    padding: 10px;
-    border-radius: 8px;
-}
-
 .calendar-grid {
     display: grid;
     grid-template-columns: 80px repeat(5, 1fr);
     gap: 2px;
-}
-
-.calendar-header {
-    display: contents;
 }
 
 .calendar-header div {
@@ -117,10 +71,6 @@ body {
     padding: 10px;
     text-align: center;
     font-weight: bold;
-}
-
-.calendar-row {
-    display: contents;
 }
 
 .calendar-time {
@@ -132,44 +82,25 @@ body {
 
 .calendar-cell {
     background: white;
-    min-height: 40px;
     border: 1px solid #cbd5e1;
+    min-height: 40px;
     position: relative;
-    overflow: hidden;
+    overflow: visible;
 }
 
-/* בלוק של ילד (מיזוג ומרכוז ויזואלי) */
+/* בלוק רציף */
 .slot-block {
-    width: 100%;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
     border-radius: 6px;
     padding: 4px;
-    font-size: 14px;
-    text-align: center;
     font-weight: bold;
+    text-align: center;
     display: flex;
     align-items: center;
     justify-content: center;
-    cursor: pointer;
-}
-
-/* מקרא */
-.legend {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 15px;
-    flex-wrap: wrap;
-}
-
-.legend-item {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.legend-color {
-    width: 16px;
-    height: 16px;
-    border-radius: 4px;
 }
 
 /* טבלאות */
@@ -191,30 +122,12 @@ th {
     color: white;
 }
 
-tr:hover {
-    background: #f1f5f9;
-}
-
-/* פרופיל ילד */
-.child-slot {
-    background: #e2e8f0;
-    padding: 10px;
-    margin-bottom: 6px;
-    border-radius: 6px;
-}
-
-/* כפתורי עריכה/מחיקה מקצועיים */
 .action-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 34px;
-    height: 34px;
-    border-radius: 8px;
-    font-size: 18px;
+    display: inline-block;
+    padding: 6px 10px;
+    border-radius: 6px;
     cursor: pointer;
-    margin: 0 4px;
-    transition: 0.2s;
+    margin: 0 3px;
 }
 
 .action-edit {
@@ -222,24 +135,17 @@ tr:hover {
     color: white;
 }
 
-.action-edit:hover {
-    background: #2563eb;
-}
-
 .action-delete {
     background: #ef4444;
     color: white;
 }
 
-.action-delete:hover {
-    background: #dc2626;
-}
-
-@media (max-width: 768px) {
-    .action-btn {
-        width: 40px;
-        height: 40px;
-        font-size: 20px;
-        margin: 4px;
-    }
+.export-btn {
+    background: #0ea5e9;
+    color: white;
+    padding: 10px 16px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    margin-bottom: 15px;
 }
