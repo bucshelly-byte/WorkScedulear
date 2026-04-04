@@ -720,7 +720,7 @@ async function exportFreeTable() {
             }
 
             // תא ממוזג
-            ctx.fillStyle = "#ff3b30";
+            ctx.fillStyle = getChildColor(child);
             ctx.fillRect(
                 x,
                 y,
