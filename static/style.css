@@ -1,57 +1,68 @@
 /* בסיס */
 body {
     margin: 0;
-    font-family: Arial, sans-serif;
-    background: #f1f5f9;
-    color: #0f172a;
+    font-family: 'Rubik', sans-serif;
+    background: #0f172a;
+    color: #e2e8f0;
 }
 
-.page {
+/* אזור התוכן */
+.app-container {
     padding: 20px;
+    margin-top: 70px;
 }
 
-/* HEADER + המבורגר */
+/* באנר עליון */
 .top-bar {
-    position: sticky;
+    position: fixed;
     top: 0;
+    width: 100%;
     background: #1e293b;
     color: white;
-    padding: 14px;
+    padding: 14px 20px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    z-index: 1000;
+    z-index: 2000;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
 }
 
 .page-title {
-    font-size: 20px;
+    font-size: 22px;
     font-weight: bold;
 }
 
+/* כפתור המבורגר */
 .menu-btn {
     font-size: 26px;
     cursor: pointer;
-    padding: 6px 10px;
+    padding: 6px 12px;
     background: #334155;
-    border-radius: 6px;
+    border-radius: 8px;
 }
 
 /* תפריט צד */
 .sidebar {
-    width: 240px;
+    width: 260px;
     background: #1e293b;
     color: white;
     position: fixed;
     top: 0;
     bottom: 0;
-    right: -240px;
+    right: -260px;
     padding: 20px;
     transition: 0.3s ease;
-    z-index: 2000;
+    z-index: 3000;
+    box-shadow: -4px 0 10px rgba(0,0,0,0.4);
 }
 
 .sidebar.open {
     right: 0;
+}
+
+.sidebar-title {
+    font-size: 22px;
+    margin-bottom: 20px;
 }
 
 .sidebar a {
@@ -64,125 +75,59 @@ body {
     text-decoration: none;
     color: white;
     font-size: 16px;
+    transition: 0.2s;
 }
 
-/* כפתורי פעולה */
+.sidebar a:hover {
+    background: #475569;
+}
+
+/* כפתורים */
 .export-btn {
     background: #0ea5e9;
     color: white;
-    padding: 10px 16px;
-    border-radius: 6px;
+    padding: 12px 18px;
+    border-radius: 8px;
     border: none;
     cursor: pointer;
-    margin-right: 6px;
-    font-size: 15px;
+    font-size: 16px;
+    margin-top: 10px;
+    transition: 0.2s;
 }
 
-.action-btn {
-    display: inline-block;
-    padding: 6px 10px;
-    border-radius: 6px;
-    cursor: pointer;
-    margin: 0 3px;
-    font-size: 14px;
+.export-btn:hover {
+    background: #0284c7;
 }
 
-.action-edit {
-    background: #3b82f6;
-    color: white;
-}
-
-.action-delete {
-    background: #ef4444;
-    color: white;
-}
-
-/* טבלאות כלליות */
-table {
-    width: 100%;
-    border-collapse: collapse;
-    background: white;
-    border-radius: 8px;
-    overflow: hidden;
-}
-
-th, td {
-    padding: 10px;
-    border-bottom: 1px solid #e2e8f0;
-}
-
-th {
-    background: #1e293b;
-    color: white;
-}
-
-/* מקרא צבעים */
-.legend {
-    display: flex;
-    gap: 10px;
-    margin: 10px 0;
-    flex-wrap: wrap;
-}
-
-.legend-item {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.legend-color {
-    width: 14px;
-    height: 14px;
-    border-radius: 4px;
-}
-
-/* כרטיסי ימים למערכת שעות (מובייל-פרנדלי) */
+/* כרטיסי ימים */
 .day-card {
-    background: white;
+    background: #1e293b;
     padding: 15px;
     margin-bottom: 15px;
-    border-radius: 10px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
 }
 
 .day-title {
-    font-size: 18px;
+    font-size: 20px;
     font-weight: bold;
     margin-bottom: 10px;
 }
 
 .slot-item {
-    background: #e2e8f0;
-    padding: 10px;
+    background: #334155;
+    padding: 12px;
     border-radius: 8px;
     margin-bottom: 8px;
     font-weight: bold;
     cursor: pointer;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
+    transition: 0.2s;
+}
+
+.slot-item:hover {
+    background: #475569;
 }
 
 .slot-item small {
-    font-weight: normal;
-    color: #475569;
-}
-
-/* מובייל */
-@media (max-width: 600px) {
-    .page {
-        padding: 12px;
-    }
-
-    .day-card {
-        padding: 12px;
-    }
-
-    .day-title {
-        font-size: 16px;
-    }
-
-    .slot-item {
-        font-size: 14px;
-    }
+    color: #cbd5e1;
 }
