@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>מערכת ניהול</title>
     <link rel="stylesheet" href="/static/style.css">
+    <!-- html2canvas נשאר אם תרצי בעתיד, כרגע אנחנו משתמשים ב-canvas ישירות -->
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 </head>
 
@@ -17,6 +18,10 @@
         <a onclick="navigate('children')">👶 רשימת ילדים</a>
         <a onclick="navigate('child_add')">➕ הוספת ילד</a>
         <a onclick="navigate('visit_add')">📅 הוספת שיבוץ</a>
+
+        <hr style="margin:15px 0; border:none; border-top:1px solid #eee;">
+
+        <a onclick="toggleDarkMode()">🌙 מצב כהה / בהיר</a>
     </div>
 
     <!-- שכבת רקע -->
