@@ -140,8 +140,11 @@ async function init_home() {
         card.appendChild(title);
 
         // כל השיבוצים של היום
-        let slots = schedule.filter(s => s.day === day);
-
+let slots = schedule.filter(s =>
+    s.day === day &&
+    s.start_time >= "08:00" &&
+    s.end_time <= "17:00"
+);
         if (slots.length === 0) {
             card.innerHTML += "<div class='slot-item empty'>אין שיבוצים</div>";
         } else {
