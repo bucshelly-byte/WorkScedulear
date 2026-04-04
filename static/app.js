@@ -29,9 +29,10 @@ const CHILD_COLORS = [
 
 let childColorMap = {};
 let FULL_SCHEDULE = [];
+let CURRENT_CHILD = null;
 
 // ----------------------------
-// SPA NAVIGATION
+// SPA NAVIGATION + המבורגר
 // ----------------------------
 async function navigate(page, param = null) {
     const route = routes[page];
@@ -48,6 +49,16 @@ async function navigate(page, param = null) {
     if (typeof window[initName] === "function") {
         window[initName](param);
     }
+
+    // לסגור תפריט אם פתוח
+    const sidebar = document.getElementById("sidebar");
+    if (sidebar) sidebar.classList.remove("open");
+}
+
+function toggleMenu() {
+    const sidebar = document.getElementById("sidebar");
+    if (!sidebar) return;
+    sidebar.classList.toggle("open");
 }
 
 window.addEventListener("load", () => navigate("home"));
@@ -157,7 +168,6 @@ function renderCalendar(schedule, children) {
         block.style.fontWeight = "bold";
         block.style.cursor = "pointer";
 
-        // לחיצה על המשבצת → עריכת שיבוץ
         block.onclick = () => navigate('visit_edit', row.id);
 
         firstCell.style.position = "relative";
@@ -193,11 +203,120 @@ window.filterByDay = function () {
         .then(children => renderCalendar(filtered, children))
         .catch(console.error);
 };
+
+// ----------------------------
+// CHILDREN LIST
+// ----------------------------
+window.init_children = async function () {
+    try {
+        const res = await fetch(`/api/children?key=${KEY}`);
+        const data = await res.json();
+
+        const tbody = document.querySelector("#childrenTable tbody");
+        if (!tbody) return;
+        tbody.innerHTML = "";
+
+        data.forEach(row => {
+            const tr = document.createElement("tr");
+
+            tr.innerHTML = `
+                <td>${row.name}</td>
+                <td>${row.parent_name || ""}</td>
+                <td>${row.phone || ""}</td>
+                <td>${row.address || ""}</td>
+                <td>
+                    <span class="action-btn action-edit" onclick="navigate('child_edit', ${row.id})">✏️</span>
+                    <span class="action-btn action-delete" onclick="deleteChild(${row.id})">🗑️</span>
+                    <span class="action-btn action-edit" onclick="navigate('child_profile', ${row.id})">👤</span>
+                </td>
+            `;
+
+            tbody.appendChild(tr);
+        });
+    } catch (e) {
+        console.error(e);
+    }
+};
+
+window.deleteChild = async function (id) {
+    if (!confirm("למחוק את הילד וכל השיבוצים שלו?")) return;
+
+    const res = await fetch(`/api/children/delete/${id}?key=${KEY}`, {
+        method: "POST"
+    });
+
+    if (res.ok) navigate("children");
+    else alert("שגיאה במחיקה");
+};
+
+// ----------------------------
+// CHILD ADD
+// ----------------------------
+window.init_child_add = function () {};
+
+window.saveChild = async function () {
+    const name = document.getElementById("name").value.trim();
+    if (!name) {
+        alert("חובה למלא שם ילד");
+        return;
+    }
+
+    const form = new FormData();
+    form.append("name", name);
+    form.append("parent_name", document.getElementById("parent_name").value.trim());
+    form.append("phone", document.getElementById("phone").value.trim());
+    form.append("address", document.getElementById("address").value.trim());
+
+    const res = await fetch(`/api/children/add?key=${KEY}`, {
+        method: "POST",
+        body: form
+    });
+
+    if (res.ok) navigate("children");
+    else alert("שגיאה בשמירה");
+};
+
+// ----------------------------
+// CHILD EDIT
+// ----------------------------
+window.init_child_edit = async function (id) {
+    try {
+        const res = await fetch(`/api/children/${id}?key=${KEY}`);
+        const data = await res.json();
+
+        document.getElementById("childId").value = data.id;
+        document.getElementById("name").value = data.name || "";
+        document.getElementById("parent_name").value = data.parent_name || "";
+        document.getElementById("phone").value = data.phone || "";
+        document.getElementById("address").value = data.address || "";
+    } catch (e) {
+        console.error(e);
+    }
+};
+
+window.saveEdit = async function () {
+    const id = document.getElementById("childId").value;
+
+    const form = new FormData();
+    form.append("name", document.getElementById("name").value.trim());
+    form.append("parent_name", document.getElementById("parent_name").value.trim());
+    form.append("phone", document.getElementById("phone").value.trim());
+    form.append("address", document.getElementById("address").value.trim());
+
+    const res = await fetch(`/api/children/edit/${id}?key=${KEY}`, {
+        method: "POST",
+        body: form
+    });
+
+    if (res.ok) navigate("children");
+    else alert("שגיאה בעדכון");
+};
+
 // ----------------------------
 // CHILD PROFILE
 // ----------------------------
 window.init_child_profile = async function (id) {
-    window.CURRENT_CHILD = id;
+    CURRENT_CHILD = id;
 
     try {
         const resChild = await fetch(`/api/children/${id}?key=${KEY}`);
@@ -256,7 +375,7 @@ window.deleteVisitChild = async function (id) {
         method: "POST"
     });
 
-    if (res.ok) init_child_profile(window.CURRENT_CHILD);
+    if (res.ok) init_child_profile(CURRENT_CHILD);
     else alert("שגיאה במחיקה");
 };
 
@@ -269,6 +388,7 @@ window.init_visit_add = async function () {
         const children = await res.json();
 
         const select = document.getElementById("child_id");
+        if (!select) return;
         select.innerHTML = "";
 
         children.forEach(c => {
@@ -328,6 +448,198 @@ window.init_visit_edit = async function (id) {
         const children = await resChildren.json();
 
         const select = document.getElementById("child_id");
+        if (!select) return;
+        select.innerHTML = "";
+        children.forEach(c => {
+            const opt = document.createElement("option");
+            opt.value = c.id;
+            opt.textContent = c.name;
+            select.appendChild(opt);
+        });
+
+        const resVisit = await fetch(`/api/schedule/${id}?key=${KEY}`);
+        const visit = await resVisit.json();
+
+        document.getElementById("visitId").value = visit.id;
+        document.getElementById("child_id").value = visit.child_id;
+        document.getElementById("day").value = visit.day;
+        document.getElementById("start_time").value = visit.start_time;
+        document.getElementById("end_time").value = visit.end_time;
+
+    } catch (e) {
+        console.error(e);
+        alert("שגיאה בטעינת נתוני השיבוץ");
+    }
+};
+
+window.saveVisitEdit = async function () {
+    const id = document.getElementById("visitId").value;
+    const child_id = document.getElementById("child_id").value;
+    const day = document.getElementById("day").value;
+    const start = document.getElementById("start_time").value;
+    const end = document.getElementById("end_time").value;
+
+    if (!child_id || !day || !start || !end) {
+        alert("חובה למלא את כל השדות");
+        return;
+    }
+
+    if (end <= start) {
+        alert("שעת סיום חייבת להיות אחרי שעת התחלה");
+        return;
+    }
+
+    const form = new FormData();
+    form.append("child_id", child_id);
+    form.append("day", day);
+    form.append("start_time", start);
+    form.append("end_time", end);
+
+    const res = await fetch(`/api/schedule/edit/${id}?key=${KEY}`, {
+        method: "POST",
+        body: form
+    });
+
+    if (res.ok) {
+        alert("השיבוץ עודכן בהצלחה");
+        navigate("home");
+    } else {
+        alert("שגיאה בעדכון השיבוץ");
+    }
+};
+
+// ----------------------------
+// EXPORT — ייצוא כתמונה
+// ----------------------------
+window.exportCalendarAsImage = async function () {
+    const calendar = document.getElementById("calendarContainer");
+    if (!calendar || typeof html2canvas === "undefined") {
+        alert("לא ניתן לייצא כרגע");
+        return;
+    }
+
+    const wrapper = document.createElement("div");
+    wrapper.style.padding = "20px";
+    wrapper.style.background = "white";
+    wrapper.style.direction = "rtl";
+
+    const title = document.createElement("h2");
+    title.innerText = "מערכת שעות כללית";
+    wrapper.appendChild(title);
+
+    const clone = calendar.cloneNode(true);
+    wrapper.appendChild(clone);
+
+    document.body.appendChild(wrapper);
+
+    const canvas = await html2canvas(wrapper, { scale: 2 });
+    const link = document.createElement("a");
+    link.download = "מערכת-שעות-כללית.png";
+    link.href = canvas.toDataURL();
+    link.click();
+
+    wrapper.remove();
+};
+
+window.exportChildCalendar = async function () {
+    const element = document.getElementById("childCalendarContainer");
+    if (!element || typeof html2canvas === "undefined") {
+        alert("לא ניתן לייצא כרגע");
+        return;
+    }
+
+    const wrapper = document.createElement("div");
+    wrapper.style.padding = "20px";
+    wrapper.style.background = "white";
+    wrapper.style.direction = "rtl";
+
+    const title = document.createElement("h2");
+    title.innerText = "מערכת שעות לפי ילד";
+    wrapper.appendChild(title);
+
+    const clone = element.cloneNode(true);
+    wrapper.appendChild(clone);
+
+    document.body.appendChild(wrapper);
+
+    const canvas = await html2canvas(wrapper, { scale: 2 });
+    const link = document.createElement("a");
+    link.download = "מערכת-שעות-לפי-ילד.png";
+    link.href = canvas.toDataURL();
+    link.click();
+
+    wrapper.remove();
+};
+// ----------------------------
+// VISIT ADD — הוספת שיבוץ
+// ----------------------------
+window.init_visit_add = async function () {
+    try {
+        const res = await fetch(`/api/children?key=${KEY}`);
+        const children = await res.json();
+
+        const select = document.getElementById("child_id");
+        if (!select) return;
+        select.innerHTML = "";
+
+        children.forEach(c => {
+            const opt = document.createElement("option");
+            opt.value = c.id;
+            opt.textContent = c.name;
+            select.appendChild(opt);
+        });
+
+    } catch (e) {
+        console.error(e);
+        alert("שגיאה בטעינת רשימת הילדים");
+    }
+};
+
+window.saveVisit = async function () {
+    const child_id = document.getElementById("child_id").value;
+    const day = document.getElementById("day").value;
+    const start = document.getElementById("start_time").value;
+    const end = document.getElementById("end_time").value;
+
+    if (!child_id || !day || !start || !end) {
+        alert("חובה למלא את כל השדות");
+        return;
+    }
+
+    if (end <= start) {
+        alert("שעת סיום חייבת להיות אחרי שעת התחלה");
+        return;
+    }
+
+    const form = new FormData();
+    form.append("child_id", child_id);
+    form.append("day", day);
+    form.append("start_time", start);
+    form.append("end_time", end);
+
+    const res = await fetch(`/api/schedule/add?key=${KEY}`, {
+        method: "POST",
+        body: form
+    });
+
+    if (res.ok) {
+        alert("השיבוץ נשמר בהצלחה");
+        navigate("home");
+    } else {
+        alert("שגיאה בשמירת השיבוץ");
+    }
+};
+
+// ----------------------------
+// VISIT EDIT — עריכת שיבוץ
+// ----------------------------
+window.init_visit_edit = async function (id) {
+    try {
+        const resChildren = await fetch(`/api/children?key=${KEY}`);
+        const children = await resChildren.json();
+
+        const select = document.getElementById("child_id");
+        if (!select) return;
         select.innerHTML = "";
         children.forEach(c => {
             const opt = document.createElement("option");
