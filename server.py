@@ -9,33 +9,24 @@ app = Flask(
 
 CORS(app)
 
-# ---------------------------
-#  דף הבית – טוען את base.html
-# ---------------------------
 @app.route("/")
 def index():
     return send_from_directory("pages", "base.html")
 
-
-# ---------------------------
-#  טעינת קבצי STATIC (CSS/JS בלבד)
-# ---------------------------
 @app.route("/static/<path:path>")
 def static_files(path):
     return send_from_directory("static", path)
 
+# ⭐ זה מה שהיה חסר — מגיש את קבצי ה‑HTML של ה‑SPA
+@app.route("/pages/<path:filename>")
+def pages(filename):
+    return send_from_directory("pages", filename)
 
-# ---------------------------
-#  דוגמה ל־API (אם יש צורך)
-# ---------------------------
+# דוגמה ל‑API
 @app.route("/api/test")
 def api_test():
     return jsonify({"status": "ok"})
 
-
-# ---------------------------
-#  הפעלת השרת
-# ---------------------------
 if __name__ == "__main__":
     app.run(
         host="0.0.0.0",
