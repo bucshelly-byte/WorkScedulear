@@ -1,6 +1,4 @@
-/* ----------------------------------------------------
-   הגדרות בסיס
----------------------------------------------------- */
+/* הגדרות בסיס */
 const KEY = "ShellySecureKey_9843_2024_XYZ";
 
 const routes = {
@@ -14,13 +12,12 @@ const routes = {
 };
 
 const DAYS = ["ראשון", "שני", "שלישי", "רביעי", "חמישי"];
-const HOURS = [];
-for (let h = 7; h <= 16; h++) {
-    for (let m of ["00", "30"]) {
-        if (h === 16 && m !== "00") continue;
-        HOURS.push(`${String(h).padStart(2, "0")}:${m}`);
-    }
-}
+
+const TIME_LIST = [
+    "07:00","07:30","08:00","08:30","09:00","09:30",
+    "10:00","10:30","11:00","11:30","12:00","12:30",
+    "13:00","13:30","14:00","14:30","15:00","15:30","16:00"
+];
 
 const CHILD_COLORS = [
     "#f97316", "#22c55e", "#3b82f6", "#e11d48",
@@ -31,9 +28,7 @@ let childColorMap = {};
 let FULL_SCHEDULE = [];
 let CURRENT_CHILD = null;
 
-/* ----------------------------------------------------
-   SPA + תפריט המבורגר
----------------------------------------------------- */
+/* SPA + תפריט */
 async function navigate(page, param = null) {
     const route = routes[page];
     if (!route) return;
@@ -55,28 +50,32 @@ async function navigate(page, param = null) {
 
 function toggleMenu() {
     const sidebar = document.getElementById("sidebar");
+    if (!sidebar) return;
     sidebar.classList.toggle("open");
 }
 
 window.addEventListener("load", () => navigate("home"));
 
-/* ----------------------------------------------------
-   עזר: הוספת 30 דקות
----------------------------------------------------- */
-function add30(time) {
-    let [h, m] = time.split(":").map(Number);
-    m += 30;
-    if (m >= 60) {
-        m -= 60;
-        h += 1;
-    }
-    return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+/* כותרת עמוד */
+function setPageTitle(title) {
+    const el = document.getElementById("pageTitle");
+    if (el) el.innerText = title;
 }
 
-/* ----------------------------------------------------
-   HOME — מערכת שעות מודרנית
----------------------------------------------------- */
+/* עזר: מילוי רשימת שעות */
+function fillTimeSelect(id) {
+    const select = document.getElementById(id);
+    if (!select) return;
+    select.innerHTML = `<option value="">בחר שעה</option>`;
+    TIME_LIST.forEach(t => {
+        select.innerHTML += `<option value="${t}">${t}</option>`;
+    });
+}
+
+/* HOME — שיבוץ שבועי (כרטיסים יומיים) */
 window.init_home = async function () {
+    setPageTitle("שיבוץ שבועי");
+
     try {
         const [scheduleRes, childrenRes] = await Promise.all([
             fetch(`/api/schedule?key=${KEY}`),
@@ -93,81 +92,74 @@ window.init_home = async function () {
             childColorMap[c.id] = CHILD_COLORS[idx % CHILD_COLORS.length];
         });
 
-        renderCalendar(schedule, children);
+        renderMobileSchedule(schedule, children);
     } catch (e) {
         console.error(e);
     }
 };
 
-/* ----------------------------------------------------
-   טבלת מערכת שעות — סגנון Google Calendar
----------------------------------------------------- */
-function renderCalendar(schedule, children) {
-    const tbody = document.getElementById("scheduleBody");
-    tbody.innerHTML = "";
+function renderMobileSchedule(schedule, children) {
+    const container = document.getElementById("weeklySchedule");
+    if (!container) return;
+    container.innerHTML = "";
 
-    // יצירת שורות שעות
-    HOURS.forEach(time => {
-        const tr = document.createElement("tr");
+    // מקרא
+    const legend = document.getElementById("calendarLegend");
+    if (legend) {
+        legend.innerHTML = "";
+        children.forEach(c => {
+            const item = document.createElement("div");
+            item.className = "legend-item";
+            item.innerHTML = `
+                <div class="legend-color" style="background:${childColorMap[c.id]}"></div>
+                <span>${c.name}</span>
+            `;
+            legend.appendChild(item);
+        });
+    }
 
-        tr.innerHTML = `<td class="time-col">${time}</td>` +
-            DAYS.map(day => `<td id="cell-${day}-${time}" data-day="${day}" data-time="${time}"></td>`).join("");
+    DAYS.forEach(day => {
+        const card = document.createElement("div");
+        card.className = "day-card";
 
-        tbody.appendChild(tr);
-    });
+        card.innerHTML = `<div class="day-title">${day}</div>`;
 
-    // ציור בלוקים
-    schedule.forEach(row => {
-        const { day, start_time, end_time, child_id, child_name, id } = row;
+        const daySlots = schedule.filter(s => s.day === day);
 
-        const firstCell = document.getElementById(`cell-${day}-${start_time}`);
-        if (!firstCell) return;
+        if (daySlots.length === 0) {
+            card.innerHTML += `<div style="color:#94a3b8;">אין שיבוצים</div>`;
+        } else {
+            daySlots
+                .sort((a, b) => a.start_time.localeCompare(b.start_time))
+                .forEach(s => {
+                    const item = document.createElement("div");
+                    item.className = "slot-item";
+                    item.style.background = childColorMap[s.child_id] || "#e2e8f0";
 
-        let count = 0;
-        let t = start_time;
-        while (t < end_time) {
-            count++;
-            t = add30(t);
+                    item.innerHTML = `
+                        <span>${s.child_name}</span>
+                        <small>${s.start_time} - ${s.end_time}</small>
+                    `;
+
+                    item.onclick = () => navigate("visit_edit", s.id);
+
+                    item.oncontextmenu = (e) => {
+                        e.preventDefault();
+                        if (confirm("למחוק שיבוץ?")) {
+                            fetch(`/api/schedule/delete/${s.id}?key=${KEY}`, { method: "POST" })
+                                .then(() => navigate("home"));
+                        }
+                    };
+
+                    card.appendChild(item);
+                });
         }
 
-        const block = document.createElement("div");
-        block.className = "slot-block";
-        block.style.background = childColorMap[child_id] || "#94a3b8";
-        block.style.height = `calc(${count} * 50px - 4px)`;
-        block.textContent = child_name;
-
-        // מעבר לעריכה
-        block.onclick = () => navigate("visit_edit", id);
-
-        // מחיקה בלחיצה ימנית
-        block.oncontextmenu = (e) => {
-            e.preventDefault();
-            if (confirm("למחוק את השיבוץ?")) {
-                fetch(`/api/schedule/delete/${id}?key=${KEY}`, { method: "POST" })
-                    .then(() => navigate("home"));
-            }
-        };
-
-        firstCell.appendChild(block);
-    });
-
-    // מקרא צבעים
-    const legend = document.getElementById("calendarLegend");
-    legend.innerHTML = "";
-    children.forEach(c => {
-        const item = document.createElement("div");
-        item.className = "legend-item";
-        item.innerHTML = `
-            <div class="legend-color" style="background:${childColorMap[c.id]}"></div>
-            <span>${c.name}</span>
-        `;
-        legend.appendChild(item);
+        container.appendChild(card);
     });
 }
 
-/* ----------------------------------------------------
-   סינון לפי יום
----------------------------------------------------- */
+/* סינון לפי יום */
 window.filterByDay = function () {
     const selected = document.getElementById("dayFilter").value;
 
@@ -177,17 +169,18 @@ window.filterByDay = function () {
 
     fetch(`/api/children?key=${KEY}`)
         .then(r => r.json())
-        .then(children => renderCalendar(filtered, children));
+        .then(children => renderMobileSchedule(filtered, children));
 };
 
-/* ----------------------------------------------------
-   CHILDREN LIST
----------------------------------------------------- */
+/* CHILDREN LIST */
 window.init_children = async function () {
+    setPageTitle("רשימת ילדים");
+
     const res = await fetch(`/api/children?key=${KEY}`);
     const data = await res.json();
 
     const tbody = document.querySelector("#childrenTable tbody");
+    if (!tbody) return;
     tbody.innerHTML = "";
 
     data.forEach(row => {
@@ -219,10 +212,10 @@ window.deleteChild = async function (id) {
     if (res.ok) navigate("children");
 };
 
-/* ----------------------------------------------------
-   CHILD ADD
----------------------------------------------------- */
-window.init_child_add = function () {};
+/* CHILD ADD */
+window.init_child_add = function () {
+    setPageTitle("הוספת ילד");
+};
 
 window.saveChild = async function () {
     const name = document.getElementById("name").value.trim();
@@ -242,10 +235,10 @@ window.saveChild = async function () {
     if (res.ok) navigate("children");
 };
 
-/* ----------------------------------------------------
-   CHILD EDIT
----------------------------------------------------- */
+/* CHILD EDIT */
 window.init_child_edit = async function (id) {
+    setPageTitle("עריכת ילד");
+
     const res = await fetch(`/api/children/${id}?key=${KEY}`);
     const data = await res.json();
 
@@ -273,40 +266,42 @@ window.saveEdit = async function () {
     if (res.ok) navigate("children");
 };
 
-/* ----------------------------------------------------
-   CHILD PROFILE
----------------------------------------------------- */
+/* CHILD PROFILE */
 window.init_child_profile = async function (id) {
+    setPageTitle("פרופיל ילד");
     CURRENT_CHILD = id;
 
     const resChild = await fetch(`/api/children/${id}?key=${KEY}`);
     const child = await resChild.json();
 
-    document.getElementById("childName").innerText = child.name;
-    document.getElementById("childMeta").innerText =
+    const nameEl = document.getElementById("childName");
+    const metaEl = document.getElementById("childMeta");
+    if (nameEl) nameEl.innerText = child.name;
+    if (metaEl) metaEl.innerText =
         `${child.parent_name || "ללא הורה"} • ${child.phone || "ללא טלפון"}`;
 
     const res = await fetch(`/api/schedule/by_child/${id}?key=${KEY}`);
     const data = await res.json();
 
     const tbody = document.querySelector("#childSchedule tbody");
-    tbody.innerHTML = "";
+    if (tbody) {
+        tbody.innerHTML = "";
+        data.forEach(row => {
+            const tr = document.createElement("tr");
 
-    data.forEach(row => {
-        const tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td>${row.day}</td>
+                <td>${row.start_time}</td>
+                <td>${row.end_time}</td>
+                <td>
+                    <span class="action-btn action-edit" onclick="navigate('visit_edit', ${row.id})">✏️</span>
+                    <span class="action-btn action-delete" onclick="deleteVisitChild(${row.id})">🗑️</span>
+                </td>
+            `;
 
-        tr.innerHTML = `
-            <td>${row.day}</td>
-            <td>${row.start_time}</td>
-            <td>${row.end_time}</td>
-            <td>
-                <span class="action-btn action-edit" onclick="navigate('visit_edit', ${row.id})">✏️</span>
-                <span class="action-btn action-delete" onclick="deleteVisitChild(${row.id})">🗑️</span>
-            </td>
-        `;
-
-        tbody.appendChild(tr);
-    });
+            tbody.appendChild(tr);
+        });
+    }
 };
 
 window.deleteVisitChild = async function (id) {
@@ -319,14 +314,15 @@ window.deleteVisitChild = async function (id) {
     if (res.ok) init_child_profile(CURRENT_CHILD);
 };
 
-/* ----------------------------------------------------
-   VISIT ADD
----------------------------------------------------- */
+/* VISIT ADD */
 window.init_visit_add = async function () {
+    setPageTitle("הוספת שיבוץ");
+
     const res = await fetch(`/api/children?key=${KEY}`);
     const children = await res.json();
 
     const select = document.getElementById("child_id");
+    if (!select) return;
     select.innerHTML = "";
 
     children.forEach(c => {
@@ -335,6 +331,9 @@ window.init_visit_add = async function () {
         opt.textContent = c.name;
         select.appendChild(opt);
     });
+
+    fillTimeSelect("start_time");
+    fillTimeSelect("end_time");
 };
 
 window.saveVisit = async function () {
@@ -363,10 +362,10 @@ window.saveVisit = async function () {
     if (res.ok) navigate("home");
 };
 
-/* ----------------------------------------------------
-   VISIT EDIT
----------------------------------------------------- */
+/* VISIT EDIT */
 window.init_visit_edit = async function (id) {
+    setPageTitle("עריכת שיבוץ");
+
     const resVisit = await fetch(`/api/schedule/${id}?key=${KEY}`);
     const visit = await resVisit.json();
 
@@ -374,6 +373,7 @@ window.init_visit_edit = async function (id) {
     const children = await resChildren.json();
 
     const select = document.getElementById("child_id");
+    if (!select) return;
     select.innerHTML = "";
     children.forEach(c => {
         const opt = document.createElement("option");
@@ -381,6 +381,9 @@ window.init_visit_edit = async function (id) {
         opt.textContent = c.name;
         select.appendChild(opt);
     });
+
+    fillTimeSelect("start_time");
+    fillTimeSelect("end_time");
 
     document.getElementById("visitId").value = visit.id;
     document.getElementById("child_id").value = visit.child_id;
@@ -416,11 +419,9 @@ window.saveVisitEdit = async function () {
     if (res.ok) navigate("home");
 };
 
-/* ----------------------------------------------------
-   EXPORT — ייצוא כתמונה
----------------------------------------------------- */
+/* EXPORT — ייצוא כתמונה */
 window.exportCalendarAsImage = async function () {
-    const calendar = document.getElementById("scheduleTable");
+    const calendar = document.getElementById("weeklySchedule");
     if (!calendar || typeof html2canvas === "undefined") {
         alert("לא ניתן לייצא כרגע");
         return;
@@ -432,7 +433,7 @@ window.exportCalendarAsImage = async function () {
     wrapper.style.direction = "rtl";
 
     const title = document.createElement("h2");
-    title.innerText = "מערכת שעות כללית";
+    title.innerText = "שיבוץ שבועי";
     wrapper.appendChild(title);
 
     const clone = calendar.cloneNode(true);
@@ -442,7 +443,7 @@ window.exportCalendarAsImage = async function () {
 
     const canvas = await html2canvas(wrapper, { scale: 2 });
     const link = document.createElement("a");
-    link.download = "מערכת-שעות-כללית.png";
+    link.download = "שיבוץ-שבועי.png";
     link.href = canvas.toDataURL();
     link.click();
 
