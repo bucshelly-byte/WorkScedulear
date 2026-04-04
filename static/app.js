@@ -103,7 +103,37 @@ function createDayButtons(container, selectedDays = []) {
 function getSelectedDays(container) {
     return [...container.querySelectorAll(".day-toggle.active")].map(b => b.innerText);
 }
+// -----------------------------
+// פונקציה גלובלית לצבע קבוע לכל ילד
+// -----------------------------
+function getChildColor(name) {
+    let colors = JSON.parse(localStorage.getItem("child_colors") || "{}");
 
+    // אם כבר יש צבע — מחזירים אותו
+    if (colors[name]) return colors[name];
+
+    // רשימת צבעים אפשריים
+    const palette = [
+        "#FF6B6B", "#4ECDC4", "#556270", "#C7F464",
+        "#C44D58", "#FF9F1C", "#2EC4B6", "#E71D36",
+        "#9B5DE5", "#F15BB5", "#00BBF9", "#00F5D4"
+    ];
+
+    // מוצאים צבע שלא בשימוש
+    const used = Object.values(colors);
+    const available = palette.filter(c => !used.includes(c));
+
+    // אם נגמרו הצבעים — בוחרים רנדומלי
+    const newColor = available.length > 0
+        ? available[0]
+        : "#" + Math.floor(Math.random() * 16777215).toString(16);
+
+    // שומרים
+    colors[name] = newColor;
+    localStorage.setItem("child_colors", JSON.stringify(colors));
+
+    return newColor;
+}
 // ------------------------------------------------------
 // דף הבית — לוח שיבוצים
 // ------------------------------------------------------
