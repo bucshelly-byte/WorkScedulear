@@ -11,11 +11,9 @@ async function navigate(page, param = null) {
     const app = document.getElementById("app");
     const pageTitle = document.getElementById("pageTitle");
 
-    // טוען את קובץ ה‑HTML של הדף
     const html = await fetch(`/pages/${page}.html`).then(r => r.text());
     app.innerHTML = html;
 
-    // שינוי כותרת
     const titles = {
         home: "דף הבית",
         children: "רשימת ילדים",
@@ -27,7 +25,6 @@ async function navigate(page, param = null) {
     };
     pageTitle.innerText = titles[page] || "מערכת";
 
-    // הפעלת פונקציית אתחול לדף
     if (page === "home") init_home();
     if (page === "children") init_children();
     if (page === "child_add") init_child_add();
@@ -36,7 +33,6 @@ async function navigate(page, param = null) {
     if (page === "visit_add") init_visit_add();
     if (page === "visit_edit") init_visit_edit(param);
 
-    // סגירת תפריט צד במובייל
     closeMenu();
 }
 
@@ -88,7 +84,6 @@ async function init_home() {
         container.appendChild(card);
     });
 
-    // מקרא
     Object.keys(colors).forEach(name => {
         const item = document.createElement("div");
         item.className = "legend-item";
@@ -122,11 +117,25 @@ async function init_children() {
             <td>
                 <button class="btn secondary-btn" onclick="navigate('child_profile', ${child.id})">פרופיל</button>
                 <button class="btn primary-btn" onclick="navigate('child_edit', ${child.id})">עריכה</button>
+                <button class="btn" style="background:#ff3b30;color:white" onclick="deleteChild(${child.id})">מחיקה</button>
             </td>
         `;
 
         tbody.appendChild(tr);
     });
+}
+
+// ------------------------------------------------------
+// מחיקת ילד
+// ------------------------------------------------------
+async function deleteChild(id) {
+    if (!confirm("למחוק את הילד וכל השיבוצים שלו?")) return;
+
+    await fetch(`${API_BASE}/children/delete/${id}?key=${API_KEY}`, {
+        method: "POST"
+    });
+
+    navigate("children");
 }
 
 // ------------------------------------------------------
@@ -200,9 +209,25 @@ async function init_child_profile(id) {
     visits.forEach(v => {
         const div = document.createElement("div");
         div.className = "slot-item";
-        div.innerText = `${v.day} — ${v.start_time} עד ${v.end_time}`;
+        div.innerHTML = `
+            ${v.day} — ${v.start_time} עד ${v.end_time}
+            <button class="btn" style="background:#ff3b30;color:white;margin-right:10px" onclick="deleteVisit(${v.id})">X</button>
+        `;
         schedule.appendChild(div);
     });
+}
+
+// ------------------------------------------------------
+// מחיקת שיבוץ
+// ------------------------------------------------------
+async function deleteVisit(id) {
+    if (!confirm("למחוק את השיבוץ?")) return;
+
+    await fetch(`${API_BASE}/schedule/delete/${id}?key=${API_KEY}`, {
+        method: "POST"
+    });
+
+    navigate("home");
 }
 
 // ------------------------------------------------------
@@ -284,10 +309,7 @@ function toggleMenu() {
     const isOpen = sidebar.classList.contains("open");
 
     if (isOpen) {
-        sidebar.classList.remove("open");
-        overlay.classList.remove("visible");
-        app.classList.remove("shifted");
-        topBar.classList.remove("shifted");
+        closeMenu();
     } else {
         sidebar.classList.add("open");
         overlay.classList.add("visible");
