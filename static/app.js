@@ -37,6 +37,47 @@ async function navigate(page, param = null) {
 }
 
 // ------------------------------------------------------
+// יצירת רשימת שעות 08:00–20:00 בקפיצות 30 דק'
+// ------------------------------------------------------
+function generateTimeOptions(selectElement) {
+    selectElement.innerHTML = "";
+    for (let h = 8; h <= 20; h++) {
+        for (let m of ["00", "30"]) {
+            if (h === 20 && m === "30") continue;
+            const time = `${String(h).padStart(2, "0")}:${m}`;
+            const opt = document.createElement("option");
+            opt.value = time;
+            opt.innerText = time;
+            selectElement.appendChild(opt);
+        }
+    }
+}
+
+// ------------------------------------------------------
+// יצירת כפתורי ימים (Toggle Buttons)
+// ------------------------------------------------------
+function createDayButtons(container, selectedDays = []) {
+    const days = ["ראשון","שני","שלישי","רביעי","חמישי","שישי","שבת"];
+    container.innerHTML = "";
+
+    days.forEach(day => {
+        const btn = document.createElement("div");
+        btn.className = "day-toggle";
+        btn.innerText = day;
+
+        if (selectedDays.includes(day)) btn.classList.add("active");
+
+        btn.onclick = () => btn.classList.toggle("active");
+
+        container.appendChild(btn);
+    });
+}
+
+function getSelectedDays(container) {
+    return [...container.querySelectorAll(".day-toggle.active")].map(b => b.innerText);
+}
+
+// ------------------------------------------------------
 // דף הבית — לוח שיבוצים
 // ------------------------------------------------------
 async function init_home() {
@@ -45,7 +86,7 @@ async function init_home() {
     const container = document.getElementById("weeklySchedule");
     const legend = document.getElementById("calendarLegend");
 
-    const days = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"];
+    const days = ["ראשון","שני","שלישי","רביעי","חמישי","שישי","שבת"];
 
     container.innerHTML = "";
     legend.innerHTML = "";
@@ -77,6 +118,9 @@ async function init_home() {
                 slot.className = "slot-item";
                 slot.style.background = colors[s.child_name];
                 slot.innerText = `${s.child_name} ${s.start_time} - ${s.end_time}`;
+
+                slot.onclick = () => navigate("visit_edit", s.id);
+
                 card.appendChild(slot);
             });
         }
@@ -186,7 +230,7 @@ async function init_child_edit(id) {
 }
 
 // ------------------------------------------------------
-// פרופיל ילד
+// פרופיל ילד + ייצוא טבלה
 // ------------------------------------------------------
 async function init_child_profile(id) {
     const meta = document.getElementById("childMeta");
@@ -201,6 +245,7 @@ async function init_child_profile(id) {
             <p><b>הורה:</b> ${child.parent_name || "-"}</p>
             <p><b>טלפון:</b> ${child.phone || "-"}</p>
             <p><b>כתובת:</b> ${child.address || "-"}</p>
+            <button class="btn primary-btn" onclick="exportChildTable(${id})">ייצוא מערכת שעות</button>
         </div>
     `;
 
@@ -218,6 +263,13 @@ async function init_child_profile(id) {
 }
 
 // ------------------------------------------------------
+// ייצוא מערכת שעות של ילד
+// ------------------------------------------------------
+async function exportChildTable(id) {
+    alert("ייצוא טבלה יתווסף בשלב 3 (HTML + CSS)");
+}
+
+// ------------------------------------------------------
 // מחיקת שיבוץ
 // ------------------------------------------------------
 async function deleteVisit(id) {
@@ -231,11 +283,19 @@ async function deleteVisit(id) {
 }
 
 // ------------------------------------------------------
-// הוספת שיבוץ
+// הוספת שיבוץ — מרובה ימים
 // ------------------------------------------------------
 async function init_visit_add() {
-    const select = document.getElementById("childId");
+    const dayContainer = document.getElementById("dayButtons");
+    const startSelect = document.getElementById("startTime");
+    const endSelect = document.getElementById("endTime");
+
+    createDayButtons(dayContainer);
+    generateTimeOptions(startSelect);
+    generateTimeOptions(endSelect);
+
     const children = await fetch(`${API_BASE}/children?key=${API_KEY}`).then(r => r.json());
+    const select = document.getElementById("childId");
 
     children.forEach(c => {
         const opt = document.createElement("option");
@@ -249,7 +309,27 @@ async function init_visit_add() {
     form.addEventListener("submit", async e => {
         e.preventDefault();
 
+        const days = getSelectedDays(dayContainer);
+        if (days.length === 0) {
+            alert("בחרי לפחות יום אחד");
+            return;
+        }
+
+        const start = startSelect.value;
+        const end = endSelect.value;
+
+        const conflict = await fetch(
+            `${API_BASE}/schedule/conflict_multi?key=${API_KEY}&start=${start}&end=${end}` +
+            days.map(d => `&days[]=${d}`).join("")
+        ).then(r => r.json());
+
+        if (conflict.conflict) {
+            alert(`השעה תפוסה על ידי ${conflict.child_name} ביום ${conflict.day}`);
+            return;
+        }
+
         const formData = new FormData(form);
+        days.forEach(d => formData.append("days[]", d));
 
         await fetch(`${API_BASE}/schedule/add?key=${API_KEY}`, {
             method: "POST",
@@ -261,12 +341,23 @@ async function init_visit_add() {
 }
 
 // ------------------------------------------------------
-// עריכת שיבוץ
+// עריכת שיבוץ — יום יחיד
 // ------------------------------------------------------
 async function init_visit_edit(id) {
     const data = await fetch(`${API_BASE}/schedule/${id}?key=${API_KEY}`).then(r => r.json());
-    const children = await fetch(`${API_BASE}/children?key=${API_KEY}`).then(r => r.json());
 
+    const daySelect = document.getElementById("day");
+    const startSelect = document.getElementById("startTime");
+    const endSelect = document.getElementById("endTime");
+
+    generateTimeOptions(startSelect);
+    generateTimeOptions(endSelect);
+
+    daySelect.value = data.day;
+    startSelect.value = data.start_time;
+    endSelect.value = data.end_time;
+
+    const children = await fetch(`${API_BASE}/children?key=${API_KEY}`).then(r => r.json());
     const select = document.getElementById("childId");
 
     children.forEach(c => {
@@ -277,14 +368,23 @@ async function init_visit_edit(id) {
         select.appendChild(opt);
     });
 
-    document.getElementById("day").value = data.day;
-    document.getElementById("startTime").value = data.start_time;
-    document.getElementById("endTime").value = data.end_time;
-
     const form = document.getElementById("visitEditForm");
 
     form.addEventListener("submit", async e => {
         e.preventDefault();
+
+        const start = startSelect.value;
+        const end = endSelect.value;
+        const day = daySelect.value;
+
+        const conflict = await fetch(
+            `${API_BASE}/schedule/conflict_multi?key=${API_KEY}&start=${start}&end=${end}&ignore=${id}&days[]=${day}`
+        ).then(r => r.json());
+
+        if (conflict.conflict) {
+            alert(`השעה תפוסה על ידי ${conflict.child_name} ביום ${conflict.day}`);
+            return;
+        }
 
         const formData = new FormData(form);
 
