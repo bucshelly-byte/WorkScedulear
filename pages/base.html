@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>מערכת ניהול</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+</head>
+
+<body>
+
+    <!-- תפריט צד -->
+    <div id="sidebar" class="sidebar">
+        <h2 class="sidebar-title">תפריט</h2>
+
+        <a onclick="navigate('home')">🏠 דף הבית</a>
+        <a onclick="navigate('children')">👶 רשימת ילדים</a>
+        <a onclick="navigate('child_add')">➕ הוספת ילד</a>
+        <a onclick="navigate('visit_add')">📅 הוספת שיבוץ</a>
+    </div>
+
+    <!-- באנר עליון -->
+    <div class="top-bar">
+        <div class="menu-btn" onclick="toggleMenu()">☰</div>
+        <div class="page-title" id="pageTitle">טוען...</div>
+    </div>
+
+    <!-- אזור התוכן -->
+    <div id="app" class="app-container"></div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
