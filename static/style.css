@@ -13,8 +13,48 @@ body {
     overflow-x: hidden;
 }
 
+/* מצב כהה */
+body.dark {
+    background: #111827;
+    color: #e5e7eb;
+}
+
+body.dark .top-bar {
+    background: #111827;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.6);
+}
+
+body.dark .sidebar {
+    background: #020617;
+    box-shadow: -2px 0 12px rgba(0,0,0,0.8);
+}
+
+body.dark .form-container,
+body.dark .table-container,
+body.dark .day-card,
+body.dark .legend-item {
+    background: #020617;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.8);
+    border: 1px solid #1f2937;
+}
+
+body.dark .input-field {
+    background: #020617;
+    border-color: #374151;
+    color: #e5e7eb;
+}
+
+body.dark .children-table th {
+    background: #111827;
+}
+
+body.dark .slot-item.empty {
+    background: #1f2937;
+    color: #9ca3af;
+}
+
 /* --------------------------------------------------
-   תפריט צד — דמוי אפליקציה
+   תפריט צד
 -------------------------------------------------- */
 .sidebar {
     position: fixed;
@@ -178,12 +218,12 @@ body {
 }
 
 .primary-btn {
-    background: #007aff;
+    background: linear-gradient(135deg, #007aff, #00c6ff);
     color: white;
 }
 
 .primary-btn:hover {
-    background: #0062cc;
+    filter: brightness(0.95);
 }
 
 .secondary-btn {
@@ -251,7 +291,7 @@ body {
 }
 
 /* --------------------------------------------------
-   לוח שיבוצים
+   לוח שיבוצים — עיצוב חדש
 -------------------------------------------------- */
 .weekly-schedule {
     display: grid;
@@ -259,10 +299,15 @@ body {
 }
 
 .day-card {
-    background: #ffffff;
+    background: radial-gradient(circle at top left, #ffffff, #f3f4f6);
     padding: 15px;
-    border-radius: 14px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    border-radius: 18px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+    border: 1px solid #e5e7eb;
+}
+
+body.dark .day-card {
+    background: radial-gradient(circle at top left, #020617, #111827);
 }
 
 .day-title {
@@ -271,14 +316,27 @@ body {
     margin-bottom: 10px;
 }
 
+/* כרטיס שיבוץ */
 .slot-item {
     background: #007aff;
     color: white;
     padding: 10px;
-    border-radius: 10px;
+    border-radius: 12px;
     margin-bottom: 8px;
     font-size: 16px;
     cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.slot-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 14px rgba(0,0,0,0.18);
+}
+
+.slot-item.empty {
+    background: #e5e7eb;
+    color: #6b7280;
+    cursor: default;
 }
 
 /* --------------------------------------------------
@@ -305,4 +363,26 @@ body {
     width: 18px;
     height: 18px;
     border-radius: 6px;
+}
+
+/* --------------------------------------------------
+   אנימציות
+-------------------------------------------------- */
+.fade-in {
+    animation: fadeIn 0.35s ease;
+}
+
+.bounce-in {
+    animation: bounceIn 0.35s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes bounceIn {
+    0% { opacity: 0; transform: scale(0.9); }
+    60% { opacity: 1; transform: scale(1.03); }
+    100% { transform: scale(1); }
 }
