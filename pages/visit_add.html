@@ -1,39 +1,39 @@
-<div class="page">
+<h2 class="page-header">הוספת שיבוץ</h2>
 
-    <div class="top-bar">
-        <div class="menu-btn" onclick="toggleMenu()">☰</div>
-        <div class="page-title" id="pageTitle"></div>
-    </div>
+<div class="form-container">
+    <form id="visitAddForm">
+        <div class="form-row">
+            <label for="childId">ילד:</label>
+            <select id="childId" name="child_id" class="input-field" required>
+                <!-- ה־JS ימלא את רשימת הילדים -->
+            </select>
+        </div>
 
-    <h1>הוספת שיבוץ</h1>
+        <div class="form-row">
+            <label for="day">יום:</label>
+            <select id="day" name="day" class="input-field" required>
+                <option value="ראשון">ראשון</option>
+                <option value="שני">שני</option>
+                <option value="שלישי">שלישי</option>
+                <option value="רביעי">רביעי</option>
+                <option value="חמישי">חמישי</option>
+                <option value="שישי">שישי</option>
+                <option value="שבת">שבת</option>
+            </select>
+        </div>
 
-    <div>
-        <label>בחר ילד:</label>
-        <select id="child_id"></select>
-    </div>
+        <div class="form-row">
+            <label for="startTime">שעת התחלה:</label>
+            <input type="time" id="startTime" name="start_time" class="input-field" required>
+        </div>
 
-    <div style="margin-top:10px;">
-        <label>יום:</label>
-        <select id="day">
-            <option value="">בחר יום</option>
-            <option value="ראשון">ראשון</option>
-            <option value="שני">שני</option>
-            <option value="שלישי">שלישי</option>
-            <option value="רביעי">רביעי</option>
-            <option value="חמישי">חמישי</option>
-        </select>
-    </div>
+        <div class="form-row">
+            <label for="endTime">שעת סיום:</label>
+            <input type="time" id="endTime" name="end_time" class="input-field" required>
+        </div>
 
-    <div style="margin-top:10px;">
-        <label>שעת התחלה:</label>
-        <select id="start_time"></select>
-    </div>
-
-    <div style="margin-top:10px;">
-        <label>שעת סיום:</label>
-        <select id="end_time"></select>
-    </div>
-
-    <button class="export-btn" style="margin-top:20px;" onclick="saveVisit()">שמירה</button>
-
+        <div class="form-actions">
+            <button type="submit" class="btn primary-btn">שמור</button>
+        </div>
+    </form>
 </div>
