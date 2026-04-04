@@ -1,4 +1,6 @@
-/* בסיס */
+/* ----------------------------------------------------
+   בסיס
+---------------------------------------------------- */
 body {
     margin: 0;
     font-family: Arial, sans-serif;
@@ -10,7 +12,9 @@ body {
     padding: 20px;
 }
 
-/* המבורגר */
+/* ----------------------------------------------------
+   כפתור המבורגר
+---------------------------------------------------- */
 .menu-btn {
     position: fixed;
     top: 15px;
@@ -24,7 +28,9 @@ body {
     cursor: pointer;
 }
 
-/* תפריט צד */
+/* ----------------------------------------------------
+   תפריט צד
+---------------------------------------------------- */
 .sidebar {
     width: 220px;
     background: #1e293b;
@@ -54,7 +60,42 @@ body {
     font-size: 16px;
 }
 
-/* טבלת מערכת שעות מודרנית */
+/* ----------------------------------------------------
+   כפתורי פעולה
+---------------------------------------------------- */
+.export-btn {
+    background: #0ea5e9;
+    color: white;
+    padding: 10px 16px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    margin-bottom: 10px;
+    font-size: 15px;
+}
+
+.action-btn {
+    display: inline-block;
+    padding: 6px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    margin: 0 3px;
+    font-size: 14px;
+}
+
+.action-edit {
+    background: #3b82f6;
+    color: white;
+}
+
+.action-delete {
+    background: #ef4444;
+    color: white;
+}
+
+/* ----------------------------------------------------
+   טבלת מערכת שעות — סגנון Google Calendar
+---------------------------------------------------- */
 .schedule-wrapper {
     overflow-x: auto;
     margin-top: 20px;
@@ -90,7 +131,9 @@ body {
     text-align: center;
 }
 
-/* בלוק שיבוץ */
+/* ----------------------------------------------------
+   בלוק שיבוץ
+---------------------------------------------------- */
 .slot-block {
     position: absolute;
     left: 2px;
@@ -106,11 +149,51 @@ body {
     justify-content: center;
     cursor: pointer;
     overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+    transition: transform 0.1s ease;
 }
 
+.slot-block:hover {
+    transform: scale(1.03);
+}
+
+/* ----------------------------------------------------
+   מקרא צבעים
+---------------------------------------------------- */
+.legend {
+    display: flex;
+    gap: 10px;
+    margin: 10px 0;
+    flex-wrap: wrap;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.legend-color {
+    width: 14px;
+    height: 14px;
+    border-radius: 4px;
+}
+
+/* ----------------------------------------------------
+   מובייל
+---------------------------------------------------- */
 @media (max-width: 600px) {
     .slot-block {
         font-size: 12px;
         padding: 3px;
+    }
+
+    .schedule-table th {
+        font-size: 13px;
+        padding: 8px;
+    }
+
+    .schedule-table td {
+        height: 45px;
     }
 }
