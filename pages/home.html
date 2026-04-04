@@ -1,32 +1,6 @@
-<div class="page">
+<h2 class="page-header">לוח שיבוצים שבועי</h2>
 
-    <div class="top-bar">
-        <div class="menu-btn" onclick="toggleMenu()">☰</div>
-        <div class="page-title" id="pageTitle"></div>
-    </div>
+<div id="weeklySchedule" class="weekly-schedule"></div>
 
-    <h1>שיבוץ שבועי</h1>
-
-    <div style="margin-bottom:15px;">
-        <label>סינון לפי יום:</label>
-        <select id="dayFilter" onchange="filterByDay()">
-            <option value="">הכול</option>
-            <option value="ראשון">ראשון</option>
-            <option value="שני">שני</option>
-            <option value="שלישי">שלישי</option>
-            <option value="רביעי">רביעי</option>
-            <option value="חמישי">חמישי</option>
-        </select>
-    </div>
-
-    <div style="margin-bottom:15px;">
-        <button class="export-btn" onclick="exportCalendarAsImage()">📤 ייצוא מערכת</button>
-        <button class="export-btn" onclick="navigate('visit_add')">➕ הוספת שיבוץ</button>
-    </div>
-
-    <div id="calendarLegend" class="legend"></div>
-
-    <!-- תצוגת מערכת שעות מותאמת מובייל (כרטיסים יומיים) -->
-    <div id="weeklySchedule"></div>
-
-</div>
+<h3 class="section-title">מקרא</h3>
+<div id="calendarLegend" class="calendar-legend"></div>
