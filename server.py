@@ -1,43 +1,25 @@
+from flask import Flask, request, send_from_directory, jsonify
 import sqlite3
-from fastapi import FastAPI, Request, Form, HTTPException, Depends
-from fastapi.responses import FileResponse
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
-from typing import Optional
-from PIL import Image, ImageDraw, ImageFont
-import datetime
+import os
 
-SECRET_KEY = "ShellySecureKey_9843_2024_XYZ"
+app = Flask(__name__, static_folder="static", template_folder="pages")
 
-def verify_key(request: Request):
-    if request.query_params.get("key") != SECRET_KEY:
-        raise HTTPException(status_code=401, detail="Unauthorized")
+KEY = "ShellySecureKey_9843_2024_XYZ"
+DB = "database.db"
 
-app = FastAPI()
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-app.mount("/static", StaticFiles(directory="static"), name="static")
-app.mount("/pages", StaticFiles(directory="pages"), name="pages")
-
-DB_NAME = "schedule.db"
-
+# ----------------------------------------------------
+# Database
+# ----------------------------------------------------
 def get_db():
-    conn = sqlite3.connect(DB_NAME)
+    conn = sqlite3.connect(DB)
     conn.row_factory = sqlite3.Row
     return conn
 
 def init_db():
     conn = get_db()
-    c = conn.cursor()
+    cur = conn.cursor()
 
-    c.execute("""
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS children (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
@@ -47,307 +29,237 @@ def init_db():
         )
     """)
 
-    c.execute("""
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS schedule (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             child_id INTEGER NOT NULL,
             day TEXT NOT NULL,
             start_time TEXT NOT NULL,
             end_time TEXT NOT NULL,
-            FOREIGN KEY (child_id) REFERENCES children(id)
+            FOREIGN KEY(child_id) REFERENCES children(id)
         )
     """)
 
     conn.commit()
-    conn.close()
 
 init_db()
 
-@app.get("/")
-def spa(_: None = Depends(verify_key)):
-    return FileResponse("base.html")
+# ----------------------------------------------------
+# Static + Pages
+# ----------------------------------------------------
+@app.route("/")
+def index():
+    return send_from_directory(".", "base.html")
 
-@app.get("/api/children")
-def api_get_children(_: None = Depends(verify_key)):
-    conn = get_db()
-    c = conn.cursor()
-    c.execute("SELECT * FROM children ORDER BY name")
-    rows = c.fetchall()
-    conn.close()
-    return [dict(r) for r in rows]
+@app.route("/pages/<path:path>")
+def pages(path):
+    return send_from_directory("pages", path)
 
-@app.get("/api/children/{child_id}")
-def api_get_child(child_id: int, _: None = Depends(verify_key)):
+@app.route("/static/<path:path>")
+def static_files(path):
+    return send_from_directory("static", path)
+
+# ----------------------------------------------------
+# API — Children
+# ----------------------------------------------------
+@app.route("/api/children")
+def api_children():
+    if request.args.get("key") != KEY:
+        return {"error": "unauthorized"}, 403
+
     conn = get_db()
-    c = conn.cursor()
-    c.execute("SELECT * FROM children WHERE id = ?", (child_id,))
-    row = c.fetchone()
-    conn.close()
-    if not row:
-        raise HTTPException(404, "Child not found")
+    rows = conn.execute("SELECT * FROM children").fetchall()
+    return jsonify([dict(r) for r in rows])
+
+@app.route("/api/children/<id>")
+def api_child(id):
+    if request.args.get("key") != KEY:
+        return {"error": "unauthorized"}, 403
+
+    conn = get_db()
+    row = conn.execute("SELECT * FROM children WHERE id=?", (id,)).fetchone()
     return dict(row)
 
-@app.post("/api/children/add")
-def api_add_child(
-    name: str = Form(...),
-    parent_name: str = Form(""),
-    phone: str = Form(""),
-    address: str = Form(""),
-    _: None = Depends(verify_key)
-):
+@app.route("/api/children/add", methods=["POST"])
+def api_child_add():
+    if request.args.get("key") != KEY:
+        return {"error": "unauthorized"}, 403
+
+    name = request.form["name"]
+    parent_name = request.form.get("parent_name")
+    phone = request.form.get("phone")
+    address = request.form.get("address")
+
     conn = get_db()
-    c = conn.cursor()
-    c.execute("""
+    conn.execute("""
         INSERT INTO children (name, parent_name, phone, address)
         VALUES (?, ?, ?, ?)
     """, (name, parent_name, phone, address))
     conn.commit()
-    conn.close()
-    return {"status": "success"}
 
-@app.post("/api/children/edit/{child_id}")
-def api_edit_child(
-    child_id: int,
-    name: str = Form(...),
-    parent_name: str = Form(""),
-    phone: str = Form(""),
-    address: str = Form(""),
-    _: None = Depends(verify_key)
-):
+    return {"status": "ok"}
+
+@app.route("/api/children/edit/<id>", methods=["POST"])
+def api_child_edit(id):
+    if request.args.get("key") != KEY:
+        return {"error": "unauthorized"}, 403
+
+    name = request.form["name"]
+    parent_name = request.form.get("parent_name")
+    phone = request.form.get("phone")
+    address = request.form.get("address")
+
     conn = get_db()
-    c = conn.cursor()
-    c.execute("""
+    conn.execute("""
         UPDATE children
-        SET name = ?, parent_name = ?, phone = ?, address = ?
-        WHERE id = ?
-    """, (name, parent_name, phone, address, child_id))
+        SET name=?, parent_name=?, phone=?, address=?
+        WHERE id=?
+    """, (name, parent_name, phone, address, id))
     conn.commit()
-    conn.close()
-    return {"status": "success"}
 
-@app.post("/api/children/delete/{child_id}")
-def api_delete_child(child_id: int, _: None = Depends(verify_key)):
+    return {"status": "ok"}
+
+@app.route("/api/children/delete/<id>", methods=["POST"])
+def api_child_delete(id):
+    if request.args.get("key") != KEY:
+        return {"error": "unauthorized"}, 403
+
     conn = get_db()
-    c = conn.cursor()
-    c.execute("DELETE FROM schedule WHERE child_id = ?", (child_id,))
-    c.execute("DELETE FROM children WHERE id = ?", (child_id,))
+    conn.execute("DELETE FROM schedule WHERE child_id=?", (id,))
+    conn.execute("DELETE FROM children WHERE id=?", (id,))
     conn.commit()
-    conn.close()
-    return {"status": "success"}
 
-def has_conflict(conn, child_id: int, day: str, start_time: str, end_time: str, exclude_id: Optional[int] = None):
-    c = conn.cursor()
-    query = """
-        SELECT id FROM schedule
-        WHERE child_id = ?
-          AND day = ?
-          AND NOT (end_time <= ? OR start_time >= ?)
-    """
-    params = [child_id, day, start_time, end_time]
-    if exclude_id is not None:
-        query += " AND id != ?"
-        params.append(exclude_id)
-    c.execute(query, params)
-    return c.fetchone() is not None
+    return {"status": "ok"}
 
-@app.get("/api/schedule")
-def api_get_schedule(_: None = Depends(verify_key)):
+# ----------------------------------------------------
+# API — Schedule
+# ----------------------------------------------------
+@app.route("/api/schedule")
+def api_schedule():
+    if request.args.get("key") != KEY:
+        return {"error": "unauthorized"}, 403
+
     conn = get_db()
-    c = conn.cursor()
-    c.execute("""
-        SELECT s.id, s.child_id, c.name AS child_name, c.parent_name, c.phone, c.address,
-               s.day, s.start_time, s.end_time
+    rows = conn.execute("""
+        SELECT s.*, c.name AS child_name
         FROM schedule s
-        JOIN children c ON s.child_id = c.id
-        ORDER BY s.day, s.start_time
-    """)
-    rows = c.fetchall()
-    conn.close()
-    return [dict(r) for r in rows]
+        JOIN children c ON c.id = s.child_id
+    """).fetchall()
 
-@app.get("/api/schedule/by_child/{child_id}")
-def api_get_schedule_by_child(child_id: int, _: None = Depends(verify_key)):
+    return jsonify([dict(r) for r in rows])
+
+@app.route("/api/schedule/<id>")
+def api_schedule_single(id):
+    if request.args.get("key") != KEY:
+        return {"error": "unauthorized"}, 403
+
     conn = get_db()
-    c = conn.cursor()
-    c.execute("""
-        SELECT s.id, s.child_id, c.name AS child_name, c.parent_name, c.phone, c.address,
-               s.day, s.start_time, s.end_time
-        FROM schedule s
-        JOIN children c ON s.child_id = c.id
-        WHERE s.child_id = ?
-        ORDER BY s.day, s.start_time
-    """, (child_id,))
-    rows = c.fetchall()
-    conn.close()
-    return [dict(r) for r in rows]
+    row = conn.execute("SELECT * FROM schedule WHERE id=?", (id,)).fetchone()
+    return dict(row)
 
-@app.post("/api/schedule/add")
-def api_add_schedule(
-    child_id: int = Form(...),
-    day: str = Form(...),
-    start_time: str = Form(...),
-    end_time: str = Form(...),
-    _: None = Depends(verify_key)
-):
+@app.route("/api/schedule/by_child/<id>")
+def api_schedule_by_child(id):
+    if request.args.get("key") != KEY:
+        return {"error": "unauthorized"}, 403
+
     conn = get_db()
+    rows = conn.execute("""
+        SELECT * FROM schedule
+        WHERE child_id=?
+    """, (id,)).fetchall()
 
-    if has_conflict(conn, child_id, day, start_time, end_time):
-        conn.close()
-        raise HTTPException(400, "שיבוץ מתנגש עם שיבוץ קיים")
+    return jsonify([dict(r) for r in rows])
 
-    c = conn.cursor()
-    c.execute("""
+@app.route("/api/schedule/add", methods=["POST"])
+def api_schedule_add():
+    if request.args.get("key") != KEY:
+        return {"error": "unauthorized"}, 403
+
+    child_id = request.form["child_id"]
+    day = request.form["day"]
+    start = request.form["start_time"]
+    end = request.form["end_time"]
+
+    conn = get_db()
+    conn.execute("""
         INSERT INTO schedule (child_id, day, start_time, end_time)
         VALUES (?, ?, ?, ?)
-    """, (child_id, day, start_time, end_time))
+    """, (child_id, day, start, end))
     conn.commit()
-    conn.close()
-    return {"status": "success"}
 
-@app.post("/api/schedule/edit/{schedule_id}")
-def api_edit_schedule(
-    schedule_id: int,
-    child_id: int = Form(...),
-    day: str = Form(...),
-    start_time: str = Form(...),
-    end_time: str = Form(...),
-    _: None = Depends(verify_key)
-):
+    return {"status": "ok"}
+
+@app.route("/api/schedule/edit/<id>", methods=["POST"])
+def api_schedule_edit(id):
+    if request.args.get("key") != KEY:
+        return {"error": "unauthorized"}, 403
+
+    child_id = request.form["child_id"]
+    day = request.form["day"]
+    start = request.form["start_time"]
+    end = request.form["end_time"]
+
     conn = get_db()
-
-    if has_conflict(conn, child_id, day, start_time, end_time, exclude_id=schedule_id):
-        conn.close()
-        raise HTTPException(400, "שיבוץ מתנגש עם שיבוץ קיים")
-
-    c = conn.cursor()
-    c.execute("""
+    conn.execute("""
         UPDATE schedule
-        SET child_id = ?, day = ?, start_time = ?, end_time = ?
-        WHERE id = ?
-    """, (child_id, day, start_time, end_time, schedule_id))
+        SET child_id=?, day=?, start_time=?, end_time=?
+        WHERE id=?
+    """, (child_id, day, start, end, id))
     conn.commit()
-    conn.close()
-    return {"status": "success"}
 
-@app.post("/api/schedule/delete/{schedule_id}")
-def api_delete_schedule(schedule_id: int, _: None = Depends(verify_key)):
+    return {"status": "ok"}
+
+@app.route("/api/schedule/delete/<id>", methods=["POST"])
+def api_schedule_delete(id):
+    if request.args.get("key") != KEY:
+        return {"error": "unauthorized"}, 403
+
     conn = get_db()
-    c = conn.cursor()
-    c.execute("DELETE FROM schedule WHERE id = ?", (schedule_id,))
+    conn.execute("DELETE FROM schedule WHERE id=?", (id,))
     conn.commit()
-    conn.close()
-    return {"status": "success"}
 
-# -----------------------------
-# ⭐ פונקציה חדשה לייצוא תמונה בעברית RTL
-# -----------------------------
-def render_schedule_to_image(rows, title: str, filename: str):
-    col_titles = ["ילד", "הורה", "טלפון", "כתובת", "יום", "התחלה", "סיום"]
-    col_widths = [180, 180, 140, 220, 100, 100, 100]
+    return {"status": "ok"}
 
-    row_height = 45
-    header_height = 70
-    margin = 30
+# ----------------------------------------------------
+# API — Conflict Check
+# ----------------------------------------------------
+@app.route("/api/schedule/conflict")
+def schedule_conflict():
+    if request.args.get("key") != KEY:
+        return {"error": "unauthorized"}, 403
 
-    width = sum(col_widths) + margin * 2
-    height = header_height + (len(rows) + 1) * row_height + margin * 2
+    day = request.args.get("day")
+    start = request.args.get("start")
+    end = request.args.get("end")
+    ignore = request.args.get("ignore")
 
-    img = Image.new("RGB", (width, height), "white")
-    draw = ImageDraw.Draw(img)
-
-    try:
-        font = ImageFont.truetype("Rubik-Regular.ttf", 22)
-        font_bold = ImageFont.truetype("Rubik-Bold.ttf", 24)
-    except:
-        font = ImageFont.load_default()
-        font_bold = font
-
-    draw.text((width - margin, margin), title[::-1], fill="black", font=font_bold, anchor="ra")
-
-    y = margin + header_height
-    x_start = margin
-    x_end = width - margin
-
-    draw.line((x_start, y, x_end, y), fill="black", width=2)
-
-    x = width - margin
-    for i, col in enumerate(col_titles):
-        draw.text((x - 10, y - row_height + 10), col[::-1], fill="black", font=font_bold, anchor="ra")
-        x -= col_widths[i]
-
-    y += 5
-    for row in rows:
-        x = width - margin
-        values = [
-            row["child_name"],
-            row["parent_name"],
-            row["phone"],
-            row["address"],
-            row["day"],
-            row["start_time"],
-            row["end_time"],
-        ]
-
-        draw.line((x_start, y + row_height - 5, x_end, y + row_height - 5), fill="gray", width=1)
-
-        for i, val in enumerate(values):
-            draw.text((x - 10, y + 5), str(val)[::-1], fill="black", font=font, anchor="ra")
-            x -= col_widths[i]
-
-        y += row_height
-
-    x = width - margin
-    draw.line((x, margin + header_height, x, height - margin), fill="black", width=2)
-    for w in col_widths:
-        x -= w
-        draw.line((x, margin + header_height, x, height - margin), fill="gray", width=1)
-
-    draw.line((x_start, height - margin, x_end, height - margin), fill="black", width=2)
-
-    img.save(filename)
-
-@app.get("/export/image/all")
-def export_image_all(_: None = Depends(verify_key)):
     conn = get_db()
-    c = conn.cursor()
-    c.execute("""
-        SELECT s.id, s.child_id, c.name AS child_name, c.parent_name, c.phone, c.address,
-               s.day, s.start_time, s.end_time
+    rows = conn.execute("""
+        SELECT s.*, c.name AS child_name
         FROM schedule s
-        JOIN children c ON s.child_id = c.id
-        ORDER BY s.day, s.start_time
-    """)
-    rows = c.fetchall()
-    conn.close()
+        JOIN children c ON c.id = s.child_id
+        WHERE s.day = ?
+        AND (
+            (s.start_time < ? AND s.end_time > ?)
+            OR
+            (s.start_time >= ? AND s.start_time < ?)
+        )
+    """, (day, end, start, start, end)).fetchall()
 
-    rows = [dict(r) for r in rows]
-    if not rows:
-        raise HTTPException(400, "אין שיבוצים לייצוא")
+    for r in rows:
+        if ignore and str(r["id"]) == str(ignore):
+            continue
+        return {
+            "conflict": True,
+            "child_name": r["child_name"],
+            "start_time": r["start_time"],
+            "end_time": r["end_time"]
+        }
 
-    filename = f"schedule_all_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
-    render_schedule_to_image(rows, "מערכת כללית", filename)
-    return FileResponse(filename, filename=filename)
+    return {"conflict": False}
 
-@app.get("/export/image/child/{child_id}")
-def export_image_child(child_id: int, _: None = Depends(verify_key)):
-    conn = get_db()
-    c = conn.cursor()
-    c.execute("""
-        SELECT s.id, s.child_id, c.name AS child_name, c.parent_name, c.phone, c.address,
-               s.day, s.start_time, s.end_time
-        FROM schedule s
-        JOIN children c ON s.child_id = c.id
-        WHERE s.child_id = ?
-        ORDER BY s.day, s.start_time
-    """, (child_id,))
-    rows = c.fetchall()
-    conn.close()
-
-    rows = [dict(r) for r in rows]
-    if not rows:
-        raise HTTPException(400, "אין שיבוצים לילד זה")
-
-    child_name = rows[0]["child_name"]
-    filename = f"schedule_{child_name}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
-    render_schedule_to_image(rows, f"מערכת עבור {child_name}", filename)
-    return FileResponse(filename, filename=filename)
+# ----------------------------------------------------
+# Run
+# ----------------------------------------------------
+if __name__ == "__main__":
+    app.run(debug=True)
