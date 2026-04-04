@@ -1,6 +1,5 @@
-from flask import Flask, send_from_directory, request, jsonify
+from flask import Flask, send_from_directory, jsonify, request
 from flask_cors import CORS
-import os
 
 app = Flask(
     __name__,
@@ -11,7 +10,7 @@ app = Flask(
 CORS(app)
 
 # ---------------------------
-#  ROUTE ראשי – טוען את האתר
+#  דף הבית – טוען את base.html
 # ---------------------------
 @app.route("/")
 def index():
@@ -19,7 +18,7 @@ def index():
 
 
 # ---------------------------
-#  טעינת קבצי STATIC (CSS/JS)
+#  טעינת קבצי STATIC (CSS/JS בלבד)
 # ---------------------------
 @app.route("/static/<path:path>")
 def static_files(path):
@@ -27,7 +26,7 @@ def static_files(path):
 
 
 # ---------------------------
-#  דוגמה ל־API (אם יש לך API)
+#  דוגמה ל־API (אם יש צורך)
 # ---------------------------
 @app.route("/api/test")
 def api_test():
