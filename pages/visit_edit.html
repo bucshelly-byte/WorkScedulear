@@ -1,16 +1,23 @@
 <div class="page">
+
+    <div class="top-bar">
+        <div class="menu-btn" onclick="toggleMenu()">☰</div>
+        <div class="page-title" id="pageTitle"></div>
+    </div>
+
     <h1>עריכת שיבוץ</h1>
 
     <input type="hidden" id="visitId">
 
     <div>
-        <label>ילד:</label><br>
+        <label>בחר ילד:</label>
         <select id="child_id"></select>
     </div>
 
-    <div>
-        <label>יום:</label><br>
+    <div style="margin-top:10px;">
+        <label>יום:</label>
         <select id="day">
+            <option value="">בחר יום</option>
             <option value="ראשון">ראשון</option>
             <option value="שני">שני</option>
             <option value="שלישי">שלישי</option>
@@ -19,16 +26,16 @@
         </select>
     </div>
 
-    <div>
-        <label>שעת התחלה:</label><br>
-        <input id="start_time" type="time">
+    <div style="margin-top:10px;">
+        <label>שעת התחלה:</label>
+        <select id="start_time"></select>
     </div>
 
-    <div>
-        <label>שעת סיום:</label><br>
-        <input id="end_time" type="time">
+    <div style="margin-top:10px;">
+        <label>שעת סיום:</label>
+        <select id="end_time"></select>
     </div>
 
-    <br>
-    <button class="export-btn" onclick="saveVisitEdit()">עדכון</button>
+    <button class="export-btn" style="margin-top:20px;" onclick="saveVisitEdit()">עדכון</button>
+
 </div>
