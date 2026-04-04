@@ -53,11 +53,11 @@ async function navigate(page, param = null) {
 }
 
 // ------------------------------------------------------
-// רשימת שעות 08:00–17:00 בקפיצות 30 דק'
+// רשימת שעות 08:00–20:00 בקפיצות 30 דק'
 // ------------------------------------------------------
 function generateTimeOptions(selectElement) {
     selectElement.innerHTML = "";
-    for (let h = 8; h <=17; h++) {
+    for (let h = 8; h <= 20; h++) {
         for (let m of ["00", "30"]) {
             if (h === 20 && m === "30") continue;
             const time = `${String(h).padStart(2, "0")}:${m}`;
@@ -71,7 +71,7 @@ function generateTimeOptions(selectElement) {
 
 function getTimeSlots() {
     const slots = [];
-    for (let h = 8; h <= 17; h++) {
+    for (let h = 8; h <= 20; h++) {
         for (let m of ["00", "30"]) {
             if (h === 20 && m === "30") continue;
             slots.push(`${String(h).padStart(2, "0")}:${m}`);
@@ -84,7 +84,7 @@ function getTimeSlots() {
 // כפתורי עיגול לבחירת ימים
 // ------------------------------------------------------
 function createDayButtons(container, selectedDays = []) {
-    const days = ["ראשון","שני","שלישי","רביעי","חמישי"];
+    const days = ["ראשון","שני","שלישי","רביעי","חמישי","שישי","שבת"];
     container.innerHTML = "";
 
     days.forEach(day => {
@@ -106,10 +106,6 @@ function getSelectedDays(container) {
 
 // ------------------------------------------------------
 // דף הבית — לוח שיבוצים
-// ------------------------------------------------------
-// ------------------------------------------------------
-// ------------------------------------------------------
-// דף הבית — לוח שיבוצים (מקורי, ללא מיזוג רצפים)
 // ------------------------------------------------------
 async function init_home() {
     const schedule = await fetch(`${API_BASE}/schedule?key=${API_KEY}`).then(r => r.json());
@@ -169,6 +165,48 @@ async function init_home() {
         legend.appendChild(item);
     });
 }
+
+// ------------------------------------------------------
+// רשימת ילדים
+// ------------------------------------------------------
+async function init_children() {
+    const data = await fetch(`${API_BASE}/children?key=${API_KEY}`).then(r => r.json());
+    const tbody = document.querySelector("#childrenTable tbody");
+
+    tbody.innerHTML = "";
+
+    data.forEach(child => {
+        const tr = document.createElement("tr");
+
+        tr.innerHTML = `
+            <td>${child.name}</td>
+            <td>${child.parent_name || ""}</td>
+            <td>${child.phone || ""}</td>
+            <td>${child.address || ""}</td>
+            <td>
+                <button class="btn secondary-btn" onclick="navigate('child_profile', ${child.id})">פרופיל</button>
+                <button class="btn primary-btn" onclick="navigate('child_edit', ${child.id})">עריכה</button>
+                <button class="btn" style="background:#ff3b30;color:white" onclick="deleteChild(${child.id})">מחיקה</button>
+            </td>
+        `;
+
+        tbody.appendChild(tr);
+    });
+}
+
+// ------------------------------------------------------
+// מחיקת ילד
+// ------------------------------------------------------
+async function deleteChild(id) {
+    if (!confirm("למחוק את הילד וכל השיבוצים שלו?")) return;
+
+    await fetch(`${API_BASE}/children/delete/${id}?key=${API_KEY}`, {
+        method: "POST"
+    });
+
+    navigate("children");
+}
+
 // ------------------------------------------------------
 // הוספת ילד
 // ------------------------------------------------------
@@ -470,33 +508,27 @@ async function exportFreeTable() {
     const schedule = await fetch(`${API_BASE}/schedule?key=${API_KEY}`).then(r => r.json());
 
     const days = ["ראשון","שני","שלישי","רביעי","חמישי"];
-    const slots = getTimeSlots(); // כאן את שולטת על טווח השעות
+    const slots = getTimeSlots();
 
-    // מפה של שיבוצים לפי יום ושעה
-    const map = {};
-    days.forEach(d => map[d] = {});
-
+    const busy = {};
+    days.forEach(d => busy[d] = {});
     schedule.forEach(v => {
         const startIndex = slots.indexOf(v.start_time);
         const endIndex = slots.indexOf(v.end_time);
         if (startIndex === -1 || endIndex === -1) return;
-
         for (let i = startIndex; i < endIndex; i++) {
-            map[v.day][slots[i]] = v.child_name;
+            busy[v.day][slots[i]] = true;
         }
     });
 
-    // קנבס
     const canvas = document.createElement("canvas");
     canvas.width = 900;
     canvas.height = 600;
     const ctx = canvas.getContext("2d");
 
-    // רקע
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // כותרת
     ctx.fillStyle = "#333";
     ctx.font = "20px Assistant";
     ctx.fillText("טבלת פנויות - כל הילדים", 20, 30);
@@ -508,21 +540,18 @@ async function exportFreeTable() {
 
     ctx.font = "14px Assistant";
 
-    // כותרות ימים
     days.forEach((day, i) => {
         const x = leftMargin + i * colWidth;
         ctx.fillStyle = "#555";
         ctx.fillText(day, x + 10, topMargin - 10);
     });
 
-    // שעות בצד שמאל
     slots.forEach((t, j) => {
         const y = topMargin + j * rowHeight;
         ctx.fillStyle = "#555";
         ctx.fillText(t, 10, y + rowHeight / 2);
     });
 
-    // קווי טבלה
     ctx.strokeStyle = "#ddd";
     for (let i = 0; i <= days.length; i++) {
         const x = leftMargin + i * colWidth;
@@ -539,58 +568,57 @@ async function exportFreeTable() {
         ctx.stroke();
     }
 
-    // ציור תאים עם מיזוג רצפים
-    days.forEach((d, i) => {
-        let j = 0;
-
-        while (j < slots.length) {
-            const child = map[d][slots[j]];
+    slots.forEach((t, j) => {
+        const y = topMargin + j * rowHeight + 2;
+        days.forEach((d, i) => {
             const x = leftMargin + i * colWidth + 2;
-            const y = topMargin + j * rowHeight + 2;
-
-            if (!child) {
-                // תא פנוי
+            if (busy[d][t]) {
+                ctx.fillStyle = "#ff3b30";
+            } else {
                 ctx.fillStyle = "#ffffff";
-                ctx.fillRect(x, y, colWidth - 4, rowHeight - 4);
-                j++;
-                continue;
             }
-
-            // מחשבים כמה שעות רצופות הילד נמצא
-            let span = 1;
-            while (
-                j + span < slots.length &&
-                map[d][slots[j + span]] === child
-            ) {
-                span++;
-            }
-
-            // תא ממוזג
-            ctx.fillStyle = "#ff3b30";
-            ctx.fillRect(
-                x,
-                y,
-                colWidth - 4,
-                rowHeight * span - 4
-            );
-
-           // שם הילד במרכז התא
-ctx.fillStyle = "#ffffff";
-ctx.font = "bold 14px Assistant";
-ctx.textAlign = "center";
-ctx.textBaseline = "middle";
-ctx.fillText(
-    child,
-    x + (colWidth / 2),
-    y + (rowHeight * span) / 2
-);
-
-            j += span;
-        }
+            ctx.fillRect(x, y, colWidth - 4, rowHeight - 4);
+        });
     });
 
     downloadCanvasImage(canvas, "free_slots.png");
 }
+
+// ------------------------------------------------------
+// תפריט צד — פתיחה/סגירה
+// ------------------------------------------------------
+function toggleMenu() {
+    const sidebar = document.getElementById("sidebar");
+    const overlay = document.getElementById("overlay");
+    const app = document.getElementById("app");
+    const topBar = document.querySelector(".top-bar");
+
+    const isOpen = sidebar.classList.contains("open");
+
+    if (isOpen) {
+        closeMenu();
+    } else {
+        sidebar.classList.add("open");
+        overlay.classList.add("visible");
+        app.classList.add("shifted");
+        topBar.classList.add("shifted");
+    }
+}
+
+function closeMenu() {
+    const sidebar = document.getElementById("sidebar");
+    const overlay = document.getElementById("overlay");
+    const app = document.getElementById("app");
+    const topBar = document.querySelector(".top-bar");
+
+    sidebar.classList.remove("open");
+    overlay.classList.remove("visible");
+    app.classList.remove("shifted");
+    topBar.classList.remove("shifted");
+}
+
+document.getElementById("overlay").addEventListener("click", closeMenu);
+
 // ------------------------------------------------------
 // אתחול
 // ------------------------------------------------------
