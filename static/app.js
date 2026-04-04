@@ -57,7 +57,7 @@ async function navigate(page, param = null) {
 // ------------------------------------------------------
 function generateTimeOptions(selectElement) {
     selectElement.innerHTML = "";
-    for (let h = 8; h <= 20; h++) {
+    for (let h = 8; h <=17; h++) {
         for (let m of ["00", "30"]) {
             if (h === 20 && m === "30") continue;
             const time = `${String(h).padStart(2, "0")}:${m}`;
