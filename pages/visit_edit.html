@@ -1,39 +1,27 @@
-<div class="page-header">עריכת שיבוץ</div>
-
 <div class="form-container">
+    <h2>עריכת שיבוץ</h2>
+    <p>עדכני את היום והשעות ולחצי שמירה.</p>
+
     <form id="visitEditForm">
 
-        <div class="form-row">
-            <label>בחרי ילד:</label>
-            <select id="childId" name="child_id" class="input-field"></select>
-        </div>
+        <label>בחרי יום</label>
+        <select id="day" name="day" required>
+            <option value="ראשון">ראשון</option>
+            <option value="שני">שני</option>
+            <option value="שלישי">שלישי</option>
+            <option value="רביעי">רביעי</option>
+            <option value="חמישי">חמישי</option>
+        </select>
 
-        <div class="form-row">
-            <label>יום:</label>
-            <select id="day" name="day" class="input-field">
-                <option>ראשון</option>
-                <option>שני</option>
-                <option>שלישי</option>
-                <option>רביעי</option>
-                <option>חמישי</option>
-                <option>שישי</option>
-                <option>שבת</option>
-            </select>
-        </div>
+        <label>שעת התחלה</label>
+        <select id="startTime" name="start_time" required></select>
 
-        <div class="form-row">
-            <label>שעת התחלה:</label>
-            <select id="startTime" name="start_time" class="input-field"></select>
-        </div>
+        <label>שעת סיום</label>
+        <select id="endTime" name="end_time" required></select>
 
-        <div class="form-row">
-            <label>שעת סיום:</label>
-            <select id="endTime" name="end_time" class="input-field"></select>
-        </div>
+        <label>בחרי ילד</label>
+        <select id="childId" name="child_id" required></select>
 
-        <div class="form-actions">
-            <button class="btn primary-btn" type="submit">שמור</button>
-        </div>
-
+        <button class="btn primary-btn" type="submit">שמירה</button>
     </form>
 </div>
