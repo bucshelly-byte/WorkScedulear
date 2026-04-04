@@ -1,6 +1,4 @@
-/* --------------------------------------------------
-   RESET בסיסי
--------------------------------------------------- */
+/* RESET */
 * {
     margin: 0;
     padding: 0;
@@ -15,24 +13,24 @@ body {
 }
 
 /* --------------------------------------------------
-   תפריט צד
+   תפריט צד — דמוי אפליקציה
 -------------------------------------------------- */
 .sidebar {
     position: fixed;
     top: 0;
     right: 0;
-    width: 240px;
+    width: 260px;
     height: 100%;
     background: #ffffff;
-    box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+    box-shadow: -2px 0 12px rgba(0,0,0,0.15);
     padding: 20px;
-    transform: translateX(0);
-    transition: 0.3s ease;
+    transform: translateX(260px); /* מוסתר כברירת מחדל */
+    transition: transform 0.35s ease;
     z-index: 1000;
 }
 
-.sidebar.hidden {
-    transform: translateX(260px);
+.sidebar.open {
+    transform: translateX(0);
 }
 
 .sidebar-title {
@@ -54,6 +52,25 @@ body {
     color: #007aff;
 }
 
+/* שכבת רקע */
+#overlay {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.35);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.35s ease;
+    z-index: 900;
+}
+
+#overlay.visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
 /* --------------------------------------------------
    כותרת עליונה
 -------------------------------------------------- */
@@ -68,7 +85,8 @@ body {
     display: flex;
     align-items: center;
     padding: 0 15px;
-    z-index: 900;
+    z-index: 800;
+    transition: transform 0.35s ease;
 }
 
 .menu-btn {
@@ -88,6 +106,20 @@ body {
 .app-container {
     margin-top: 70px;
     padding: 20px;
+    transition: transform 0.35s ease;
+}
+
+/* כשהתפריט פתוח */
+.app-container.shifted,
+.top-bar.shifted {
+    transform: translateX(-200px);
+}
+
+@media (max-width: 600px) {
+    .app-container.shifted,
+    .top-bar.shifted {
+        transform: translateX(-180px);
+    }
 }
 
 /* --------------------------------------------------
@@ -248,26 +280,4 @@ body {
     width: 18px;
     height: 18px;
     border-radius: 6px;
-}
-
-/* --------------------------------------------------
-   מובייל
--------------------------------------------------- */
-@media (max-width: 600px) {
-    .sidebar {
-        width: 220px;
-    }
-
-    .page-header {
-        font-size: 20px;
-    }
-
-    .slot-item {
-        font-size: 14px;
-    }
-
-    .children-table th,
-    .children-table td {
-        font-size: 14px;
-    }
 }
