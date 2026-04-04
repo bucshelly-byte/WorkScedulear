@@ -1,24 +1,23 @@
 <div class="page">
     <h1 id="childName">פרופיל ילד</h1>
-    <div id="childMeta"></div>
+    <div id="childMeta" style="margin-bottom:10px;color:#64748b;"></div>
 
-    <button class="export-btn" onclick="exportChildCalendar()">
-        📸 ייצוא מערכת לפי ילד
-    </button>
+    <button class="export-btn" onclick="navigate('visit_add')">➕ הוספת שיבוץ לילד</button>
+    <button class="export-btn" onclick="exportChildCalendar()">📤 ייצוא מערכת ילד</button>
 
-    <h2>מערכת שעות של הילד</h2>
+    <h2>שיבוצים בטבלה</h2>
     <table id="childSchedule">
         <thead>
             <tr>
                 <th>יום</th>
-                <th>התחלה</th>
-                <th>סיום</th>
+                <th>שעת התחלה</th>
+                <th>שעת סיום</th>
                 <th>פעולות</th>
             </tr>
         </thead>
         <tbody></tbody>
     </table>
 
-    <h3>תצוגה לייצוא</h3>
+    <h2>שיבוצים ברשימה</h2>
     <div id="childCalendarContainer"></div>
 </div>
