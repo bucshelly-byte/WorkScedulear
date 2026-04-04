@@ -50,7 +50,6 @@ async function navigate(page, param = null) {
         window[initName](param);
     }
 
-    // לסגור תפריט אם פתוח
     const sidebar = document.getElementById("sidebar");
     if (sidebar) sidebar.classList.remove("open");
 }
@@ -116,12 +115,12 @@ function renderCalendar(schedule, children) {
     DAYS.forEach(d => html += `<div>${d}</div>`);
     html += `</div>`;
 
-    // שורות שעות
+    // שורות שעות (Y) וימים (X)
     HOURS.forEach(time => {
         html += `<div class="calendar-row">`;
         html += `<div class="calendar-time">${time}</div>`;
         DAYS.forEach(day => {
-            html += `<div class="calendar-cell" data-day="${day}" data-time="${time}"></div>`;
+            html += `<div class="calendar-cell" id="cell-${day}-${time}" data-day="${day}" data-time="${time}"></div>`;
         });
         html += `</div>`;
     });
@@ -131,46 +130,37 @@ function renderCalendar(schedule, children) {
 
     // ציור בלוקים — קובייה אחת רציפה לכל טווח
     schedule.forEach(row => {
-        const day = row.day;
-        const start = row.start_time;
-        const end = row.end_time;
-        const childId = row.child_id;
-        const childName = row.child_name || "";
-        const color = childColorMap[childId] || "#4b5563";
+        const { day, start_time, end_time, child_id, child_name, id } = row;
 
-        const firstCell = container.querySelector(
-            `.calendar-cell[data-day="${day}"][data-time="${start}"]`
-        );
+        const firstCell = document.getElementById(`cell-${day}-${start_time}`);
         if (!firstCell) return;
 
         let count = 0;
-        let t = start;
-        while (t < end) {
+        let t = start_time;
+        while (t < end_time) {
             count++;
             t = add30(t);
         }
 
         const block = document.createElement("div");
         block.className = "slot-block";
-        block.style.background = color;
+        block.style.background = childColorMap[child_id] || "#94a3b8";
         block.style.color = "#0b1120";
-        block.textContent = childName;
-
         block.style.height = `calc(${count} * 40px)`;
-        block.style.position = "absolute";
-        block.style.top = "0";
-        block.style.left = "0";
-        block.style.right = "0";
-        block.style.borderRadius = "6px";
-        block.style.display = "flex";
-        block.style.alignItems = "center";
-        block.style.justifyContent = "center";
-        block.style.fontWeight = "bold";
-        block.style.cursor = "pointer";
+        block.textContent = child_name;
 
-        block.onclick = () => navigate('visit_edit', row.id);
+        // לחיצה רגילה → עריכת שיבוץ
+        block.onclick = () => navigate("visit_edit", id);
 
-        firstCell.style.position = "relative";
+        // קליק ימני → מחיקת שיבוץ
+        block.oncontextmenu = (e) => {
+            e.preventDefault();
+            if (confirm("למחוק את השיבוץ?")) {
+                fetch(`/api/schedule/delete/${id}?key=${KEY}`, { method: "POST" })
+                    .then(() => navigate("home"));
+            }
+        };
+
         firstCell.appendChild(block);
     });
 
@@ -178,11 +168,10 @@ function renderCalendar(schedule, children) {
     if (legend) {
         legend.innerHTML = "";
         children.forEach(c => {
-            const color = childColorMap[c.id];
             const item = document.createElement("div");
             item.className = "legend-item";
             item.innerHTML = `
-                <div class="legend-color" style="background:${color}"></div>
+                <div class="legend-color" style="background:${childColorMap[c.id]}"></div>
                 <span>${c.name}</span>
             `;
             legend.appendChild(item);
@@ -444,6 +433,9 @@ window.saveVisit = async function () {
 // ----------------------------
 window.init_visit_edit = async function (id) {
     try {
+        const resVisit = await fetch(`/api/schedule/${id}?key=${KEY}`);
+        const visit = await resVisit.json();
+
         const resChildren = await fetch(`/api/children?key=${KEY}`);
         const children = await resChildren.json();
 
@@ -456,200 +448,6 @@ window.init_visit_edit = async function (id) {
             opt.textContent = c.name;
             select.appendChild(opt);
         });
-
-        const resVisit = await fetch(`/api/schedule/${id}?key=${KEY}`);
-        const visit = await resVisit.json();
-
-        document.getElementById("visitId").value = visit.id;
-        document.getElementById("child_id").value = visit.child_id;
-        document.getElementById("day").value = visit.day;
-        document.getElementById("start_time").value = visit.start_time;
-        document.getElementById("end_time").value = visit.end_time;
-
-    } catch (e) {
-        console.error(e);
-        alert("שגיאה בטעינת נתוני השיבוץ");
-    }
-};
-
-window.saveVisitEdit = async function () {
-    const id = document.getElementById("visitId").value;
-    const child_id = document.getElementById("child_id").value;
-    const day = document.getElementById("day").value;
-    const start = document.getElementById("start_time").value;
-    const end = document.getElementById("end_time").value;
-
-    if (!child_id || !day || !start || !end) {
-        alert("חובה למלא את כל השדות");
-        return;
-    }
-
-    if (end <= start) {
-        alert("שעת סיום חייבת להיות אחרי שעת התחלה");
-        return;
-    }
-
-    const form = new FormData();
-    form.append("child_id", child_id);
-    form.append("day", day);
-    form.append("start_time", start);
-    form.append("end_time", end);
-
-    const res = await fetch(`/api/schedule/edit/${id}?key=${KEY}`, {
-        method: "POST",
-        body: form
-    });
-
-    if (res.ok) {
-        alert("השיבוץ עודכן בהצלחה");
-        navigate("home");
-    } else {
-        alert("שגיאה בעדכון השיבוץ");
-    }
-};
-
-// ----------------------------
-// EXPORT — ייצוא כתמונה
-// ----------------------------
-window.exportCalendarAsImage = async function () {
-    const calendar = document.getElementById("calendarContainer");
-    if (!calendar || typeof html2canvas === "undefined") {
-        alert("לא ניתן לייצא כרגע");
-        return;
-    }
-
-    const wrapper = document.createElement("div");
-    wrapper.style.padding = "20px";
-    wrapper.style.background = "white";
-    wrapper.style.direction = "rtl";
-
-    const title = document.createElement("h2");
-    title.innerText = "מערכת שעות כללית";
-    wrapper.appendChild(title);
-
-    const clone = calendar.cloneNode(true);
-    wrapper.appendChild(clone);
-
-    document.body.appendChild(wrapper);
-
-    const canvas = await html2canvas(wrapper, { scale: 2 });
-    const link = document.createElement("a");
-    link.download = "מערכת-שעות-כללית.png";
-    link.href = canvas.toDataURL();
-    link.click();
-
-    wrapper.remove();
-};
-
-window.exportChildCalendar = async function () {
-    const element = document.getElementById("childCalendarContainer");
-    if (!element || typeof html2canvas === "undefined") {
-        alert("לא ניתן לייצא כרגע");
-        return;
-    }
-
-    const wrapper = document.createElement("div");
-    wrapper.style.padding = "20px";
-    wrapper.style.background = "white";
-    wrapper.style.direction = "rtl";
-
-    const title = document.createElement("h2");
-    title.innerText = "מערכת שעות לפי ילד";
-    wrapper.appendChild(title);
-
-    const clone = element.cloneNode(true);
-    wrapper.appendChild(clone);
-
-    document.body.appendChild(wrapper);
-
-    const canvas = await html2canvas(wrapper, { scale: 2 });
-    const link = document.createElement("a");
-    link.download = "מערכת-שעות-לפי-ילד.png";
-    link.href = canvas.toDataURL();
-    link.click();
-
-    wrapper.remove();
-};
-// ----------------------------
-// VISIT ADD — הוספת שיבוץ
-// ----------------------------
-window.init_visit_add = async function () {
-    try {
-        const res = await fetch(`/api/children?key=${KEY}`);
-        const children = await res.json();
-
-        const select = document.getElementById("child_id");
-        if (!select) return;
-        select.innerHTML = "";
-
-        children.forEach(c => {
-            const opt = document.createElement("option");
-            opt.value = c.id;
-            opt.textContent = c.name;
-            select.appendChild(opt);
-        });
-
-    } catch (e) {
-        console.error(e);
-        alert("שגיאה בטעינת רשימת הילדים");
-    }
-};
-
-window.saveVisit = async function () {
-    const child_id = document.getElementById("child_id").value;
-    const day = document.getElementById("day").value;
-    const start = document.getElementById("start_time").value;
-    const end = document.getElementById("end_time").value;
-
-    if (!child_id || !day || !start || !end) {
-        alert("חובה למלא את כל השדות");
-        return;
-    }
-
-    if (end <= start) {
-        alert("שעת סיום חייבת להיות אחרי שעת התחלה");
-        return;
-    }
-
-    const form = new FormData();
-    form.append("child_id", child_id);
-    form.append("day", day);
-    form.append("start_time", start);
-    form.append("end_time", end);
-
-    const res = await fetch(`/api/schedule/add?key=${KEY}`, {
-        method: "POST",
-        body: form
-    });
-
-    if (res.ok) {
-        alert("השיבוץ נשמר בהצלחה");
-        navigate("home");
-    } else {
-        alert("שגיאה בשמירת השיבוץ");
-    }
-};
-
-// ----------------------------
-// VISIT EDIT — עריכת שיבוץ
-// ----------------------------
-window.init_visit_edit = async function (id) {
-    try {
-        const resChildren = await fetch(`/api/children?key=${KEY}`);
-        const children = await resChildren.json();
-
-        const select = document.getElementById("child_id");
-        if (!select) return;
-        select.innerHTML = "";
-        children.forEach(c => {
-            const opt = document.createElement("option");
-            opt.value = c.id;
-            opt.textContent = c.name;
-            select.appendChild(opt);
-        });
-
-        const resVisit = await fetch(`/api/schedule/${id}?key=${KEY}`);
-        const visit = await resVisit.json();
 
         document.getElementById("visitId").value = visit.id;
         document.getElementById("child_id").value = visit.child_id;
