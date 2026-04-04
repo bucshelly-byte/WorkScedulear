@@ -1,7 +1,9 @@
 <div class="page">
+
     <h1>מערכת שעות כללית</h1>
 
-    <div style="margin-bottom:10px;">
+    <!-- סינון לפי יום -->
+    <div style="margin-bottom:15px;">
         <label>סינון לפי יום:</label>
         <select id="dayFilter" onchange="filterByDay()">
             <option value="">הכול</option>
@@ -13,9 +15,30 @@
         </select>
     </div>
 
-    <button class="export-btn" onclick="exportCalendarAsImage()">📤 ייצוא מערכת</button>
-    <button class="export-btn" onclick="navigate('visit_add')">➕ הוספת שיבוץ</button>
+    <!-- כפתורים -->
+    <div style="margin-bottom:15px;">
+        <button class="export-btn" onclick="exportCalendarAsImage()">📤 ייצוא מערכת</button>
+        <button class="export-btn" onclick="navigate('visit_add')">➕ הוספת שיבוץ</button>
+    </div>
 
+    <!-- מקרא צבעים -->
     <div id="calendarLegend" class="legend"></div>
-    <div id="calendarContainer" class="calendar"></div>
+
+    <!-- טבלת מערכת שעות מודרנית -->
+    <div class="schedule-wrapper">
+        <table class="schedule-table" id="scheduleTable">
+            <thead>
+                <tr>
+                    <th>שעה</th>
+                    <th>ראשון</th>
+                    <th>שני</th>
+                    <th>שלישי</th>
+                    <th>רביעי</th>
+                    <th>חמישי</th>
+                </tr>
+            </thead>
+            <tbody id="scheduleBody"></tbody>
+        </table>
+    </div>
+
 </div>
