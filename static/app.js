@@ -108,7 +108,8 @@ function getSelectedDays(container) {
 // דף הבית — לוח שיבוצים
 // ------------------------------------------------------
 // ------------------------------------------------------
-// דף הבית — לוח שיבוצים (עם מיזוג רצפים של אותו ילד)
+// ------------------------------------------------------
+// דף הבית — לוח שיבוצים (מקורי, ללא מיזוג רצפים)
 // ------------------------------------------------------
 async function init_home() {
     const schedule = await fetch(`${API_BASE}/schedule?key=${API_KEY}`).then(r => r.json());
@@ -121,15 +122,14 @@ async function init_home() {
     container.innerHTML = "";
     legend.innerHTML = "";
 
-    // צבע קבוע לכל ילד
     const colors = {};
+
     schedule.forEach(s => {
         if (!colors[s.child_name]) {
             colors[s.child_name] = "#" + Math.floor(Math.random() * 16777215).toString(16);
         }
     });
 
-    // בניית כרטיס לכל יום
     days.forEach(day => {
         const card = document.createElement("div");
         card.className = "day-card fade-in";
@@ -139,42 +139,12 @@ async function init_home() {
         title.innerText = day;
         card.appendChild(title);
 
-        // כל השיבוצים של היום
-let slots = schedule.filter(s =>
-    s.day === day &&
-    s.start_time >= "08:00" &&
-    s.end_time <= "17:00"
-);
+        const slots = schedule.filter(s => s.day === day);
+
         if (slots.length === 0) {
             card.innerHTML += "<div class='slot-item empty'>אין שיבוצים</div>";
         } else {
-
-            // ממיינים לפי שעה
-            slots.sort((a, b) => a.start_time.localeCompare(b.start_time));
-
-            // מאחדים רצפים של אותו ילד
-            const merged = [];
-            let current = null;
-
             slots.forEach(s => {
-                if (!current) {
-                    current = { ...s };
-                    return;
-                }
-
-                // אם זה אותו ילד והרצף ממשיך
-                if (current.child_name === s.child_name && current.end_time === s.start_time) {
-                    current.end_time = s.end_time; // מאריכים את השיבוץ
-                } else {
-                    merged.push(current);
-                    current = { ...s };
-                }
-            });
-
-            if (current) merged.push(current);
-
-            // מציגים את השיבוצים המאוחדים
-            merged.forEach(s => {
                 const slot = document.createElement("div");
                 slot.className = "slot-item bounce-in";
                 slot.style.background = colors[s.child_name];
@@ -187,7 +157,6 @@ let slots = schedule.filter(s =>
         container.appendChild(card);
     });
 
-    // אגדה (Legend)
     Object.keys(colors).forEach(name => {
         const item = document.createElement("div");
         item.className = "legend-item";
@@ -199,47 +168,7 @@ let slots = schedule.filter(s =>
 
         legend.appendChild(item);
     });
-}// ------------------------------------------------------
-// רשימת ילדים
-// ------------------------------------------------------
-async function init_children() {
-    const data = await fetch(`${API_BASE}/children?key=${API_KEY}`).then(r => r.json());
-    const tbody = document.querySelector("#childrenTable tbody");
-
-    tbody.innerHTML = "";
-
-    data.forEach(child => {
-        const tr = document.createElement("tr");
-
-        tr.innerHTML = `
-            <td>${child.name}</td>
-            <td>${child.parent_name || ""}</td>
-            <td>${child.phone || ""}</td>
-            <td>${child.address || ""}</td>
-            <td>
-                <button class="btn secondary-btn" onclick="navigate('child_profile', ${child.id})">פרופיל</button>
-                <button class="btn primary-btn" onclick="navigate('child_edit', ${child.id})">עריכה</button>
-                <button class="btn" style="background:#ff3b30;color:white" onclick="deleteChild(${child.id})">מחיקה</button>
-            </td>
-        `;
-
-        tbody.appendChild(tr);
-    });
 }
-
-// ------------------------------------------------------
-// מחיקת ילד
-// ------------------------------------------------------
-async function deleteChild(id) {
-    if (!confirm("למחוק את הילד וכל השיבוצים שלו?")) return;
-
-    await fetch(`${API_BASE}/children/delete/${id}?key=${API_KEY}`, {
-        method: "POST"
-    });
-
-    navigate("children");
-}
-
 // ------------------------------------------------------
 // הוספת ילד
 // ------------------------------------------------------
