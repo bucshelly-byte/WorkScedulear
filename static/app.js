@@ -1,33 +1,4 @@
 // ------------------------------------------------------
-// הגדרות בסיס
-// ------------------------------------------------------
-const API_KEY = "ShellySecureKey_9843_2024_XYZ";
-
-// ------------------------------------------------------
-// פונקציות עזר ל־API
-// ------------------------------------------------------
-async function apiGet(url) {
-    const res = await fetch(url);
-    if (!res.ok) throw new Error("API GET failed");
-    return res.json();
-}
-
-async function apiPostForm(url, formData) {
-    const res = await fetch(url, {
-        method: "POST",
-        body: formData
-    });
-    if (!res.ok) throw new Error("API POST failed");
-    return res.json();
-}
-
-function toggleMenu() {
-    const menu = document.getElementById("menu");
-    if (menu) {
-        menu.classList.toggle("open");
-    }
-}
-// ------------------------------------------------------
 // ניווט בין דפים
 // ------------------------------------------------------
 async function navigate(page, param = null) {
@@ -44,114 +15,107 @@ async function navigate(page, param = null) {
 }
 
 // ------------------------------------------------------
-// דף הבית – הצגת כל השיבוצים
+// API helper
+// ------------------------------------------------------
+async function api(endpoint, data = null) {
+    const options = {
+        method: data ? "POST" : "GET",
+        headers: { "Content-Type": "application/json" }
+    };
+
+    if (data) options.body = JSON.stringify(data);
+
+    const res = await fetch(`/api/${endpoint}`, options);
+    return res.json();
+}
+
+// ------------------------------------------------------
+// דף הבית
 // ------------------------------------------------------
 async function init_home() {
-    try {
-        const data = await apiGet(`/api/schedule?key=${API_KEY}`);
+    const schedule = await api("schedule/weekly");
+    renderWeeklySchedule(schedule);
+    renderLegend();
+}
 
-        const container = document.getElementById("weeklySchedule");
-        if (!container) return;
+function renderWeeklySchedule(data) {
+    const container = document.getElementById("weeklySchedule");
+    container.innerHTML = "";
 
-        let html = `
-            <table class="schedule-table">
-                <thead>
-                    <tr>
-                        <th>ילד</th>
-                        <th>יום</th>
-                        <th>התחלה</th>
-                        <th>סיום</th>
-                    </tr>
-                </thead>
-                <tbody>
-        `;
+    const days = ["ראשון", "שני", "שלישי", "רביעי", "חמישי"];
 
-        data.forEach(v => {
-            html += `
-                <tr>
-                    <td>${v.child_name}</td>
-                    <td>${v.day}</td>
-                    <td>${v.start_time}</td>
-                    <td>${v.end_time}</td>
-                </tr>
-            `;
+    let html = `<table class="schedule-table"><thead><tr><th>שעה</th>`;
+    days.forEach(d => html += `<th>${d}</th>`);
+    html += `</tr></thead><tbody>`;
+
+    for (let hour = 8; hour <= 17; hour++) {
+        const h = hour.toString().padStart(2, "0") + ":00";
+        html += `<tr><td>${h}</td>`;
+
+        days.forEach(day => {
+            const cell = data[day]?.[h] || [];
+            if (cell.length === 0) {
+                html += `<td></td>`;
+            } else {
+                html += `<td class="busy">${cell.map(c => c.name).join("<br>")}</td>`;
+            }
         });
 
-        html += `</tbody></table>`;
-        container.innerHTML = html;
-    } catch (e) {
-        console.error(e);
-        alert("שגיאה בטעינת השיבוצים");
+        html += `</tr>`;
     }
+
+    html += `</tbody></table>`;
+    container.innerHTML = html;
+}
+
+function renderLegend() {
+    document.getElementById("calendarLegend").innerHTML = `
+        <div class="legend-item"><span class="legend-color busy"></span> תפוס</div>
+        <div class="legend-item"><span class="legend-color free"></span> פנוי</div>
+    `;
 }
 
 // ------------------------------------------------------
 // רשימת ילדים
 // ------------------------------------------------------
 async function init_children() {
-    try {
-        const children = await apiGet(`/api/children?key=${API_KEY}`);
-        const tbody = document.querySelector("#childrenTable tbody");
-        if (!tbody) return;
+    const children = await api("children/list");
+    const tbody = document.querySelector("#childrenTable tbody");
 
-        tbody.innerHTML = children.map(c => `
-            <tr>
-                <td>${c.name}</td>
-                <td>${c.parent_name || ""}</td>
-                <td>${c.phone || ""}</td>
-                <td>${c.address || ""}</td>
-                <td>
-                    <button onclick="navigate('child_profile', ${c.id})">פרופיל</button>
-                    <button onclick="navigate('child_edit', ${c.id})">עריכה</button>
-                    <button onclick="deleteChild(${c.id})">מחיקה</button>
-                </td>
-            </tr>
-        `).join("");
-    } catch (e) {
-        console.error(e);
-        alert("שגיאה בטעינת רשימת הילדים");
-    }
+    tbody.innerHTML = children.map(c => `
+        <tr>
+            <td>${c.name}</td>
+            <td>${c.parent_name || ""}</td>
+            <td>${c.phone || ""}</td>
+            <td>${c.address || ""}</td>
+            <td>
+                <button onclick="navigate('child_profile', ${c.id})">פרופיל</button>
+                <button onclick="navigate('child_edit', ${c.id})">עריכה</button>
+                <button onclick="deleteChild(${c.id})">מחיקה</button>
+            </td>
+        </tr>
+    `).join("");
 }
 
 async function deleteChild(id) {
-    if (!confirm("למחוק את הילד וכל השיבוצים שלו?")) return;
-
-    const form = new FormData();
-    const url = `/api/children/delete/${id}?key=${API_KEY}`;
-
-    try {
-        await apiPostForm(url, form);
-        navigate("children");
-    } catch (e) {
-        console.error(e);
-        alert("שגיאה במחיקת ילד");
-    }
+    if (!confirm("למחוק את הילד?")) return;
+    await api(`children/delete/${id}`);
+    navigate("children");
 }
 
 // ------------------------------------------------------
 // הוספת ילד
 // ------------------------------------------------------
 function init_child_add() {
-    const formEl = document.getElementById("childAddForm");
-    if (!formEl) return;
-
-    formEl.onsubmit = async (e) => {
+    document.getElementById("childAddForm").onsubmit = async (e) => {
         e.preventDefault();
 
-        const formData = new FormData(formEl);
-        const url = `/api/children/add?key=${API_KEY}`;
+        const data = Object.fromEntries(new FormData(e.target).entries());
+        const res = await api("children/add", data);
 
-        try {
-            const res = await apiPostForm(url, formData);
-            if (res.status === "ok") {
-                alert("הילד נוסף בהצלחה");
-                navigate("children");
-            } else {
-                alert("שגיאה בהוספת ילד");
-            }
-        } catch (e) {
-            console.error(e);
-            alert("שגיאה בהוספת ילד");
+        if (res.success) {
+            alert("הילד נוסף בהצלחה");
+            navigate("children");
         }
     };
 }
@@ -160,109 +124,68 @@ function init_child_add() {
 // עריכת ילד
 // ------------------------------------------------------
 async function init_child_edit(id) {
-    try {
-        const child = await apiGet(`/api/children/${id}?key=${API_KEY}`);
+    const child = await api(`children/get/${id}`);
 
-        document.getElementById("childName").value = child.name || "";
-        document.getElementById("parentName").value = child.parent_name || "";
-        document.getElementById("phone").value = child.phone || "";
-        document.getElementById("address").value = child.address || "";
+    document.getElementById("childName").value = child.name;
+    document.getElementById("parentName").value = child.parent_name;
+    document.getElementById("phone").value = child.phone;
+    document.getElementById("address").value = child.address;
 
-        const formEl = document.getElementById("childEditForm");
-        if (!formEl) return;
+    document.getElementById("childEditForm").onsubmit = async (e) => {
+        e.preventDefault();
 
-        formEl.onsubmit = async (e) => {
-            e.preventDefault();
+        const data = Object.fromEntries(new FormData(e.target).entries());
+        data.id = id;
 
-            const formData = new FormData(formEl);
-            const url = `/api/children/edit/${id}?key=${API_KEY}`;
+        const res = await api("children/update", data);
 
-            try {
-                const res = await apiPostForm(url, formData);
-                if (res.status === "ok") {
-                    alert("הילד עודכן בהצלחה");
-                    navigate("children");
-                } else {
-                    alert("שגיאה בעדכון ילד");
-                }
-            } catch (e) {
-                console.error(e);
-                alert("שגיאה בעדכון ילד");
-            }
-        };
-    } catch (e) {
-        console.error(e);
-        alert("שגיאה בטעינת פרטי הילד");
-    }
+        if (res.success) {
+            alert("הילד עודכן");
+            navigate("children");
+        }
+    };
 }
 
 // ------------------------------------------------------
-// פרופיל ילד – שיבוצים של ילד אחד
+// פרופיל ילד
 // ------------------------------------------------------
 async function init_child_profile(id) {
-    try {
-        const child = await apiGet(`/api/children/${id}?key=${API_KEY}`);
-        const visits = await apiGet(`/api/schedule/by_child/${id}?key=${API_KEY}`);
+    const child = await api(`children/get/${id}`);
+    const visits = await api(`schedule/by_child/${id}`);
 
-        const meta = document.getElementById("childMeta");
-        const sched = document.getElementById("childSchedule");
-        if (!meta || !sched) return;
+    document.getElementById("childMeta").innerHTML = `
+        <p><b>שם:</b> ${child.name}</p>
+        <p><b>הורה:</b> ${child.parent_name || ""}</p>
+        <p><b>טלפון:</b> ${child.phone || ""}</p>
+        <p><b>כתובת:</b> ${child.address || ""}</p>
+    `;
 
-        meta.innerHTML = `
-            <p><b>שם:</b> ${child.name}</p>
-            <p><b>הורה:</b> ${child.parent_name || ""}</p>
-            <p><b>טלפון:</b> ${child.phone || ""}</p>
-            <p><b>כתובת:</b> ${child.address || ""}</p>
+    let html = `<table class="schedule-table"><thead><tr>
+        <th>יום</th><th>התחלה</th><th>סיום</th><th>פעולות</th>
+    </tr></thead><tbody>`;
+
+    visits.forEach(v => {
+        html += `
+            <tr>
+                <td>${v.day}</td>
+                <td>${v.start}</td>
+                <td>${v.end}</td>
+                <td>
+                    <button onclick="navigate('visit_edit', ${v.id})">עריכה</button>
+                    <button onclick="deleteVisit(${v.id}, ${id})">מחיקה</button>
+                </td>
+            </tr>
         `;
+    });
 
-        let html = `
-            <table class="schedule-table">
-                <thead>
-                    <tr>
-                        <th>יום</th>
-                        <th>התחלה</th>
-                        <th>סיום</th>
-                        <th>פעולות</th>
-                    </tr>
-                </thead>
-                <tbody>
-        `;
-
-        visits.forEach(v => {
-            html += `
-                <tr>
-                    <td>${v.day}</td>
-                    <td>${v.start_time}</td>
-                    <td>${v.end_time}</td>
-                    <td>
-                        <button onclick="navigate('visit_edit', ${v.id})">עריכה</button>
-                        <button onclick="deleteVisit(${v.id}, ${id})">מחיקה</button>
-                    </td>
-                </tr>
-            `;
-        });
-
-        html += `</tbody></table>`;
-        sched.innerHTML = html;
-    } catch (e) {
-        console.error(e);
-        alert("שגיאה בטעינת פרופיל הילד");
-    }
+    html += `</tbody></table>`;
+    document.getElementById("childSchedule").innerHTML = html;
 }
 
 async function deleteVisit(id, childId) {
     if (!confirm("למחוק את השיבוץ?")) return;
-
-    const form = new FormData();
-    const url = `/api/schedule/delete/${id}?key=${API_KEY}`;
-
-    try {
-        await apiPostForm(url, form);
-        navigate("child_profile", childId);
-    } catch (e) {
-        console.error(e);
-        alert("שגיאה במחיקת שיבוץ");
-    }
+    await api(`schedule/delete/${id}`);
+    navigate("child_profile", childId);
 }
 
 // ------------------------------------------------------
@@ -271,7 +194,6 @@ async function deleteVisit(id, childId) {
 function createDayButtons(containerId) {
     const days = ["ראשון", "שני", "שלישי", "רביעי", "חמישי"];
     const container = document.getElementById(containerId);
-    if (!container) return;
 
     container.innerHTML = days.map(d => `
         <button type="button" class="day-btn" onclick="toggleDay(this)">${d}</button>
@@ -291,159 +213,95 @@ function getSelectedDays() {
 // ------------------------------------------------------
 function generateTimeOptions(id) {
     const select = document.getElementById(id);
-    if (!select) return;
-
     let html = "";
+
     for (let h = 8; h <= 17; h++) {
         const t = h.toString().padStart(2, "0") + ":00";
         html += `<option value="${t}">${t}</option>`;
     }
+
     select.innerHTML = html;
 }
 
 // ------------------------------------------------------
-// הוספת שיבוץ – מרובה ימים (תואם ל־server.py)
+// הוספת שיבוץ – הגרסה הישנה שעבדה
 // ------------------------------------------------------
 async function init_visit_add() {
-    try {
-        // טען ילדים
-        const children = await apiGet(`/api/children?key=${API_KEY}`);
-        const childSelect = document.getElementById("childId");
-        if (!childSelect) return;
 
-        childSelect.innerHTML = children.map(c => `
-            <option value="${c.id}">${c.name}</option>
-        `).join("");
+    const children = await api("children/list");
+    const childSelect = document.getElementById("childId");
+    childSelect.innerHTML = children.map(c => `<option value="${c.id}">${c.name}</option>`).join("");
 
-        // כפתורי ימים ושעות
-        createDayButtons("dayButtons");
-        generateTimeOptions("startTime");
-        generateTimeOptions("endTime");
+    createDayButtons("dayButtons");
+    generateTimeOptions("startTime");
+    generateTimeOptions("endTime");
 
-        const formEl = document.getElementById("visitAddForm");
-        if (!formEl) return;
+    document.getElementById("visitAddForm").onsubmit = async (e) => {
+        e.preventDefault();
 
-        formEl.onsubmit = async (e) => {
-            e.preventDefault();
+        const child_id = childSelect.value;
+        const start = document.getElementById("startTime").value;
+        const end = document.getElementById("endTime").value;
+        const days = getSelectedDays();
 
-            const child_id = childSelect.value;
-            const start = document.getElementById("startTime").value;
-            const end = document.getElementById("endTime").value;
-            const days = getSelectedDays(); // ["ראשון","שלישי",...]
+        const result = await api("schedule/add", {
+            child_id,
+            start,
+            end,
+            days
+        });
 
-            if (!child_id) {
-                alert("יש לבחור ילד");
-                return;
-            }
-            if (days.length === 0) {
-                alert("יש לבחור לפחות יום אחד");
-                return;
-            }
-
-            // בדיקת התנגשות – בדיוק כמו בשרת: days[]
-            const params = new URLSearchParams();
-            params.set("key", API_KEY);
-            params.set("start", start);
-            params.set("end", end);
-            // ignore לא בשימוש כאן, אז לא שולחים
-            days.forEach(d => params.append("days[]", d));
-
-            let conflict;
-            try {
-                conflict = await apiGet(`/api/schedule/conflict_multi?${params.toString()}`);
-            } catch (e) {
-                console.error(e);
-                alert("שגיאה בבדיקת התנגשות");
-                return;
-            }
-
-            if (conflict.conflict) {
-                alert(`קיים שיבוץ חופף לילד ${conflict.child_name} ביום ${conflict.day}`);
-                return;
-            }
-
-            // אין התנגשות – שולחים ל־/api/schedule/add עם FormData ו־days[]
-            const fd = new FormData();
-            fd.set("child_id", child_id);
-            fd.set("start_time", start);
-            fd.set("end_time", end);
-            days.forEach(d => fd.append("days[]", d));
-
-            try {
-                const res = await apiPostForm(`/api/schedule/add?key=${API_KEY}`, fd);
-                if (res.status === "ok") {
-                    alert("השיבוץ נוסף בהצלחה");
-                    navigate("home");
-                } else {
-                    alert("שגיאה בהוספת שיבוץ");
-                }
-            } catch (e) {
-                console.error(e);
-                alert("שגיאה בהוספת שיבוץ");
-            }
-        };
-    } catch (e) {
-        console.error(e);
-        alert("שגיאה בטעינת נתונים להוספת שיבוץ");
-    }
+        if (result.success) {
+            alert("השיבוץ נוסף");
+            navigate("home");
+        }
+    };
 }
 
 // ------------------------------------------------------
-// עריכת שיבוץ (יום יחיד) – תואם ל־/api/schedule/edit/<id>
+// עריכת שיבוץ
 // ------------------------------------------------------
 async function init_visit_edit(id) {
-    try {
-        const visit = await apiGet(`/api/schedule/${id}?key=${API_KEY}`);
-        const children = await apiGet(`/api/children?key=${API_KEY}`);
+    const visit = await api(`schedule/get/${id}`);
+    const children = await api("children/list");
 
-        const daySelect = document.getElementById("day");
-        const childSelect = document.getElementById("childId");
-        const startSel = document.getElementById("startTime");
-        const endSel = document.getElementById("endTime");
+    document.getElementById("day").value = visit.day;
 
-        if (!daySelect || !childSelect || !startSel || !endSel) return;
+    const childSelect = document.getElementById("childId");
+    childSelect.innerHTML = children.map(c => `
+        <option value="${c.id}" ${c.id === visit.child_id ? "selected" : ""}>${c.name}</option>
+    `).join("");
 
-        // ילדים
-        childSelect.innerHTML = children.map(c => `
-            <option value="${c.id}" ${c.id === visit.child_id ? "selected" : ""}>${c.name}</option>
-        `).join("");
+    generateTimeOptions("startTime");
+    generateTimeOptions("endTime");
 
-        // ימים
-        daySelect.value = visit.day;
+    document.getElementById("startTime").value = visit.start;
+    document.getElementById("endTime").value = visit.end;
 
-        // שעות
-        generateTimeOptions("startTime");
-        generateTimeOptions("endTime");
-        startSel.value = visit.start_time;
-        endSel.value = visit.end_time;
+    document.getElementById("visitEditForm").onsubmit = async (e) => {
+        e.preventDefault();
 
-        const formEl = document.getElementById("visitEditForm");
-        if (!formEl) return;
-
-        formEl.onsubmit = async (e) => {
-            e.preventDefault();
-
-            const fd = new FormData();
-            fd.set("child_id", childSelect.value);
-            fd.set("day", daySelect.value);
-            fd.set("start_time", startSel.value);
-            fd.set("end_time", endSel.value);
-
-            try {
-                const res = await apiPostForm(`/api/schedule/edit/${id}?key=${API_KEY}`, fd);
-                if (res.status === "ok") {
-                    alert("השיבוץ עודכן בהצלחה");
-                    navigate("home");
-                } else {
-                    alert("שגיאה בעדכון שיבוץ");
-                }
-            } catch (e) {
-                console.error(e);
-                alert("שגיאה בעדכון שיבוץ");
-            }
+        const data = {
+            id,
+            day: document.getElementById("day").value,
+            start: document.getElementById("startTime").value,
+            end: document.getElementById("endTime").value,
+            child_id: document.getElementById("childId").value
         };
-    } catch (e) {
-        console.error(e);
-        alert("שגיאה בטעינת נתוני השיבוץ לעריכה");
-    }
- }
+
+        const res = await api("schedule/update", data);
+
+        if (res.success) {
+            alert("השיבוץ עודכן");
+            navigate("home");
+        }
+    };
+}
+
+// ------------------------------------------------------
+// תפריט המבורגר
+// ------------------------------------------------------
+function toggleMenu() {
+    const menu = document.getElementById("menu");
+    menu.classList.toggle("open");
+}
