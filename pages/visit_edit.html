@@ -1,39 +1,39 @@
-<h2 class="page-header">עריכת שיבוץ</h2>
+<div class="page-header">עריכת שיבוץ</div>
 
 <div class="form-container">
     <form id="visitEditForm">
+
         <div class="form-row">
-            <label for="childId">ילד:</label>
-            <select id="childId" name="child_id" class="input-field" required>
-                <!-- ה־JS ימלא את רשימת הילדים ויבחר את הנכון -->
+            <label>בחרי ילד:</label>
+            <select id="childId" name="child_id" class="input-field"></select>
+        </div>
+
+        <div class="form-row">
+            <label>יום:</label>
+            <select id="day" name="day" class="input-field">
+                <option>ראשון</option>
+                <option>שני</option>
+                <option>שלישי</option>
+                <option>רביעי</option>
+                <option>חמישי</option>
+                <option>שישי</option>
+                <option>שבת</option>
             </select>
         </div>
 
         <div class="form-row">
-            <label for="day">יום:</label>
-            <select id="day" name="day" class="input-field" required>
-                <option value="ראשון">ראשון</option>
-                <option value="שני">שני</option>
-                <option value="שלישי">שלישי</option>
-                <option value="רביעי">רביעי</option>
-                <option value="חמישי">חמישי</option>
-                <option value="שישי">שישי</option>
-                <option value="שבת">שבת</option>
-            </select>
+            <label>שעת התחלה:</label>
+            <select id="startTime" name="start_time" class="input-field"></select>
         </div>
 
         <div class="form-row">
-            <label for="startTime">שעת התחלה:</label>
-            <input type="time" id="startTime" name="start_time" class="input-field" required>
-        </div>
-
-        <div class="form-row">
-            <label for="endTime">שעת סיום:</label>
-            <input type="time" id="endTime" name="end_time" class="input-field" required>
+            <label>שעת סיום:</label>
+            <select id="endTime" name="end_time" class="input-field"></select>
         </div>
 
         <div class="form-actions">
-            <button type="submit" class="btn primary-btn">שמור</button>
+            <button class="btn primary-btn" type="submit">שמור</button>
         </div>
+
     </form>
 </div>
