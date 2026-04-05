@@ -319,3 +319,16 @@ input, select {
         padding: 8px 12px;
     }
 }
+.whatsapp-icon {
+    width: 28px;      /* גודל כמו כפתור ייצוא קטן */
+    height: 28px;
+    cursor: pointer;
+    border-radius: 4px;
+    padding: 3px;     /* כמו כפתור */
+    transition: 0.2s;
+}
+
+.whatsapp-icon:hover {
+    background-color: #e6e6e6; /* כמו hover של כפתור */
+    transform: scale(1.05);
+}
