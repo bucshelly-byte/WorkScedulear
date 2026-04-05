@@ -639,8 +639,9 @@ async function exportFreeTable() {
     const schedule = await fetch(`${API_BASE}/schedule?key=${API_KEY}`).then(r => r.json());
 
     const days = ["ראשון","שני","שלישי","רביעי","חמישי"];
-    const slots = getTimeSlots();
+    const slots = getTimeSlots(); // כאן את שולטת על טווח השעות
 
+    // מפה של שיבוצים לפי יום ושעה
     const map = {};
     days.forEach(d => map[d] = {});
 
@@ -654,14 +655,17 @@ async function exportFreeTable() {
         }
     });
 
+    // קנבס
     const canvas = document.createElement("canvas");
     canvas.width = 900;
     canvas.height = 600;
     const ctx = canvas.getContext("2d");
 
+    // רקע
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+    // כותרת
     ctx.fillStyle = "#333";
     ctx.font = "20px Assistant";
     ctx.fillText("טבלת פנויות - כל הילדים", 20, 30);
@@ -673,18 +677,21 @@ async function exportFreeTable() {
 
     ctx.font = "14px Assistant";
 
+    // כותרות ימים
     days.forEach((day, i) => {
         const x = leftMargin + i * colWidth;
         ctx.fillStyle = "#555";
         ctx.fillText(day, x + 10, topMargin - 10);
     });
 
+    // שעות בצד שמאל
     slots.forEach((t, j) => {
         const y = topMargin + j * rowHeight;
         ctx.fillStyle = "#555";
         ctx.fillText(t, 10, y + rowHeight / 2);
     });
 
+    // קווי טבלה
     ctx.strokeStyle = "#ddd";
     for (let i = 0; i <= days.length; i++) {
         const x = leftMargin + i * colWidth;
@@ -701,6 +708,7 @@ async function exportFreeTable() {
         ctx.stroke();
     }
 
+    // ציור תאים עם מיזוג רצפים
     days.forEach((d, i) => {
         let j = 0;
 
@@ -710,17 +718,23 @@ async function exportFreeTable() {
             const y = topMargin + j * rowHeight + 2;
 
             if (!child) {
+                // תא פנוי
                 ctx.fillStyle = "#ffffff";
                 ctx.fillRect(x, y, colWidth - 4, rowHeight - 4);
                 j++;
                 continue;
             }
 
+            // מחשבים כמה שעות רצופות הילד נמצא
             let span = 1;
-            while (j + span < slots.length && map[d][slots[j + span]] === child) {
+            while (
+                j + span < slots.length &&
+                map[d][slots[j + span]] === child
+            ) {
                 span++;
             }
 
+            // תא ממוזג
             ctx.fillStyle = getChildColor(child);
             ctx.fillRect(
                 x,
@@ -729,6 +743,7 @@ async function exportFreeTable() {
                 rowHeight * span - 4
             );
 
+            // שם הילד במרכז התא
             ctx.fillStyle = "#ffffff";
             ctx.font = "bold 14px Assistant";
             ctx.textAlign = "center";
@@ -743,30 +758,50 @@ async function exportFreeTable() {
         }
     });
 
-    // ⭐⭐⭐ שיתוף לוואטסאפ בטלפון / הורדה במחשב ⭐⭐⭐
+    downloadCanvasImage(canvas, "free_slots.png");
+}
 
-    const dataUrl = canvas.toDataURL("image/png");
+// ------------------------------------------------------
+// תפריט צד — פתיחה/סגירה
+// ------------------------------------------------------
+function toggleMenu() {
+    const sidebar = document.getElementById("sidebar");
+    const overlay = document.getElementById("overlay");
+    const app = document.getElementById("app");
+    const topBar = document.querySelector(".top-bar");
 
-    // הופכים את ה-dataURL ל-blob
-    const res = await fetch(dataUrl);
-    const blob = await res.blob();
-    const file = new File([blob], "free_slots.png", { type: "image/png" });
+    const isOpen = sidebar.classList.contains("open");
 
-    // אם המכשיר תומך בשיתוף קבצים (טלפון)
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({
-            files: [file],
-            title: "טבלת פנויות",
-            text: "טבלת הפנויות המעודכנת"
-        });
+    if (isOpen) {
+        closeMenu();
     } else {
-        // מחשב — מוריד את התמונה
-        const a = document.createElement("a");
-        a.href = dataUrl;
-        a.download = "free_slots.png";
-        a.click();
+        sidebar.classList.add("open");
+        overlay.classList.add("visible");
+        app.classList.add("shifted");
+        topBar.classList.add("shifted");
     }
-}}// ------------------------------------------------------
+}
+
+function closeMenu() {
+    const sidebar = document.getElementById("sidebar");
+    const overlay = document.getElementById("overlay");
+    const app = document.getElementById("app");
+    const topBar = document.querySelector(".top-bar");
+
+    sidebar.classList.remove("open");
+    overlay.classList.remove("visible");
+    app.classList.remove("shifted");
+    topBar.classList.remove("shifted");
+}
+
+document.getElementById("overlay").addEventListener("click", closeMenu);
+function downloadCanvasImage(canvas, filename) {
+    const link = document.createElement("a");
+    link.download = filename;
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+}
+// ------------------------------------------------------
 // אתחול
 // ------------------------------------------------------
 initTheme();
