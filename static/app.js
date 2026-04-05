@@ -19,6 +19,7 @@ function toggleDarkMode() {
     const isDark = document.body.classList.contains("dark");
     localStorage.setItem("theme", isDark ? "dark" : "light");
 }
+
 let isBackNavigation = false;
 
 async function navigate(page, param = null) {
@@ -35,11 +36,11 @@ async function navigate(page, param = null) {
     const pageTitle = document.getElementById("pageTitle");
     const backBtn = document.getElementById("backBtn");
 
-    // טוענים את ה־HTML קודם
+    // שלב 1 — טוענים את ה־HTML קודם
     const html = await fetch(`/pages/${page}.html`).then(r => r.text());
     app.innerHTML = html;
 
-    // עכשיו ה־HTML קיים — אפשר להריץ init בבטחה
+    // שלב 2 — עכשיו ה־HTML קיים, אפשר להריץ init בבטחה
 
     // הצגת כפתור חזרה
     if (page !== "home") backBtn.classList.add("visible");
