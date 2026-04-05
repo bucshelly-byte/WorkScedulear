@@ -437,10 +437,10 @@ async function init_visit_edit(id) {
             return;
         }
 
-        // 7) שליחת עדכון — חשוב! days[] ולא day
+        // 7) שליחת עדכון
         const formData = new FormData();
         formData.append("child_id", select.value);
-        formData.append("day", day);          // ← זה התיקון
+        formData.append("day", day);
         formData.append("start_time", start);
         formData.append("end_time", end);
 
@@ -450,6 +450,11 @@ async function init_visit_edit(id) {
         });
 
         navigate("home");
+    });
+
+    // ⭐⭐⭐ הוספה חשובה — חיבור כפתור המחיקה ⭐⭐⭐
+    document.getElementById("deleteBtn").addEventListener("click", () => {
+        deleteVisit(id);
     });
 }
 // ------------------------------------------------------
