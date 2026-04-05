@@ -383,7 +383,62 @@ async function init_visit_add() {
         navigate("home");
     });
 }
+// ------------------------------
+// עריכת שיבוץ
+// ------------------------------
 
+async function loadEditVisit() {
+    const KEY = "ShellySecureKey_9843_2024_XYZ";
+
+    // 1) קבלת ה-ID מה-URL
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get("id");
+
+    if (!id) {
+        alert("לא נמצא מזהה שיבוץ");
+        return;
+    }
+
+    document.getElementById("shiftId").value = id;
+
+    // 2) טעינת נתוני השיבוץ מהשרת
+    const res = await fetch(`/api/schedule/${id}?key=${KEY}`);
+    const data = await res.json();
+
+    // 3) מילוי השדות
+    document.getElementById("day").value = data.day;
+    document.getElementById("startTime").value = data.start_time;
+    document.getElementById("endTime").value = data.end_time;
+    document.getElementById("childId").value = data.child_id;
+
+    // 4) מאזין לכפתור עדכון
+    document.getElementById("visitEditForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const formData = new FormData();
+        formData.append("child_id", document.getElementById("childId").value);
+        formData.append("day", document.getElementById("day").value);
+        formData.append("start_time", document.getElementById("startTime").value);
+        formData.append("end_time", document.getElementById("endTime").value);
+
+        const updateRes = await fetch(`/api/schedule/edit/${id}?key=${KEY}`, {
+            method: "POST",
+            body: formData
+        });
+
+        if (updateRes.ok) {
+            alert("השיבוץ עודכן בהצלחה");
+            window.location.href = "/";
+        } else {
+            alert("שגיאה בעדכון השיבוץ");
+        }
+    });
+}
+
+// הפעלה אוטומטית רק אם אנחנו בדף עריכה
+if (window.location.pathname.includes("visit_edit.html")) {
+    loadEditVisit();
+}
 // ------------------------------------------------------
 // עריכת שיבוץ — יום יחיד
 // ------------------------------------------------------
