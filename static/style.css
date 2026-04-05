@@ -211,7 +211,16 @@ input, select {
     border: 1px solid #ccc;
     font-size: 16px;
 }
+.back-btn {
+    font-size: 22px;
+    margin-right: 10px;
+    cursor: pointer;
+    display: none;
+}
 
+.back-btn.visible {
+    display: inline;
+}
 /* ------------------------------------------------------
    כפתורי ימים (עיגולים)
 ------------------------------------------------------ */
