@@ -743,16 +743,30 @@ async function exportFreeTable() {
         }
     });
 
-    // ⭐⭐ שיתוף לוואטסאפ — עובד בכל טלפון ⭐⭐
+    // ⭐⭐⭐ שיתוף לוואטסאפ בטלפון / הורדה במחשב ⭐⭐⭐
 
     const dataUrl = canvas.toDataURL("image/png");
 
-    // שולחים את התמונה כ-base64 לוואטסאפ
-    const encoded = encodeURIComponent(dataUrl);
+    // הופכים את ה-dataURL ל-blob
+    const res = await fetch(dataUrl);
+    const blob = await res.blob();
+    const file = new File([blob], "free_slots.png", { type: "image/png" });
 
-    // פותח וואטסאפ עם התמונה בהודעה
-    window.open(`https://wa.me/?text=${encoded}`, "_blank");
-}// ------------------------------------------------------
+    // אם המכשיר תומך בשיתוף קבצים (טלפון)
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+            files: [file],
+            title: "טבלת פנויות",
+            text: "טבלת הפנויות המעודכנת"
+        });
+    } else {
+        // מחשב — מוריד את התמונה
+        const a = document.createElement("a");
+        a.href = dataUrl;
+        a.download = "free_slots.png";
+        a.click();
+    }
+}}// ------------------------------------------------------
 // אתחול
 // ------------------------------------------------------
 initTheme();
