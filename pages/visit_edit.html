@@ -1,8 +1,10 @@
 <div class="form-container">
     <h2>עריכת שיבוץ</h2>
-    <p>עדכני את היום והשעות ולחצי שמירה.</p>
+    <p>עדכני את היום והשעות ולחצי עדכון.</p>
 
     <form id="visitEditForm">
+
+        <input type="hidden" id="shiftId">
 
         <label>בחרי יום</label>
         <select id="day" name="day" required>
@@ -22,6 +24,60 @@
         <label>בחרי ילד</label>
         <select id="childId" name="child_id" required></select>
 
-        <button class="btn primary-btn" type="submit">שמירה</button>
+        <button class="btn primary-btn" type="submit">עדכון</button>
     </form>
 </div>
+
+<script>
+
+const KEY = "ShellySecureKey_9843_2024_XYZ";
+
+// 1) טוען נתוני שיבוץ לעריכה
+async function loadShift() {
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get("id");
+
+    if (!id) {
+        alert("לא נמצא מזהה שיבוץ");
+        return;
+    }
+
+    document.getElementById("shiftId").value = id;
+
+    const res = await fetch(`/api/schedule/${id}?key=${KEY}`);
+    const data = await res.json();
+
+    document.getElementById("day").value = data.day;
+    document.getElementById("startTime").value = data.start_time;
+    document.getElementById("endTime").value = data.end_time;
+    document.getElementById("childId").value = data.child_id;
+}
+
+// 2) מאזין לכפתור עדכון
+document.getElementById("visitEditForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const id = document.getElementById("shiftId").value;
+
+    const formData = new FormData();
+    formData.append("child_id", document.getElementById("childId").value);
+    formData.append("day", document.getElementById("day").value);
+    formData.append("start_time", document.getElementById("startTime").value);
+    formData.append("end_time", document.getElementById("endTime").value);
+
+    const res = await fetch(`/api/schedule/edit/${id}?key=${KEY}`, {
+        method: "POST",
+        body: formData
+    });
+
+    if (res.ok) {
+        alert("השיבוץ עודכן בהצלחה");
+        window.location.href = "/";
+    } else {
+        alert("שגיאה בעדכון השיבוץ");
+    }
+});
+
+loadShift();
+
+</script>
