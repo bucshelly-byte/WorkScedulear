@@ -21,7 +21,6 @@ function toggleDarkMode() {
 }
 
 let isBackNavigation = false;
-let isBackNavigation = false;
 
 // ------------------------------------------------------
 // ניווט בין דפים (עם תמיכה ב־BACK)
