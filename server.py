@@ -287,7 +287,7 @@ def conflict_multi():
             return jsonify({"conflict": True, "child_name": r[1], "day": day})
 
     conn.close()
-    return jsonify({"conflict": False})
+    return jsonify({"conflict": False})    
 # ----------------------------------------------------
 # הוספת שיבוץ מרובה ימים
 # ----------------------------------------------------
