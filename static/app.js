@@ -743,71 +743,16 @@ async function exportFreeTable() {
         }
     });
 
-    // ⭐⭐ כאן מתחיל הקסם — שיתוף לוואטסאפ בתוך אותה פונקציה ⭐⭐
+    // ⭐⭐ שיתוף לוואטסאפ — עובד בכל טלפון ⭐⭐
 
     const dataUrl = canvas.toDataURL("image/png");
-    const res = await fetch(dataUrl);
-    const blob = await res.blob();
-    const file = new File([blob], "free_slots.png", { type: "image/png" });
 
-    // אם בטלפון — שיתוף ישיר לוואטסאפ
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({
-            files: [file],
-            title: "טבלת פנויות",
-            text: "טבלת הפנויות המעודכנת"
-        });
-    } else {
-        // אם במחשב — פשוט מוריד את התמונה
-        const a = document.createElement("a");
-        a.href = dataUrl;
-        a.download = "free_slots.png";
-        a.click();
-    }
+    // שולחים את התמונה כ-base64 לוואטסאפ
+    const encoded = encodeURIComponent(dataUrl);
 
-    // ⭐⭐ סוף השיתוף ⭐⭐
-}
-// ------------------------------------------------------
-// תפריט צד — פתיחה/סגירה
-// ------------------------------------------------------
-function toggleMenu() {
-    const sidebar = document.getElementById("sidebar");
-    const overlay = document.getElementById("overlay");
-    const app = document.getElementById("app");
-    const topBar = document.querySelector(".top-bar");
-
-    const isOpen = sidebar.classList.contains("open");
-
-    if (isOpen) {
-        closeMenu();
-    } else {
-        sidebar.classList.add("open");
-        overlay.classList.add("visible");
-        app.classList.add("shifted");
-        topBar.classList.add("shifted");
-    }
-}
-
-function closeMenu() {
-    const sidebar = document.getElementById("sidebar");
-    const overlay = document.getElementById("overlay");
-    const app = document.getElementById("app");
-    const topBar = document.querySelector(".top-bar");
-
-    sidebar.classList.remove("open");
-    overlay.classList.remove("visible");
-    app.classList.remove("shifted");
-    topBar.classList.remove("shifted");
-}
-
-document.getElementById("overlay").addEventListener("click", closeMenu);
-function downloadCanvasImage(canvas, filename) {
-    const link = document.createElement("a");
-    link.download = filename;
-    link.href = canvas.toDataURL("image/png");
-    link.click();
-}
-// ------------------------------------------------------
+    // פותח וואטסאפ עם התמונה בהודעה
+    window.open(`https://wa.me/?text=${encoded}`, "_blank");
+}// ------------------------------------------------------
 // אתחול
 // ------------------------------------------------------
 initTheme();
