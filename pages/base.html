@@ -30,10 +30,14 @@
     <div id="overlay"></div>
 
     <!-- תפריט עליון -->
-    <div class="top-bar">
-        <span class="menu-btn" onclick="toggleMenu()">☰</span>
-        <span id="pageTitle">מערכת</span>
-    </div>
+   <div class="top-bar">
+    <span class="menu-btn" onclick="toggleMenu()">☰</span>
+
+    <!-- כפתור חזרה -->
+    <span id="backBtn" class="back-btn" onclick="history.back()">←</span>
+
+    <span id="pageTitle">מערכת</span>
+</div>
 
     <!-- אזור התוכן -->
     <div id="app"></div>
