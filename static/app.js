@@ -383,58 +383,74 @@ async function init_visit_add() {
         navigate("home");
     });
 }
-// ------------------------------
-// עריכת שיבוץ
-// ------------------------------
+// ------------------------------------------------------
+// עריכת שיבוץ — יום יחיד (גרסה מתוקנת)
+// ------------------------------------------------------
+async function init_visit_edit(id) {
 
-async function loadEditVisit() {
-    const KEY = "ShellySecureKey_9843_2024_XYZ";
+    // 1) טוען את נתוני השיבוץ
+    const data = await fetch(`${API_BASE}/schedule/${id}?key=${API_KEY}`).then(r => r.json());
 
-    // 1) קבלת ה-ID מה-URL
-    const params = new URLSearchParams(window.location.search);
-    const id = params.get("id");
+    const daySelect = document.getElementById("day");
+    const startSelect = document.getElementById("startTime");
+    const endSelect = document.getElementById("endTime");
 
-    if (!id) {
-        alert("לא נמצא מזהה שיבוץ");
-        return;
-    }
+    // 2) טוען שעות
+    generateTimeOptions(startSelect);
+    generateTimeOptions(endSelect);
 
-    document.getElementById("shiftId").value = id;
+    // 3) ממלא ערכים קיימים
+    daySelect.value = data.day;
+    startSelect.value = data.start_time;
+    endSelect.value = data.end_time;
 
-    // 2) טעינת נתוני השיבוץ מהשרת
-    const res = await fetch(`/api/schedule/${id}?key=${KEY}`);
-    const data = await res.json();
+    // 4) טוען ילדים
+    const children = await fetch(`${API_BASE}/children?key=${API_KEY}`).then(r => r.json());
+    const select = document.getElementById("childId");
 
-    // 3) מילוי השדות
-    document.getElementById("day").value = data.day;
-    document.getElementById("startTime").value = data.start_time;
-    document.getElementById("endTime").value = data.end_time;
-    document.getElementById("childId").value = data.child_id;
+    children.forEach(c => {
+        const opt = document.createElement("option");
+        opt.value = c.id;
+        opt.innerText = c.name;
+        if (c.id === data.child_id) opt.selected = true;
+        select.appendChild(opt);
+    });
 
-    // 4) מאזין לכפתור עדכון
-    document.getElementById("visitEditForm").addEventListener("submit", async (e) => {
+    // 5) מאזין לשמירה
+    const form = document.getElementById("visitEditForm");
+
+    form.addEventListener("submit", async e => {
         e.preventDefault();
 
-        const formData = new FormData();
-        formData.append("child_id", document.getElementById("childId").value);
-        formData.append("day", document.getElementById("day").value);
-        formData.append("start_time", document.getElementById("startTime").value);
-        formData.append("end_time", document.getElementById("endTime").value);
+        const start = startSelect.value;
+        const end = endSelect.value;
+        const day = daySelect.value;
 
-        const updateRes = await fetch(`/api/schedule/edit/${id}?key=${KEY}`, {
+        // 6) בדיקת התנגשות
+        const conflict = await fetch(
+            `${API_BASE}/schedule/conflict_multi?key=${API_KEY}&start=${start}&end=${end}&ignore=${id}&days[]=${encodeURIComponent(day)}`
+        ).then(r => r.json());
+
+        if (conflict.conflict) {
+            alert(`השעה תפוסה על ידי ${conflict.child_name} ביום ${conflict.day}`);
+            return;
+        }
+
+        // 7) שליחת עדכון — חשוב! days[] ולא day
+        const formData = new FormData();
+        formData.append("child_id", select.value);
+        formData.append("days[]", day);
+        formData.append("start_time", start);
+        formData.append("end_time", end);
+
+        await fetch(`${API_BASE}/schedule/edit/${id}?key=${API_KEY}`, {
             method: "POST",
             body: formData
         });
 
-        if (updateRes.ok) {
-            alert("השיבוץ עודכן בהצלחה");
-            window.location.href = "/";
-        } else {
-            alert("שגיאה בעדכון השיבוץ");
-        }
+        navigate("home");
     });
 }
-
 // הפעלה אוטומטית רק אם אנחנו בדף עריכה
 if (window.location.pathname.includes("visit_edit.html")) {
     loadEditVisit();
