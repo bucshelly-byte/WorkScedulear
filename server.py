@@ -265,9 +265,9 @@ def conflict_multi():
                 SELECT schedule.id, children.name
                 FROM schedule
                 JOIN children ON children.id = schedule.child_id
-                WHERE day=? AND id!=? AND (
-                    (start_time < ? AND end_time > ?) OR
-                    (start_time >= ? AND start_time < ?)
+                WHERE schedule.day=? AND schedule.id!=? AND (
+                    (schedule.start_time < ? AND schedule.end_time > ?) OR
+                    (schedule.start_time >= ? AND schedule.start_time < ?)
                 )
             """, (day, ignore, end, start, start, end))
         else:
@@ -275,9 +275,9 @@ def conflict_multi():
                 SELECT schedule.id, children.name
                 FROM schedule
                 JOIN children ON children.id = schedule.child_id
-                WHERE day=? AND (
-                    (start_time < ? AND end_time > ?) OR
-                    (start_time >= ? AND start_time < ?)
+                WHERE schedule.day=? AND (
+                    (schedule.start_time < ? AND schedule.end_time > ?) OR
+                    (schedule.start_time >= ? AND schedule.start_time < ?)
                 )
             """, (day, end, start, start, end))
 
@@ -288,7 +288,6 @@ def conflict_multi():
 
     conn.close()
     return jsonify({"conflict": False})
-
 # ----------------------------------------------------
 # הוספת שיבוץ מרובה ימים
 # ----------------------------------------------------
