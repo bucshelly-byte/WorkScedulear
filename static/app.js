@@ -23,13 +23,26 @@ function toggleDarkMode() {
 // ------------------------------------------------------
 // ניווט בין דפים
 // ------------------------------------------------------
+let isBackNavigation = false;
+
 async function navigate(page, param = null) {
+
+    // מוסיפים להיסטוריה רק אם זה לא BACK
+    if (!isBackNavigation) {
+        history.pushState({ page, param }, "", "");
+    }
+
+    // מאפסים את הדגל
+    isBackNavigation = false;
+
     const app = document.getElementById("app");
     const pageTitle = document.getElementById("pageTitle");
 
+    // טוענים את ה־HTML
     const html = await fetch(`/pages/${page}.html`).then(r => r.text());
     app.innerHTML = html;
 
+    // כותרות
     const titles = {
         home: "תחזית שבועית",
         children: "רשימת ילדים",
@@ -41,6 +54,7 @@ async function navigate(page, param = null) {
     };
     pageTitle.innerText = titles[page] || "מערכת";
 
+    // הפעלת פונקציות אתחול — עכשיו זה בטוח כי ה־HTML כבר נטען
     if (page === "home") init_home();
     if (page === "children") init_children();
     if (page === "child_add") init_child_add();
@@ -51,6 +65,18 @@ async function navigate(page, param = null) {
 
     closeMenu();
 }
+
+// תמיכה בכפתור BACK של הדפדפן / טלפון
+window.onpopstate = function (event) {
+    isBackNavigation = true;
+
+    if (event.state) {
+        navigate(event.state.page, event.state.param);
+    } else {
+        navigate("home");
+    }
+};
+
 
 // ------------------------------------------------------
 // רשימת שעות 08:00–17:00 בקפיצות 30 דק'
