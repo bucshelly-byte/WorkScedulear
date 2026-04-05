@@ -440,7 +440,7 @@ async function init_visit_edit(id) {
         // 7) שליחת עדכון — חשוב! days[] ולא day
         const formData = new FormData();
         formData.append("child_id", select.value);
-        formData.append("days[]", day);
+        formData.append("day", day);          // ← זה התיקון
         formData.append("start_time", start);
         formData.append("end_time", end);
 
