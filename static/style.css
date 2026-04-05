@@ -318,17 +318,16 @@ input, select {
         font-size: 14px;
         padding: 8px 12px;
     }
-}
 .whatsapp-icon {
-    width: 28px;      /* גודל כמו כפתור ייצוא קטן */
+    width: 28px;          /* גודל כמו אייקון כפתור */
     height: 28px;
     cursor: pointer;
-    border-radius: 4px;
-    padding: 3px;     /* כמו כפתור */
+    padding: 6px;         /* נותן תחושה של כפתור */
+    border-radius: 6px;   /* כמו כפתור */
     transition: 0.2s;
 }
 
 .whatsapp-icon:hover {
-    background-color: #e6e6e6; /* כמו hover של כפתור */
+    background-color: #e6e6e6;
     transform: scale(1.05);
 }
