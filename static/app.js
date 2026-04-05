@@ -451,10 +451,6 @@ async function init_visit_edit(id) {
         navigate("home");
     });
 }
-// הפעלה אוטומטית רק אם אנחנו בדף עריכה
-if (window.location.pathname.includes("visit_edit.html")) {
-    loadEditVisit();
-}
 // ------------------------------------------------------
 // ייצוא מערכת שעות של ילד כתמונה
 // ------------------------------------------------------
