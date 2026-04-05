@@ -19,12 +19,8 @@ function toggleDarkMode() {
     const isDark = document.body.classList.contains("dark");
     localStorage.setItem("theme", isDark ? "dark" : "light");
 }
-
 let isBackNavigation = false;
 
-// ------------------------------------------------------
-// ניווט בין דפים (עם תמיכה ב־BACK)
-// ------------------------------------------------------
 async function navigate(page, param = null) {
 
     // אם זה לא BACK — מוסיפים להיסטוריה
@@ -32,17 +28,18 @@ async function navigate(page, param = null) {
         history.pushState({ page, param }, "", "");
     }
 
+    // מאפסים את הדגל
     isBackNavigation = false;
 
     const app = document.getElementById("app");
     const pageTitle = document.getElementById("pageTitle");
     const backBtn = document.getElementById("backBtn");
 
-    // טעינת תוכן הדף
+    // טוענים את ה־HTML קודם
     const html = await fetch(`/pages/${page}.html`).then(r => r.text());
     app.innerHTML = html;
 
-    // עכשיו ה־HTML נטען — אפשר להריץ init בבטחה
+    // עכשיו ה־HTML קיים — אפשר להריץ init בבטחה
 
     // הצגת כפתור חזרה
     if (page !== "home") backBtn.classList.add("visible");
@@ -72,9 +69,7 @@ async function navigate(page, param = null) {
     closeMenu();
 }
 
-// ------------------------------------------------------
-// BACK של הדפדפן / טלפון
-// ------------------------------------------------------
+// BACK של הדפדפן
 window.onpopstate = function (event) {
     isBackNavigation = true;
 
