@@ -21,9 +21,10 @@ function toggleDarkMode() {
 }
 
 let isBackNavigation = false;
+let isBackNavigation = false;
 
 // ------------------------------------------------------
-// ניווט בין דפים (עם תמיכה בכפתור BACK)
+// ניווט בין דפים (עם תמיכה ב־BACK)
 // ------------------------------------------------------
 async function navigate(page, param = null) {
 
@@ -32,19 +33,21 @@ async function navigate(page, param = null) {
         history.pushState({ page, param }, "", "");
     }
 
-    isBackNavigation = false; // מאפסים
+    isBackNavigation = false;
 
     const app = document.getElementById("app");
     const pageTitle = document.getElementById("pageTitle");
     const backBtn = document.getElementById("backBtn");
 
-    // הצגת כפתור חזרה
-    if (page !== "home") backBtn.classList.add("visible");
-    else backBtn.classList.remove("visible");
-
     // טעינת תוכן הדף
     const html = await fetch(`/pages/${page}.html`).then(r => r.text());
     app.innerHTML = html;
+
+    // עכשיו ה־HTML נטען — אפשר להריץ init בבטחה
+
+    // הצגת כפתור חזרה
+    if (page !== "home") backBtn.classList.add("visible");
+    else backBtn.classList.remove("visible");
 
     // כותרות
     const titles = {
@@ -58,7 +61,7 @@ async function navigate(page, param = null) {
     };
     pageTitle.innerText = titles[page] || "מערכת";
 
-    // הפעלת פונקציות אתחול
+    // הפעלת פונקציות אתחול — עכשיו זה בטוח
     if (page === "home") init_home();
     if (page === "children") init_children();
     if (page === "child_add") init_child_add();
