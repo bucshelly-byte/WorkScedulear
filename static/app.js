@@ -20,31 +20,27 @@ function toggleDarkMode() {
     localStorage.setItem("theme", isDark ? "dark" : "light");
 }
 
+let isBackNavigation = false;
+
 // ------------------------------------------------------
-// ניווט בין דפים (מוסיף להיסטוריה)
+// ניווט בין דפים (עם תמיכה בכפתור BACK)
 // ------------------------------------------------------
 async function navigate(page, param = null) {
-    // מוסיף state להיסטוריה
-    history.pushState({ page, param }, "", "");
 
-    // טוען את הדף בפועל
-    await loadPage(page, param);
-}
+    // אם זה לא BACK — מוסיפים להיסטוריה
+    if (!isBackNavigation) {
+        history.pushState({ page, param }, "", "");
+    }
 
-// ------------------------------------------------------
-// טעינת דף (ללא pushState) — משמשת גם ל־BACK
-// ------------------------------------------------------
-async function loadPage(page, param = null) {
+    isBackNavigation = false; // מאפסים
+
     const app = document.getElementById("app");
     const pageTitle = document.getElementById("pageTitle");
     const backBtn = document.getElementById("backBtn");
 
-    // הצגת כפתור חזרה בכל דף שאינו הבית
-    if (page !== "home") {
-        backBtn.classList.add("visible");
-    } else {
-        backBtn.classList.remove("visible");
-    }
+    // הצגת כפתור חזרה
+    if (page !== "home") backBtn.classList.add("visible");
+    else backBtn.classList.remove("visible");
 
     // טעינת תוכן הדף
     const html = await fetch(`/pages/${page}.html`).then(r => r.text());
@@ -75,21 +71,11 @@ async function loadPage(page, param = null) {
 }
 
 // ------------------------------------------------------
-// תמיכה בכפתור BACK של הדפדפן / טלפון
+// BACK של הדפדפן / טלפון
 // ------------------------------------------------------
 window.onpopstate = function (event) {
-    if (event.state) {
-        // טוען דף בלי pushState
-        loadPage(event.state.page, event.state.param);
-    } else {
-        loadPage("home");
-    }
-};
+    isBackNavigation = true;
 
-// ------------------------------------------------------
-// תמיכה בכפתור BACK של הדפדפן / טלפון
-// ------------------------------------------------------
-window.onpopstate = function (event) {
     if (event.state) {
         navigate(event.state.page, event.state.param);
     } else {
