@@ -27,6 +27,10 @@ function toggleDarkMode() {
 // ניווט בין דפים
 // ------------------------------------------------------
 async function navigate(page, param = null) {
+
+    // ⭐ השורה שחסרה — מכניסה את הדף להיסטוריה
+    history.pushState({ page, param }, "", "");
+
     const app = document.getElementById("app");
     const pageTitle = document.getElementById("pageTitle");
 
@@ -801,4 +805,19 @@ function downloadCanvasImage(canvas, filename) {
 // אתחול
 // ------------------------------------------------------
 initTheme();
+// ⭐ מוסיפים כאן ⭐
+
+// כשמשתמש לוחץ BACK — נטען את הדף הקודם
+window.onpopstate = function (event) {
+    if (event.state) {
+        navigate(event.state.page, event.state.param);
+    }
+};
+
+// מגדירים לדפדפן מהו הדף הראשון בהיסטוריה
+history.replaceState({ page: "home", param: null }, "", "");
+
+// ⭐ סוף ההוספה ⭐
+
+
 navigate("home");
