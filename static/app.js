@@ -31,43 +31,7 @@ async function navigate(page, param = null) {
     // שמירה בהיסטוריה של הדפדפן
     history.pushState({ page, param }, "", "");
 
-    const app = document.getElementById("app");
-    const pageTitle = document.getElementById("pageTitle");
-    const backBtn = document.getElementById("backBtn");
-
-    // הצגת כפתור חזרה בכל דף שאינו הבית
-    if (page !== "home") {
-        backBtn.classList.add("visible");
-    } else {
-        backBtn.classList.remove("visible");
-    }
-
-    // טעינת תוכן הדף
-    const html = await fetch(`/pages/${page}.html`).then(r => r.text());
-    app.innerHTML = html;
-
-    // כותרות
-    const titles = {
-        home: "תחזית שבועית",
-        children: "רשימת ילדים",
-        child_add: "הוספת ילד",
-        child_edit: "עריכת ילד",
-        child_profile: "פרופיל ילד",
-        visit_add: "הוספת שיבוץ",
-        visit_edit: "עריכת שיבוץ"
-    };
-    pageTitle.innerText = titles[page] || "מערכת";
-
-    // הפעלת פונקציות אתחול
-    if (page === "home") init_home();
-    if (page === "children") init_children();
-    if (page === "child_add") init_child_add();
-    if (page === "child_edit") init_child_edit(param);
-    if (page === "child_profile") init_child_profile(param);
-    if (page === "visit_add") init_visit_add();
-    if (page === "visit_edit") init_visit_edit(param);
-
-    closeMenu();
+    await loadPage(page, param);
 }
 
 // ------------------------------------------------------
