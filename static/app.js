@@ -383,28 +383,24 @@ async function init_visit_add() {
         navigate("home");
     });
 }
+
 // ------------------------------------------------------
-// עריכת שיבוץ — יום יחיד (גרסה מתוקנת)
+// עריכת שיבוץ — יום יחיד
 // ------------------------------------------------------
 async function init_visit_edit(id) {
-
-    // 1) טוען את נתוני השיבוץ
     const data = await fetch(`${API_BASE}/schedule/${id}?key=${API_KEY}`).then(r => r.json());
 
     const daySelect = document.getElementById("day");
     const startSelect = document.getElementById("startTime");
     const endSelect = document.getElementById("endTime");
 
-    // 2) טוען שעות
     generateTimeOptions(startSelect);
     generateTimeOptions(endSelect);
 
-    // 3) ממלא ערכים קיימים
     daySelect.value = data.day;
     startSelect.value = data.start_time;
     endSelect.value = data.end_time;
 
-    // 4) טוען ילדים
     const children = await fetch(`${API_BASE}/children?key=${API_KEY}`).then(r => r.json());
     const select = document.getElementById("childId");
 
@@ -416,7 +412,6 @@ async function init_visit_edit(id) {
         select.appendChild(opt);
     });
 
-    // 5) מאזין לשמירה
     const form = document.getElementById("visitEditForm");
 
     form.addEventListener("submit", async e => {
@@ -426,7 +421,6 @@ async function init_visit_edit(id) {
         const end = endSelect.value;
         const day = daySelect.value;
 
-        // 6) בדיקת התנגשות
         const conflict = await fetch(
             `${API_BASE}/schedule/conflict_multi?key=${API_KEY}&start=${start}&end=${end}&ignore=${id}&days[]=${encodeURIComponent(day)}`
         ).then(r => r.json());
@@ -436,12 +430,7 @@ async function init_visit_edit(id) {
             return;
         }
 
-        // 7) שליחת עדכון — חשוב! days[] ולא day
-        const formData = new FormData();
-        formData.append("child_id", select.value);
-        formData.append("days[]", day);
-        formData.append("start_time", start);
-        formData.append("end_time", end);
+        const formData = new FormData(form);
 
         await fetch(`${API_BASE}/schedule/edit/${id}?key=${API_KEY}`, {
             method: "POST",
@@ -451,6 +440,17 @@ async function init_visit_edit(id) {
         navigate("home");
     });
 }
+
+// ------------------------------------------------------
+// ייצוא טבלה — כלי עזר
+// ------------------------------------------------------
+function downloadCanvasImage(canvas, filename) {
+    const link = document.createElement("a");
+    link.download = filename;
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+}
+
 // ------------------------------------------------------
 // ייצוא מערכת שעות של ילד כתמונה
 // ------------------------------------------------------
