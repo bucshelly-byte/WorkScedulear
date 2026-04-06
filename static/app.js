@@ -805,38 +805,28 @@ function downloadCanvasImage(canvas, filename) {
 // שיתוף בוואטסאפ
 // ------------------------------------------------------
 async function shareToWhatsapp() {
-
-    // 1. מייצרים את הקנבס (אותו קוד כמו exportFreeTable)
-    const canvas = document.createElement("canvas");
-    canvas.width = 900;
-    canvas.height = 600;
-    const ctx = canvas.getContext("2d");
-
-    // כאן את שמה את כל הציור של הטבלה שלך
-    // בדיוק כמו שיש לך ב-exportFreeTable
-    // (אם תרצי – אני אעתיק לך את כל זה אוטומטית)
-
-    // 2. ממירים ל-blob
+    // יוצרים את הקנבס (אותו קוד כמו exportFreeTable)
+    const canvas = await generateFreeTableCanvas();
     const dataUrl = canvas.toDataURL("image/png");
+
+    // ממירים ל-blob
     const res = await fetch(dataUrl);
     const blob = await res.blob();
-    const file = new File([blob], "free_slots.png", { type: "image/png" });
 
-    // 3. בטלפון — שיתוף אמיתי
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({
-            files: [file],
-            title: "טבלת פנויות",
-            text: "טבלת הפנויות המעודכנת"
-        });
-        return;
-    }
+    // מעלים לשרת Flask
+    const formData = new FormData();
+    formData.append("file", blob, "free_slots.png");
 
-    // 4. במחשב — הורדה רגילה
-    const a = document.createElement("a");
-    a.href = dataUrl;
-    a.download = "free_slots.png";
-    a.click();
+    const upload = await fetch("http://192.168.1.102:8000/upload-image", {
+        method: "POST",
+        body: formData
+    }).then(r => r.json());
+
+    const imageUrl = upload.url;
+
+    // פותחים וואטסאפ עם קישור לתמונה
+    const text = encodeURIComponent("טבלת הפנויות:\n" + imageUrl);
+    window.open(`https://wa.me/?text=${text}`, "_blank");
 }
 // ------------------------------------------------------
 // אתחול
