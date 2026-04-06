@@ -353,6 +353,40 @@ def delete_visit(id):
 
     return jsonify({"status": "ok"})
 
+
+# ----------------------------------------------------
+# Pic Upload to server 
+# ----------------------------------------------------
+import os
+from datetime import datetime
+
+UPLOAD_FOLDER = "uploads"
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+
+# יצירת התיקייה אם לא קיימת
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
+
+@app.route("/upload-image", methods=["POST"])
+def upload_image():
+    file = request.files.get("file")
+    if not file:
+        return jsonify({"error": "no file"}), 400
+
+    # שם קובץ ייחודי
+    filename = datetime.now().strftime("%Y%m%d%H%M%S") + ".png"
+    filepath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+    file.save(filepath)
+
+    # כתובת מלאה לתמונה (חשוב: ה‑IP של המחשב שלך!)
+    url = f"http://192.168.1.102:8000/uploads/{filename}"
+    return jsonify({"url": url})
+
+@app.route("/uploads/<path:filename>")
+def serve_upload(filename):
+    return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
+
+
 # ----------------------------------------------------
 # RUN
 # ----------------------------------------------------
