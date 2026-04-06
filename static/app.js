@@ -805,15 +805,121 @@ function downloadCanvasImage(canvas, filename) {
 // שיתוף בוואטסאפ
 // ------------------------------------------------------
 async function shareToWhatsapp() {
-    // יוצרים את הקנבס (אותו קוד כמו exportFreeTable)
-    const canvas = await generateFreeTableCanvas();
-    const dataUrl = canvas.toDataURL("image/png");
 
-    // ממירים ל-blob
+    // --- שלב 1: יצירת התמונה (קנבס) ---
+    const schedule = await fetch(`${API_BASE}/schedule?key=${API_KEY}`).then(r => r.json());
+
+    const days = ["ראשון","שני","שלישי","רביעי","חמישי"];
+    const slots = getTimeSlots();
+
+    const map = {};
+    days.forEach(d => map[d] = {});
+
+    schedule.forEach(v => {
+        const startIndex = slots.indexOf(v.start_time);
+        const endIndex = slots.indexOf(v.end_time);
+        if (startIndex === -1 || endIndex === -1) return;
+
+        for (let i = startIndex; i < endIndex; i++) {
+            map[v.day][slots[i]] = v.child_name;
+        }
+    });
+
+    const canvas = document.createElement("canvas");
+    canvas.width = 900;
+    canvas.height = 600;
+    const ctx = canvas.getContext("2d");
+
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = "#333";
+    ctx.font = "20px Assistant";
+    ctx.fillText("טבלת פנויות - כל הילדים", 20, 30);
+
+    const leftMargin = 80;
+    const topMargin = 60;
+    const colWidth = (canvas.width - leftMargin - 20) / days.length;
+    const rowHeight = (canvas.height - topMargin - 40) / slots.length;
+
+    ctx.font = "14px Assistant";
+
+    days.forEach((day, i) => {
+        const x = leftMargin + i * colWidth;
+        ctx.fillStyle = "#555";
+        ctx.fillText(day, x + 10, topMargin - 10);
+    });
+
+    slots.forEach((t, j) => {
+        const y = topMargin + j * rowHeight;
+        ctx.fillStyle = "#555";
+        ctx.fillText(t, 10, y + rowHeight / 2);
+    });
+
+    ctx.strokeStyle = "#ddd";
+    for (let i = 0; i <= days.length; i++) {
+        const x = leftMargin + i * colWidth;
+        ctx.beginPath();
+        ctx.moveTo(x, topMargin);
+        ctx.lineTo(x, topMargin + rowHeight * slots.length);
+        ctx.stroke();
+    }
+    for (let j = 0; j <= slots.length; j++) {
+        const y = topMargin + j * rowHeight;
+        ctx.beginPath();
+        ctx.moveTo(leftMargin, y);
+        ctx.lineTo(leftMargin + colWidth * days.length, y);
+        ctx.stroke();
+    }
+
+    days.forEach((d, i) => {
+        let j = 0;
+
+        while (j < slots.length) {
+            const child = map[d][slots[j]];
+            const x = leftMargin + i * colWidth + 2;
+            const y = topMargin + j * rowHeight + 2;
+
+            if (!child) {
+                ctx.fillStyle = "#ffffff";
+                ctx.fillRect(x, y, colWidth - 4, rowHeight - 4);
+                j++;
+                continue;
+            }
+
+            let span = 1;
+            while (j + span < slots.length && map[d][slots[j + span]] === child) {
+                span++;
+            }
+
+            ctx.fillStyle = getChildColor(child);
+            ctx.fillRect(
+                x,
+                y,
+                colWidth - 4,
+                rowHeight * span - 4
+            );
+
+            ctx.fillStyle = "#ffffff";
+            ctx.font = "bold 14px Assistant";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText(
+                child,
+                x + (colWidth / 2),
+                y + (rowHeight * span) / 2
+            );
+
+            j += span;
+        }
+    });
+
+    // --- שלב 2: המרה ל-blob ---
+    const dataUrl = canvas.toDataURL("image/png");
     const res = await fetch(dataUrl);
     const blob = await res.blob();
 
-    // מעלים לשרת Flask
+    // --- שלב 3: העלאה לשרת Flask ---
     const formData = new FormData();
     formData.append("file", blob, "free_slots.png");
 
@@ -824,7 +930,7 @@ async function shareToWhatsapp() {
 
     const imageUrl = upload.url;
 
-    // פותחים וואטסאפ עם קישור לתמונה
+    // --- שלב 4: פתיחת וואטסאפ ---
     const text = encodeURIComponent("טבלת הפנויות:\n" + imageUrl);
     window.open(`https://wa.me/?text=${text}`, "_blank");
 }
