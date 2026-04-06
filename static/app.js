@@ -802,6 +802,33 @@ function downloadCanvasImage(canvas, filename) {
     link.click();
 }
 // ------------------------------------------------------
+// שיתוף בוואטסאפ
+// ------------------------------------------------------
+async function shareToWhatsapp() {
+    const canvas = await generateFreeTableCanvas(); // פונקציה שמחזירה את הקנבס
+    const dataUrl = canvas.toDataURL("image/png");
+
+    const res = await fetch(dataUrl);
+    const blob = await res.blob();
+    const file = new File([blob], "free_slots.png", { type: "image/png" });
+
+    // ⭐ בטלפון — שיתוף אמיתי לוואטסאפ
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+            files: [file],
+            title: "טבלת פנויות",
+            text: "טבלת הפנויות המעודכנת"
+        });
+        return;
+    }
+
+    // ⭐ במחשב — הורדה רגילה
+    const a = document.createElement("a");
+    a.href = dataUrl;
+    a.download = "free_slots.png";
+    a.click();
+}
+// ------------------------------------------------------
 // אתחול
 // ------------------------------------------------------
 initTheme();
