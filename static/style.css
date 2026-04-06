@@ -317,13 +317,12 @@ input, select {
     .btn {
         font-size: 14px;
         padding: 8px 12px;
-    }
-.whatsapp-icon {
-    width: 28px;          /* גודל כמו אייקון כפתור */
+  .whatsapp-icon {
+    width: 28px;      /* הגודל הרצוי */
     height: 28px;
     cursor: pointer;
-    padding: 6px;         /* נותן תחושה של כפתור */
-    border-radius: 6px;   /* כמו כפתור */
+    padding: 4px;     /* כדי שיראה כמו כפתור */
+    border-radius: 6px;
     transition: 0.2s;
 }
 
