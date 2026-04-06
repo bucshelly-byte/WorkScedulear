@@ -357,6 +357,9 @@ def delete_visit(id):
 # ----------------------------------------------------
 # Pic Upload to server 
 # ----------------------------------------------------
+# ----------------------------------------------------
+# UPLOAD IMAGE FOR WHATSAPP
+# ----------------------------------------------------
 import os
 from datetime import datetime
 
@@ -378,15 +381,14 @@ def upload_image():
     filepath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
     file.save(filepath)
 
-    # כתובת מלאה לתמונה (חשוב: ה‑IP של המחשב שלך!)
+    # כתובת מלאה לתמונה
     url = f"http://192.168.1.102:8000/uploads/{filename}"
     return jsonify({"url": url})
 
 @app.route("/uploads/<path:filename>")
 def serve_upload(filename):
     return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
-
-
+    
 # ----------------------------------------------------
 # RUN
 # ----------------------------------------------------
