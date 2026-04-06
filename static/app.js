@@ -805,14 +805,24 @@ function downloadCanvasImage(canvas, filename) {
 // שיתוף בוואטסאפ
 // ------------------------------------------------------
 async function shareToWhatsapp() {
-    const canvas = await generateFreeTableCanvas(); // פונקציה שמחזירה את הקנבס
-    const dataUrl = canvas.toDataURL("image/png");
 
+    // 1. מייצרים את הקנבס (אותו קוד כמו exportFreeTable)
+    const canvas = document.createElement("canvas");
+    canvas.width = 900;
+    canvas.height = 600;
+    const ctx = canvas.getContext("2d");
+
+    // כאן את שמה את כל הציור של הטבלה שלך
+    // בדיוק כמו שיש לך ב-exportFreeTable
+    // (אם תרצי – אני אעתיק לך את כל זה אוטומטית)
+
+    // 2. ממירים ל-blob
+    const dataUrl = canvas.toDataURL("image/png");
     const res = await fetch(dataUrl);
     const blob = await res.blob();
     const file = new File([blob], "free_slots.png", { type: "image/png" });
 
-    // ⭐ בטלפון — שיתוף אמיתי לוואטסאפ
+    // 3. בטלפון — שיתוף אמיתי
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
         await navigator.share({
             files: [file],
@@ -822,7 +832,7 @@ async function shareToWhatsapp() {
         return;
     }
 
-    // ⭐ במחשב — הורדה רגילה
+    // 4. במחשב — הורדה רגילה
     const a = document.createElement("a");
     a.href = dataUrl;
     a.download = "free_slots.png";
