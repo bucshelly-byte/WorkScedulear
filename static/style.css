@@ -317,4 +317,20 @@ input, select {
     .btn {
         font-size: 14px;
         padding: 8px 12px;
+
+       .whatsapp-icon {
+    width: 26px;        /* גודל כמו כפתור קטן */
+    height: 26px;
+    cursor: pointer;
+    padding: 6px;       /* נותן תחושה של כפתור */
+    border-radius: 6px; /* כמו כפתור */
+    background: white;  /* כדי שייראה נקי */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+    transition: 0.2s;
+}
+
+.whatsapp-icon:hover {
+    background: #e6e6e6;
+    transform: scale(1.05);
+}
   
